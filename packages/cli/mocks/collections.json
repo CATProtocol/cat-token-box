@@ -1,0 +1,37 @@
+[
+  {
+    "id": "cat-token-closemint",
+    "from": "base",
+    "routes": ["get-tokens:closemint", "get-token-metadata:closemint", "get-minters:closemint", "get-balance:success" , "get-balance-all:success"]
+  },
+  {
+    "id": "cat-token-merge",
+    "from": "base",
+    "routes": ["get-tokens:merge", "get-token-metadata:closemint", "get-minters:closemint", "get-balance:success" , "get-balance-all:success"]
+  },
+  {
+    "id": "cat-token-openmint",
+    "from": "base",
+    "routes": ["get-tokens:openmint", "get-token-metadata:openmint", "get-minters:openmint", "get-balance:success" , "get-balance-all:success"]
+  },
+  {
+    "id": "cat-token-openmint-01",
+    "from": "base",
+    "routes": ["get-tokens:openmint-01", "get-token-metadata:openmint", "get-minters:openmint-01", "get-balance:success" , "get-balance-all:success"]
+  },
+  {
+    "id": "cat-token-openmint-02",
+    "from": "base",
+    "routes": ["get-tokens:openmint-01", "get-token-metadata:openmint", "get-minters:openmint-02", "get-balance:success" , "get-balance-all:success"]
+  },
+  {
+    "id": "cat-token-closemint-01",
+    "from": "base",
+    "routes": ["get-tokens:closemint-01", "get-token-metadata:closemint", "get-minters:closemint-01", "get-balance:success" , "get-balance-all:success"]
+  },
+  {
+    "id": "cat-token-closemint-02",
+    "from": "base",
+    "routes": ["get-tokens:closemint-02", "get-token-metadata:closemint", "get-minters:closemint-02", "get-balance:success" , "get-balance-all:success"]
+  }
+]

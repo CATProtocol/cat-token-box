@@ -1,0 +1,14 @@
+dist: focal
+language: node_js
+node_js:
+  - 20
+
+before_install:
+  - echo "before install"
+
+os:
+  - linux
+  # - windows
+
+script:
+  - turbo test

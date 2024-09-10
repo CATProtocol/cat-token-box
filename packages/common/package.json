@@ -1,0 +1,13 @@
+{
+  "name": "@cat-protocol/cat-common",
+  "version": "0.1.0",
+  "private": true,
+  "main": "index.js",
+  "license": "MIT",
+  "scripts": {
+    "build": "tsc"
+  },
+  "devDependencies": {
+    "typescript": "=5.3.3"
+  }
+}

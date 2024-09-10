@@ -1,0 +1,42 @@
+{
+    "version": 9,
+    "compilerVersion": "1.19.4+commit.cfee948",
+    "contract": "CAT20Proto",
+    "md5": "d41d8cd98f00b204e9800998ecf8427e",
+    "structs": [
+        {
+            "name": "CAT20State",
+            "params": [
+                {
+                    "name": "ownerAddr",
+                    "type": "bytes"
+                },
+                {
+                    "name": "amount",
+                    "type": "int"
+                }
+            ],
+            "genericTypes": []
+        }
+    ],
+    "library": [
+        {
+            "name": "CAT20Proto",
+            "params": [],
+            "properties": [],
+            "genericTypes": []
+        }
+    ],
+    "alias": [],
+    "abi": [
+        {
+            "type": "constructor",
+            "params": []
+        }
+    ],
+    "stateProps": [],
+    "buildType": "debug",
+    "file": "../cat20Proto.scrypt",
+    "hex": "",
+    "sourceMapFile": ""
+}

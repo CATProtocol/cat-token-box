@@ -1,0 +1,42 @@
+{
+    "version": 9,
+    "compilerVersion": "1.19.4+commit.cfee948",
+    "contract": "GuardProto",
+    "md5": "d41d8cd98f00b204e9800998ecf8427e",
+    "structs": [
+        {
+            "name": "GuardConstState",
+            "params": [
+                {
+                    "name": "tokenScript",
+                    "type": "bytes"
+                },
+                {
+                    "name": "inputTokenAmountArray",
+                    "type": "int[6]"
+                }
+            ],
+            "genericTypes": []
+        }
+    ],
+    "library": [
+        {
+            "name": "GuardProto",
+            "params": [],
+            "properties": [],
+            "genericTypes": []
+        }
+    ],
+    "alias": [],
+    "abi": [
+        {
+            "type": "constructor",
+            "params": []
+        }
+    ],
+    "stateProps": [],
+    "buildType": "debug",
+    "file": "../guardProto.scrypt",
+    "hex": "",
+    "sourceMapFile": ""
+}

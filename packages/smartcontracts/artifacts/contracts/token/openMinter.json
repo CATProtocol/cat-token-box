@@ -1,0 +1,442 @@
+{
+    "version": 9,
+    "compilerVersion": "1.19.4+commit.cfee948",
+    "contract": "OpenMinter",
+    "md5": "21cbd2e538f2b6cc40ee180e174f1e25",
+    "structs": [
+        {
+            "name": "SHPreimage",
+            "params": [
+                {
+                    "name": "txVer",
+                    "type": "bytes"
+                },
+                {
+                    "name": "nLockTime",
+                    "type": "bytes"
+                },
+                {
+                    "name": "hashPrevouts",
+                    "type": "bytes"
+                },
+                {
+                    "name": "hashSpentAmounts",
+                    "type": "bytes"
+                },
+                {
+                    "name": "hashSpentScripts",
+                    "type": "bytes"
+                },
+                {
+                    "name": "hashSequences",
+                    "type": "bytes"
+                },
+                {
+                    "name": "hashOutputs",
+                    "type": "bytes"
+                },
+                {
+                    "name": "spendType",
+                    "type": "bytes"
+                },
+                {
+                    "name": "inputIndex",
+                    "type": "bytes"
+                },
+                {
+                    "name": "hashTapLeaf",
+                    "type": "bytes"
+                },
+                {
+                    "name": "keyVer",
+                    "type": "bytes"
+                },
+                {
+                    "name": "codeSeparator",
+                    "type": "bytes"
+                },
+                {
+                    "name": "_e",
+                    "type": "bytes"
+                },
+                {
+                    "name": "eLastByte",
+                    "type": "int"
+                }
+            ],
+            "genericTypes": []
+        },
+        {
+            "name": "PrevoutsCtx",
+            "params": [
+                {
+                    "name": "prevouts",
+                    "type": "bytes[6]"
+                },
+                {
+                    "name": "inputIndexVal",
+                    "type": "int"
+                },
+                {
+                    "name": "outputIndexVal",
+                    "type": "int"
+                },
+                {
+                    "name": "spentTxhash",
+                    "type": "bytes"
+                },
+                {
+                    "name": "outputIndex",
+                    "type": "bytes"
+                }
+            ],
+            "genericTypes": []
+        },
+        {
+            "name": "BacktraceInfo",
+            "params": [
+                {
+                    "name": "preTx",
+                    "type": "XrayedTxIdPreimg1"
+                },
+                {
+                    "name": "preTxInput",
+                    "type": "TxInput"
+                },
+                {
+                    "name": "preTxInputIndex",
+                    "type": "int"
+                },
+                {
+                    "name": "prePreTx",
+                    "type": "XrayedTxIdPreimg2"
+                }
+            ],
+            "genericTypes": []
+        },
+        {
+            "name": "OpenMinterState",
+            "params": [
+                {
+                    "name": "tokenScript",
+                    "type": "bytes"
+                },
+                {
+                    "name": "isPremined",
+                    "type": "bool"
+                },
+                {
+                    "name": "remainingSupply",
+                    "type": "int"
+                }
+            ],
+            "genericTypes": []
+        },
+        {
+            "name": "CAT20State",
+            "params": [
+                {
+                    "name": "ownerAddr",
+                    "type": "bytes"
+                },
+                {
+                    "name": "amount",
+                    "type": "int"
+                }
+            ],
+            "genericTypes": []
+        },
+        {
+            "name": "PreTxStatesInfo",
+            "params": [
+                {
+                    "name": "statesHashRoot",
+                    "type": "bytes"
+                },
+                {
+                    "name": "txoStateHashes",
+                    "type": "bytes[5]"
+                }
+            ],
+            "genericTypes": []
+        },
+        {
+            "name": "XrayedTxIdPreimg1",
+            "params": [
+                {
+                    "name": "version",
+                    "type": "bytes"
+                },
+                {
+                    "name": "inputCount",
+                    "type": "bytes"
+                },
+                {
+                    "name": "inputs",
+                    "type": "bytes[6]"
+                },
+                {
+                    "name": "outputCountVal",
+                    "type": "int"
+                },
+                {
+                    "name": "outputCount",
+                    "type": "bytes"
+                },
+                {
+                    "name": "outputSatoshisList",
+                    "type": "bytes[6]"
+                },
+                {
+                    "name": "outputScriptList",
+                    "type": "bytes[6]"
+                },
+                {
+                    "name": "nLocktime",
+                    "type": "bytes"
+                }
+            ],
+            "genericTypes": []
+        },
+        {
+            "name": "XrayedTxIdPreimg2",
+            "params": [
+                {
+                    "name": "prevList",
+                    "type": "bytes[4]"
+                },
+                {
+                    "name": "outputCountVal",
+                    "type": "int"
+                },
+                {
+                    "name": "outputCount",
+                    "type": "bytes"
+                },
+                {
+                    "name": "outputSatoshisList",
+                    "type": "bytes[6]"
+                },
+                {
+                    "name": "outputScriptList",
+                    "type": "bytes[6]"
+                },
+                {
+                    "name": "nLocktime",
+                    "type": "bytes"
+                }
+            ],
+            "genericTypes": []
+        },
+        {
+            "name": "XrayedTxIdPreimg3",
+            "params": [
+                {
+                    "name": "prev",
+                    "type": "bytes"
+                },
+                {
+                    "name": "outputCountVal",
+                    "type": "int"
+                },
+                {
+                    "name": "outputCount",
+                    "type": "bytes"
+                },
+                {
+                    "name": "outputSatoshisList",
+                    "type": "bytes[4]"
+                },
+                {
+                    "name": "outputScriptList",
+                    "type": "bytes[4]"
+                },
+                {
+                    "name": "nLocktime",
+                    "type": "bytes"
+                }
+            ],
+            "genericTypes": []
+        },
+        {
+            "name": "TxInput",
+            "params": [
+                {
+                    "name": "txhash",
+                    "type": "bytes"
+                },
+                {
+                    "name": "outputIndex",
+                    "type": "bytes"
+                },
+                {
+                    "name": "outputIndexVal",
+                    "type": "int"
+                },
+                {
+                    "name": "sequence",
+                    "type": "bytes"
+                }
+            ],
+            "genericTypes": []
+        },
+        {
+            "name": "ChangeInfo",
+            "params": [
+                {
+                    "name": "script",
+                    "type": "bytes"
+                },
+                {
+                    "name": "satoshis",
+                    "type": "bytes"
+                }
+            ],
+            "genericTypes": []
+        }
+    ],
+    "library": [
+        {
+            "name": "SigHashUtils",
+            "params": [],
+            "properties": [],
+            "genericTypes": []
+        },
+        {
+            "name": "Backtrace",
+            "params": [],
+            "properties": [],
+            "genericTypes": []
+        },
+        {
+            "name": "OpenMinterProto",
+            "params": [],
+            "properties": [],
+            "genericTypes": []
+        },
+        {
+            "name": "CAT20Proto",
+            "params": [],
+            "properties": [],
+            "genericTypes": []
+        },
+        {
+            "name": "StateUtils",
+            "params": [],
+            "properties": [],
+            "genericTypes": []
+        },
+        {
+            "name": "TxProof",
+            "params": [],
+            "properties": [],
+            "genericTypes": []
+        },
+        {
+            "name": "TxUtil",
+            "params": [],
+            "properties": [],
+            "genericTypes": []
+        }
+    ],
+    "alias": [],
+    "abi": [
+        {
+            "type": "function",
+            "name": "mint",
+            "index": 0,
+            "params": [
+                {
+                    "name": "curTxoStateHashes",
+                    "type": "bytes[5]"
+                },
+                {
+                    "name": "tokenMint",
+                    "type": "CAT20State"
+                },
+                {
+                    "name": "nextMinterAmounts",
+                    "type": "int[2]"
+                },
+                {
+                    "name": "preminerPubKeyPrefix",
+                    "type": "bytes"
+                },
+                {
+                    "name": "preminerPubKey",
+                    "type": "PubKey"
+                },
+                {
+                    "name": "preminerSig",
+                    "type": "Sig"
+                },
+                {
+                    "name": "minterSatoshis",
+                    "type": "bytes"
+                },
+                {
+                    "name": "tokenSatoshis",
+                    "type": "bytes"
+                },
+                {
+                    "name": "preState",
+                    "type": "OpenMinterState"
+                },
+                {
+                    "name": "preTxStatesInfo",
+                    "type": "PreTxStatesInfo"
+                },
+                {
+                    "name": "backtraceInfo",
+                    "type": "BacktraceInfo"
+                },
+                {
+                    "name": "shPreimage",
+                    "type": "SHPreimage"
+                },
+                {
+                    "name": "prevoutsCtx",
+                    "type": "PrevoutsCtx"
+                },
+                {
+                    "name": "spentScriptsCtx",
+                    "type": "bytes[6]"
+                },
+                {
+                    "name": "changeInfo",
+                    "type": "ChangeInfo"
+                }
+            ]
+        },
+        {
+            "type": "constructor",
+            "params": [
+                {
+                    "name": "genesisOutpoint",
+                    "type": "bytes"
+                },
+                {
+                    "name": "max",
+                    "type": "int"
+                },
+                {
+                    "name": "premine",
+                    "type": "int"
+                },
+                {
+                    "name": "limit",
+                    "type": "int"
+                },
+                {
+                    "name": "premineAddr",
+                    "type": "bytes"
+                }
+            ]
+        }
+    ],
+    "stateProps": [],
+    "buildType": "debug",
+    "file": "../openMinter.scrypt",
+    "hex": "0800000000000000002079be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f817984c807bb52d7a9fef58323eb1bf7a407db382d2f3f2d81bb1224f49fe518f6d48d37c7bb52d7a9fef58323eb1bf7a407db382d2f3f2d81bb1224f49fe518f6d48d37c79be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f8179879be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f8179842f40a48df4b2a70c8b4924bf2654661ed3d95fd66a313eb87237597c628e4a031f40a48df4b2a70c8b4924bf2654661ed3d95fd66a313eb87237597c628e4a0310000<genesisOutpoint><max><premine><limit><premineAddr>0128790128790128790128790128790128790128790128790128790128790128790128790128790128790113795e797e5d797e5c797e5b797e5a797e59797e58797e57797e56797e55797e54797e53797ea8011579787ea85279017f9f695279009c6301006752796878557952797e8801187955797e54798b7e6b6d6d6d6d6d6d6d6d6c775879ad011a79011a79011a79011a79011a79011a79011a79011a79011a79011a79013079012b795b795b795b795b795b795b790056766b796c756e7e777755766b796c756e7e777754766b796c756e7e777753766b796c756e7e777752766b796c756e7e777751766b796c756e7e7b756b6d6d6d6c77a852798855796e760087630100776876030000007e527987777777695479537978760087630100776876030000007e527987777777695b795b795b795b795b795b79565c797600a26976569f69948c766b796c756b6d6d6d6c547954797e886d6d6d6d6d6d607960796079607960796079012a795679567956795679567956790056766b796c756e827752797e7e777755766b796c756e827752797e7e777754766b796c756e827752797e7e777753766b796c756e827752797e7e777752766b796c756e827752797e7e777751766b796c756e827752797e7e7b756b6d6d6d6c77a878886d6d6d75015d79015d79015d79015d79015d79015d79016679016679016679786351670100685379787e52797ea96b6d6d6c014e79014e79014e79014e79014e79014e7956007600a26976569f69948c766b796c756b6d6d6d6c011b795879066a1863617401787e77527988577957795779577957795d79007657766b796c75a97e7d7756766b796c75a97e7d7755766b796c75a97e7d7754766b796c75a97e7d7753766b796c75a97e7d77a95279876b6d6d6d6c77695279587958795879587958795557798c7600a26976559f69948c766b796c756b6d6d756c886d6d6d6d75600115797600a26976569f6994766b796c750113790159790159790159790159790159790159790159790159790159790159790159790159790159790159790159790159790159790159790159790159790159790159790159790159790159790159790159790159790159790159790159790159790159790159790159790159790159790159790159790159790159790159790159790159790159790159790159790135790131790131790131790131790131790131790131790131790131790131790131790131790131790131790131790131790131790131790131790131790131790131790131790131790131790116790116797e7601167901167901167901167901167901167955766b796c756b6d6d6d6c7e7d7701167901167901167901167901167901167954766b796c756b6d6d6d6c7e7d7701167901167901167901167901167901167953766b796c756b6d6d6d6c7e7d7701167901167901167901167901167901167952766b796c756b6d6d6d6c7e7d7701167901167901167901167901167901167951766b796c756b6d6d6d6c7e7d7701167901167901167901167901167901167900766b796c756b6d6d6d6c7e7d775f797e775f795f79885d795d795d795d795d795d7955766b796c756b6d6d6d6c58795879587958795879587955766b796c756b6d6d6d6c768277000113799f637052797e53797e7e547a7572537a537975686d755d795d795d795d795d795d7954766b796c756b6d6d6d6c58795879587958795879587954766b796c756b6d6d6d6c768277510113799f637052797e53797e7e547a7572537a537975686d755d795d795d795d795d795d7953766b796c756b6d6d6d6c58795879587958795879587953766b796c756b6d6d6d6c768277520113799f637052797e53797e7e547a7572537a537975686d755d795d795d795d795d795d7952766b796c756b6d6d6d6c58795879587958795879587952766b796c756b6d6d6d6c768277530113799f637052797e53797e7e547a7572537a537975686d755d795d795d795d795d795d7951766b796c756b6d6d6d6c58795879587958795879587951766b796c756b6d6d6d6c768277540113799f637052797e53797e7e547a7572537a537975686d755d795d795d795d795d795d7900766b796c756b6d6d6d6c58795879587958795879587900766b796c756b6d6d6d6c768277550113799f637052797e53797e7e547a7572537a537975686d787752797eaa6b6d6d6d6d6d6d6d6d6d6d6d6d6c88011979011979011979011979707e01007e787e6b6d6d6c012f79012f79012f79012f79012f79012f7956011d797600a26976569f69948c766b796c756b6d6d6d6c8801177901197978760087630100776876030000007e527987777777690119790119797e7653798764011579011579011579011579011579011579011579011579011579011579011579011579011579011579011579011579011579011579011579012d79012c79011679011579011579011579011579011579011579011579011579011579011579011579011579011579011579011579011579011579011579011579007601147901147901147901147953766b796c756b6d6d6c7e7d7701147901147901147901147952766b796c756b6d6d6c7e7d7701147901147901147901147951766b796c756b6d6d6c7e7d7701147901147901147901147900766b796c756b6d6d6c7e775f795f79885d795d795d795d795d795d7955766b796c756b6d6d6d6c58795879587958795879587955766b796c756b6d6d6d6c768277000113799f637052797e53797e7e547a7572537a537975686d755d795d795d795d795d795d7954766b796c756b6d6d6d6c58795879587958795879587954766b796c756b6d6d6d6c768277510113799f637052797e53797e7e547a7572537a537975686d755d795d795d795d795d795d7953766b796c756b6d6d6d6c58795879587958795879587953766b796c756b6d6d6d6c768277520113799f637052797e53797e7e547a7572537a537975686d755d795d795d795d795d795d7952766b796c756b6d6d6d6c58795879587958795879587952766b796c756b6d6d6d6c768277530113799f637052797e53797e7e547a7572537a537975686d755d795d795d795d795d795d7951766b796c756b6d6d6d6c58795879587958795879587951766b796c756b6d6d6d6c768277540113799f637052797e53797e7e547a7572537a537975686d755d795d795d795d795d795d7900766b796c756b6d6d6d6c58795879587958795879587900766b796c756b6d6d6d6c768277550113799f637052797e53797e7e547a7572537a537975686d787752797eaa6b6d6d6d6d6d6d6d6d6d6d6c5379885979597959795979597959795658797600a26976569f69948c766b796c756b6d6d6d6c78886d6d6d6d6d6d6d6d6d6d6d686d6d6d6d6d6d6d6d6d6d6d6d6d6d6d6d6d6d6d6d6d6d6d6d6d7500000000016c766b796c787700a0636e937b757c52798b537a757b7b52797554795679016a7978827d770122a1696e7e53797e7777777e557a75547a547a547a547a5479755379016779515379786351670100685379787e52797ea96b6d6d6ca97e547a7572537a5379756875016c8c766b796c787700a0636e937b757c52798b537a757b7b52797554795679016a7978827d770122a1696e7e53797e7777777e557a75547a547a547a547a5479755379016779515379786351670100685379787e52797ea96b6d6d6ca97e547a7572537a537975687500016e7900a06378016f79937b757c52798b537a757b7b527975537901707901707978827701149d6e7ea97777a97e547a7572537a53797501667901687978827d770122a1696e7e53797e6b6d6d6c6801657964587900a067006863016b79016b797ea9577988016979016b79ad780165795a79939d59790165795a79939d016e7959799d67780165799d016e795879a169687001767901767901767901767901767956795679557894000052799f637600a97e77685152799f637600a97e77685252799f637600a97e77685352799f637600a97e77685452799f637600a97e776877777ea9557955795579557955795579007657766b796c75a97e7d7756766b796c75a97e7d7755766b796c75a97e7d7754766b796c75a97e7d7753766b796c75a97e7d77a95279876b6d6d6d6c776976066a1863617401787e770800000000000000007882777e787e6b6d6d6d6d6c770111790111797601127987646e78827d770122a1696e7e53797e77777767006877777857797e53797e787ea876012c79876b6d6d6d6d6d6d6d6d6d6d6d6d6d6d6d6d6d6d6d6d6d6d6d6d6d6d6d6d6d6d6d6d6d6d6d6d6d6d6d6d6d6d6d6d6d6d6d6d6d6d6d6d6d6d6d6d6d6d6d6d6c",
+    "sourceMapFile": ""
+}

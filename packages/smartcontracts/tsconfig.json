@@ -1,0 +1,14 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "outDir": "./dist",
+    "declarationDir": "./dist",
+    "rootDir": "./src",
+    // Todo remove below
+    "noImplicitAny": false,
+    "strict": false /* Enable all strict type-checking options. */,
+  },
+  "include": [
+    "./src/**/*",
+  ]
+}

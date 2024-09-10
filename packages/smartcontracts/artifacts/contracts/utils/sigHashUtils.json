@@ -1,0 +1,136 @@
+{
+    "version": 9,
+    "compilerVersion": "1.19.4+commit.cfee948",
+    "contract": "SigHashUtils",
+    "md5": "d41d8cd98f00b204e9800998ecf8427e",
+    "structs": [
+        {
+            "name": "SHPreimage",
+            "params": [
+                {
+                    "name": "txVer",
+                    "type": "bytes"
+                },
+                {
+                    "name": "nLockTime",
+                    "type": "bytes"
+                },
+                {
+                    "name": "hashPrevouts",
+                    "type": "bytes"
+                },
+                {
+                    "name": "hashSpentAmounts",
+                    "type": "bytes"
+                },
+                {
+                    "name": "hashSpentScripts",
+                    "type": "bytes"
+                },
+                {
+                    "name": "hashSequences",
+                    "type": "bytes"
+                },
+                {
+                    "name": "hashOutputs",
+                    "type": "bytes"
+                },
+                {
+                    "name": "spendType",
+                    "type": "bytes"
+                },
+                {
+                    "name": "inputIndex",
+                    "type": "bytes"
+                },
+                {
+                    "name": "hashTapLeaf",
+                    "type": "bytes"
+                },
+                {
+                    "name": "keyVer",
+                    "type": "bytes"
+                },
+                {
+                    "name": "codeSeparator",
+                    "type": "bytes"
+                },
+                {
+                    "name": "_e",
+                    "type": "bytes"
+                },
+                {
+                    "name": "eLastByte",
+                    "type": "int"
+                }
+            ],
+            "genericTypes": []
+        },
+        {
+            "name": "PrevoutsCtx",
+            "params": [
+                {
+                    "name": "prevouts",
+                    "type": "bytes[6]"
+                },
+                {
+                    "name": "inputIndexVal",
+                    "type": "int"
+                },
+                {
+                    "name": "outputIndexVal",
+                    "type": "int"
+                },
+                {
+                    "name": "spentTxhash",
+                    "type": "bytes"
+                },
+                {
+                    "name": "outputIndex",
+                    "type": "bytes"
+                }
+            ],
+            "genericTypes": []
+        },
+        {
+            "name": "ChangeInfo",
+            "params": [
+                {
+                    "name": "script",
+                    "type": "bytes"
+                },
+                {
+                    "name": "satoshis",
+                    "type": "bytes"
+                }
+            ],
+            "genericTypes": []
+        }
+    ],
+    "library": [
+        {
+            "name": "SigHashUtils",
+            "params": [],
+            "properties": [],
+            "genericTypes": []
+        },
+        {
+            "name": "TxUtil",
+            "params": [],
+            "properties": [],
+            "genericTypes": []
+        }
+    ],
+    "alias": [],
+    "abi": [
+        {
+            "type": "constructor",
+            "params": []
+        }
+    ],
+    "stateProps": [],
+    "buildType": "debug",
+    "file": "../sigHashUtils.scrypt",
+    "hex": "",
+    "sourceMapFile": ""
+}

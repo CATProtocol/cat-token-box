@@ -1,0 +1,22 @@
+{
+  "name": "cat-token-box",
+  "version": "0.1.0",
+  "repository": "git@github.com:CATProtocol/cat-token-box.git",
+  "author": "catprotocol.org",
+  "license": "MIT",
+  "private": true,
+  "packageManager": "yarn@1.22.21",
+  "workspaces": [
+    "packages/*"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "build": "turbo build",
+    "postinstall": "sh ./scripts/patch.sh"
+  },
+  "devDependencies": {
+    "turbo": "^2.1.1"
+  }
+}

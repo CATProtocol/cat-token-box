@@ -1,0 +1,188 @@
+{
+    "version": 9,
+    "compilerVersion": "1.19.4+commit.cfee948",
+    "contract": "StateUtils",
+    "md5": "d41d8cd98f00b204e9800998ecf8427e",
+    "structs": [
+        {
+            "name": "PreTxStatesInfo",
+            "params": [
+                {
+                    "name": "statesHashRoot",
+                    "type": "bytes"
+                },
+                {
+                    "name": "txoStateHashes",
+                    "type": "bytes[5]"
+                }
+            ],
+            "genericTypes": []
+        },
+        {
+            "name": "ChangeInfo",
+            "params": [
+                {
+                    "name": "script",
+                    "type": "bytes"
+                },
+                {
+                    "name": "satoshis",
+                    "type": "bytes"
+                }
+            ],
+            "genericTypes": []
+        },
+        {
+            "name": "XrayedTxIdPreimg1",
+            "params": [
+                {
+                    "name": "version",
+                    "type": "bytes"
+                },
+                {
+                    "name": "inputCount",
+                    "type": "bytes"
+                },
+                {
+                    "name": "inputs",
+                    "type": "bytes[6]"
+                },
+                {
+                    "name": "outputCountVal",
+                    "type": "int"
+                },
+                {
+                    "name": "outputCount",
+                    "type": "bytes"
+                },
+                {
+                    "name": "outputSatoshisList",
+                    "type": "bytes[6]"
+                },
+                {
+                    "name": "outputScriptList",
+                    "type": "bytes[6]"
+                },
+                {
+                    "name": "nLocktime",
+                    "type": "bytes"
+                }
+            ],
+            "genericTypes": []
+        },
+        {
+            "name": "XrayedTxIdPreimg2",
+            "params": [
+                {
+                    "name": "prevList",
+                    "type": "bytes[4]"
+                },
+                {
+                    "name": "outputCountVal",
+                    "type": "int"
+                },
+                {
+                    "name": "outputCount",
+                    "type": "bytes"
+                },
+                {
+                    "name": "outputSatoshisList",
+                    "type": "bytes[6]"
+                },
+                {
+                    "name": "outputScriptList",
+                    "type": "bytes[6]"
+                },
+                {
+                    "name": "nLocktime",
+                    "type": "bytes"
+                }
+            ],
+            "genericTypes": []
+        },
+        {
+            "name": "XrayedTxIdPreimg3",
+            "params": [
+                {
+                    "name": "prev",
+                    "type": "bytes"
+                },
+                {
+                    "name": "outputCountVal",
+                    "type": "int"
+                },
+                {
+                    "name": "outputCount",
+                    "type": "bytes"
+                },
+                {
+                    "name": "outputSatoshisList",
+                    "type": "bytes[4]"
+                },
+                {
+                    "name": "outputScriptList",
+                    "type": "bytes[4]"
+                },
+                {
+                    "name": "nLocktime",
+                    "type": "bytes"
+                }
+            ],
+            "genericTypes": []
+        },
+        {
+            "name": "TxInput",
+            "params": [
+                {
+                    "name": "txhash",
+                    "type": "bytes"
+                },
+                {
+                    "name": "outputIndex",
+                    "type": "bytes"
+                },
+                {
+                    "name": "outputIndexVal",
+                    "type": "int"
+                },
+                {
+                    "name": "sequence",
+                    "type": "bytes"
+                }
+            ],
+            "genericTypes": []
+        }
+    ],
+    "library": [
+        {
+            "name": "StateUtils",
+            "params": [],
+            "properties": [],
+            "genericTypes": []
+        },
+        {
+            "name": "TxUtil",
+            "params": [],
+            "properties": [],
+            "genericTypes": []
+        },
+        {
+            "name": "TxProof",
+            "params": [],
+            "properties": [],
+            "genericTypes": []
+        }
+    ],
+    "alias": [],
+    "abi": [
+        {
+            "type": "constructor",
+            "params": []
+        }
+    ],
+    "stateProps": [],
+    "buildType": "debug",
+    "file": "../stateUtils.scrypt",
+    "hex": "",
+    "sourceMapFile": ""
+}

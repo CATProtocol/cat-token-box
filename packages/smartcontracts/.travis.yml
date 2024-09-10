@@ -1,0 +1,14 @@
+dist: focal
+language: node_js
+node_js:
+  - 19
+
+before_install:
+
+os:
+  - linux
+  - windows
+
+script:
+  - echo "PRIVATE_KEY=$PRIVATE_KEY" > .env
+  - npm t

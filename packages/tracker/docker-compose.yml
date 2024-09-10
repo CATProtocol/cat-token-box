@@ -1,0 +1,39 @@
+services:
+  postgres:
+    image: postgres:16
+    restart: always
+    environment:
+      POSTGRES_USER: $DATABASE_USERNAME
+      POSTGRES_PASSWORD: $DATABASE_PASSWORD
+      POSTGRES_DB: $DATABASE_DB
+      PGDATA: /var/lib/postgresql/data/pgdata
+    ports:
+      - "5432:5432"
+    volumes:
+      - ./docker/pgdata:/var/lib/postgresql/data
+  bitcoind:
+    image: fractalbitcoin/fractal:v0.2.1
+    restart: always
+    entrypoint: ["bitcoind", "-datadir=/data/", "-maxtipage=504576000"]
+    command: ""
+    healthcheck:
+      test: ["CMD", "bitcoin-cli", "-datadir=/data/", "getblockchaininfo"]
+    ports:
+      - "8330:8330"
+      - "8331:8331"
+      - "8332:8332"
+      - "8333:8333"
+    deploy:
+      resources:
+        limits:
+          memory: 40G
+    memswap_limit: 60G
+    mem_swappiness: 100
+    volumes:
+      - ./docker/data:/data
+    logging:
+      driver: "json-file"
+      options:
+        labels: "env,filebeat,name"
+        max-size: "1g"
+        max-file: "3"

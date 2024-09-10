@@ -1,0 +1,17 @@
+tsconfig.json
+src/
+mocks/
+loopmint.js
+mocks.config.js
+nest-cli.json
+.npmrc
+spends.json
+tokens.json
+wallet.json
+wallet*.json
+config.json
+config*.json
+metadata.json
+metadata*.json
+tsconfig.build.json
+.eslintrc.js
