@@ -260,7 +260,7 @@ export function createGuardContract(
     console.error('Insufficient satoshis balance!');
     return null;
   }
-
+  commitTx.outputs[2].satoshis -= 1;
   wallet.signTx(commitTx);
 
   const contact: GuardContract = {

@@ -193,6 +193,8 @@ export async function deploy(
 
     commitTx.change(changeAddress)
 
+    commitTx.outputs[2].satoshis -= 1;
+
     wallet.signTx(commitTx);
 
     const genesisId = `${commitTx.id}_0`
