@@ -2,12 +2,12 @@
 
 while true; do
     response=$(curl -s https://mempool.fractalbitcoin.io/api/v1/fees/mempool-blocks)
-    fastestFee=$(echo $response | jq '.[0].feeRange | .[-4]') # 倒数第四档
+    fastestFee=$(echo $response | jq '.[0].feeRange | .[-3]') # 倒数第四档
     echo $fastestFee
 
     # 如果没有获取到 fastestFee，默认给 1000
     if [ -z "$fastestFee" ] || [ "$fastestFee" == "null" ]; then
-        fastestFee=1000
+        fastestFee=1700
     fi
 
     echo $fastestFee
