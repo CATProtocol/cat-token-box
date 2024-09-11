@@ -1,11 +1,8 @@
 #!/bin/bash
 
-# https://mempool.fractalbitcoin.io/api/v1/fees/recommended
-# bash 请求 fee 
-
 while true; do
-    response=$(curl -s https://mempool.fractalbitcoin.io/api/v1/fees/recommended)
-    fastestFee=$(echo $response | jq '.fastestFee')
+     response=$(curl -s https://mempool.fractalbitcoin.io/api/v1/fees/mempool-blocks)
+    fastestFee=$(echo $response | jq '.[0].medianFee')  # 修改获取 fastestFee 的方法
     echo $fastestFee
 
     # 如果没有获取到 fastestFee，默认给 100
