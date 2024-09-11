@@ -1,6 +1,7 @@
 services:
   postgres:
     image: postgres:16
+    shm_size: 1g
     restart: always
     environment:
       POSTGRES_USER: $DATABASE_USERNAME
