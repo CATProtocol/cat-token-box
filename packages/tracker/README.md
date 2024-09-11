@@ -31,7 +31,7 @@ sudo chmod 777 docker/pgdata
 3. Run `postgresql` and `bitcoind`:
 
 ```bash
-docker compose up -d
+docker-compose up -d
 ```
 
 ## Run the tracker service
