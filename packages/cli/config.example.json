@@ -1,10 +1,10 @@
 {
   "network": "fractal-mainnet",
-  "tracker": "http://127.0.0.1:3000",
+  "tracker": "http://172.19.0.16:3000",
   "dataDir": ".",
-  "maxFeeRate": 3,
+  "maxFeeRate": 30000,
   "rpc": {
-      "url": "http://127.0.0.1:8332",
+      "url": "http://172.19.0.16:8332",
       "username": "bitcoin",
       "password": "opcatAwesome"
   }
