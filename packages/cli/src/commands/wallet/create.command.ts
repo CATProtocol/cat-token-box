@@ -40,7 +40,7 @@ export class CreateCommand extends BaseCommand {
         : `cat-${randomBytes(4).toString('hex')}`;
 
       const wallet: Wallet = {
-        accountPath: "m/44'/0'/0'/0/0",
+        accountPath: "m/86'/0'/0'/0/0",
         name: name,
         mnemonic: bip39.generateMnemonic(),
       };

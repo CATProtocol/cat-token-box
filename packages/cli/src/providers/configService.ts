@@ -12,7 +12,7 @@ export class ConfigService {
     tracker: 'http://127.0.0.1:3000',
     dataDir: '.',
     feeRate: -1,
-    maxFeeRate: 30_000,
+    maxFeeRate: -1,
     rpc: null,
   };
 
