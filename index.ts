@@ -43,7 +43,7 @@ app.listen(port, () => {
 //   res.status(200).json({ message: "hello" });
 // });
 
-app.get("/healthz", async (req, res) => {t
+app.get("/healthz", async (req, res) => {
   res.status(200).json({ status: "OK" });
 });
 
