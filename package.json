@@ -13,7 +13,7 @@
     "node": ">=20"
   },
   "scripts": {
-    "test": "ts-node index.ts",
+    "run": "ts-node index.ts",
     "build": "turbo build",
     "postinstall": "sh ./scripts/patch.sh"
   },
