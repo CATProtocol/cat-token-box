@@ -43,9 +43,9 @@ app.listen(port, () => {
 //   res.status(200).json({ message: "hello" });
 // });
 
-// app.get("/healthz", async (req, res) => {t
-//   res.status(200).json({ status: "OK" });
-// });
+app.get("/healthz", async (req, res) => {t
+  res.status(200).json({ status: "OK" });
+});
 
 app.get("/create-wallet", (req: any, res: any) => {
   try {
