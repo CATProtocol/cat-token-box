@@ -84,7 +84,7 @@ export class MintCommand extends BoardcastCommand {
         const MAX_RETRY_COUNT = 10;
 
         for (let index = 0; index < MAX_RETRY_COUNT; index++) {
-          await this.merge(token, address);
+          //await this.merge(token, address);
           const feeRate = await this.getFeeRate();
           const feeUtxos = await this.getFeeUTXOs(address);
           if (feeUtxos.length === 0) {
@@ -92,10 +92,11 @@ export class MintCommand extends BoardcastCommand {
             return;
           }
 
-          const count = await getTokenMinterCount(
+          /*const count = await getTokenMinterCount(
             this.configService,
             token.tokenId,
-          );
+          );*/
+		  const count: number = 300000;
 
           const maxTry = count < MAX_RETRY_COUNT ? count : MAX_RETRY_COUNT;
 
@@ -148,7 +149,8 @@ export class MintCommand extends BoardcastCommand {
               this.walletService,
               this.spendService,
               feeRate,
-              feeUtxos,
+              feeUtxos.slice(0,1),
+			  //feeUtxos,
               token,
               2,
               minter,
