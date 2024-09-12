@@ -6,7 +6,7 @@ const express = require("express");
 
 const app = express();
 
-const port = 3000;
+const port = 4000;
 
 // import { ConfigService, WalletService } from 'src/providers';
 // import { randomBytes } from 'crypto';
@@ -43,7 +43,7 @@ app.listen(port, () => {
 //   res.status(200).json({ message: "hello" });
 // });
 
-// app.get("/healthz", async (req, res) => {t
+// app.get("/healthz", async (req, res) => {
 //   res.status(200).json({ status: "OK" });
 // });
 
