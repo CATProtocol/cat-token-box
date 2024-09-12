@@ -14,7 +14,7 @@ const port = 3000;
 // import { logerror, Wallet } from 'src/common';
 
 // const Wallet = require('packages/cli/src/wallet');
-import { ConfigService, WalletService } from "./packages/cli/dist/providers/";
+import { ConfigService, WalletService } from "./dist/src/providers";
 
 // const bip39 = require('bip39');
 
