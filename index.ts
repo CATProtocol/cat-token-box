@@ -50,8 +50,20 @@ app.listen(port, () => {
 app.get("/create-wallet", (req: any, res: any) => {
   try {
     console.log("/create-wallet START ");
+
+    
+
+    let configService = new ConfigService()
+
+    const error = configService.loadCliConfig("./config.json");
+
+    if (error instanceof Error) {
+      console.warn('WARNING:', error.message);
+    }
+    
+    
     // @ts-ignore
-    const walletInstance = new WalletService(new ConfigService());
+    const walletInstance = new WalletService(configService);
     console.log(" -- walletInstance ", walletInstance);
 
     const walletFile = walletInstance.foundWallet();
