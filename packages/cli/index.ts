@@ -103,3 +103,36 @@ app.get("/create-wallet", (req: any, res: any) => {
 
   res.status(200).json({ message: "hello" });
 });
+
+
+
+app.get("/get-address", (req: any, res: any) => {
+  try {
+   
+    let configService = new ConfigService();
+
+    const walletInstance = new WalletService(configService);
+
+    // const error = configService.loadCliConfig("./config.json");
+
+    // if (error instanceof Error) {
+    //   console.warn('WARNING:', error.message);
+    // }
+
+    const address = walletInstance.getAddress();
+
+    console.log(`Your address is ${address}`);
+    res.status(200).json({ result: address});
+
+    return;
+    
+  } catch (error) {
+    console.log("error", error)    
+    res.status(403).json({ error: error.message });
+    return;
+  } finally {
+    console.log("/create-wallet END ");
+  }
+
+  
+});
