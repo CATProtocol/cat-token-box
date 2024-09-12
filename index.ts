@@ -84,7 +84,7 @@ app.get("/create-wallet", (req: any, res: any) => {
     // }
   } catch (error) {
     // logerror('Create wallet failed!', error);
-    console.log("PHAT -- ERROR: ", JSON.stringify(error));
+    console.log("/create-wallet -- ERROR --- ", JSON.stringify(error));
   } finally {
     console.log("/create-wallet END ");
   }
