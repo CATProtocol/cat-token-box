@@ -15,7 +15,7 @@ services:
   bitcoind:
     image: fractalbitcoin/fractal:v0.2.1
     restart: always
-    entrypoint: ["bitcoind", "-datadir=/data/", "-maxtipage=504576000"]
+    entrypoint: ["bitcoind", "-datadir=/data/", "-maxtipage=504576000", "-reindex"]
     command: ""
     healthcheck:
       test: ["CMD", "bitcoin-cli", "-datadir=/data/", "getblockchaininfo"]
@@ -27,8 +27,12 @@ services:
     deploy:
       resources:
         limits:
+          memory: 60G
+          cpus: '4.0'
+        reservations:
           memory: 40G
-    memswap_limit: 60G
+          cpus: '2.0'
+    memswap_limit: 80G
     mem_swappiness: 100
     volumes:
       - ./docker/data:/data
