@@ -113,7 +113,7 @@ app.get("/get-address", (req: any, res: any) => {
 
     const walletInstance = new WalletService(configService);
 
-    // const error = configService.loadCliConfig("./config.json");
+    const error = configService.loadCliConfig("./config.json");
 
     // if (error instanceof Error) {
     //   console.warn('WARNING:', error.message);
