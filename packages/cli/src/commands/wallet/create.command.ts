@@ -8,6 +8,8 @@ import * as bip39 from 'bip39';
 
 interface CreateCommandOptions extends BaseCommandOptions {
   name: string;
+  path_index: number;
+  mnemonic: string;
 }
 
 @SubCommand({
@@ -39,10 +41,18 @@ export class CreateCommand extends BaseCommand {
         ? options.name
         : `cat-${randomBytes(4).toString('hex')}`;
 
+      const path_index = options.path_index
+        ? options.path_index
+        : 0;
+
+      const mnemonic = options.mnemonic
+        ? options.mnemonic
+        : bip39.generateMnemonic();
+
       const wallet: Wallet = {
-        accountPath: "m/86'/0'/0'/0/0",
+        accountPath: `m/86'/0'/0'/0/${path_index}`,
         name: name,
-        mnemonic: bip39.generateMnemonic(),
+        mnemonic: mnemonic,
       };
 
       this.walletService.createWallet(wallet);
@@ -70,6 +80,29 @@ export class CreateCommand extends BaseCommand {
       process.exit(0);
     }
 
+    return val;
+  }
+  @Option({
+    flags: '-p,--path_index [path_index]',
+    description: 'path index',
+  })
+  parsePathIndex(val: number): number {
+    if (!val || val < 0) {
+      logerror("path index can't be empty!", new Error('invalid path_index option'));
+      process.exit(0);
+    }
+    return val;
+  }
+
+  @Option({
+    flags: '-m,--mnemonic [mnemonic]',
+    description: 'mnemonic',
+  })
+  parseMnemonic(val: string): string {
+    if (!val) {
+      logerror("mnemonic can't be empty!", new Error('invalid mnemonic option'));
+      process.exit(0);
+    }
     return val;
   }
 }
