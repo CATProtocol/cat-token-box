@@ -1,5 +1,5 @@
-import { UTXO } from 'scrypt-ts';
-import fetch from 'node-fetch-cjs';
+import { UTXO } from "scrypt-ts";
+import fetch from "node-fetch-cjs";
 
 import {
   rpc_broadcast,
@@ -7,10 +7,10 @@ import {
   rpc_getfeeRate,
   rpc_getrawtransaction,
   rpc_listunspent,
-} from './apis-rpc';
-import { logerror, logwarn } from './log';
-import { btc } from './btc';
-import { ConfigService, WalletService } from 'src/providers';
+} from "./apis-rpc";
+import { logerror, logwarn } from "./log";
+import { btc } from "./btc";
+import { ConfigService, WalletService } from "../providers";
 
 export const getFeeRate = async function (
   config: ConfigService,
@@ -41,7 +41,7 @@ export const getFeeRate = async function (
     return 2;
   }
 
-  return Math.max(2, feeRate['fastestFee'] || 1);
+  return Math.max(2, feeRate["fastestFee"] || 1);
 };
 
 export const getFractalUtxos = async function (
@@ -54,16 +54,16 @@ export const getFractalUtxos = async function (
   const utxos: Array<any> = await fetch(
     url,
     config.withProxy({
-      method: 'GET',
+      method: "GET",
       headers: {
-        'Content-Type': 'application/json',
+        "Content-Type": "application/json",
         Authorization: `Bearer ${config.getApiKey()}`,
       },
     }),
   )
     .then(async (res) => {
-      const contentType = res.headers.get('content-type');
-      if (contentType.includes('json')) {
+      const contentType = res.headers.get("content-type");
+      if (contentType.includes("json")) {
         return res.json();
       } else {
         throw new Error(
@@ -121,8 +121,8 @@ export const getUtxos = async function (
   const url = `${config.getApiHost()}/api/address/${address}/utxo`;
   const utxos: Array<any> = await fetch(url, config.withProxy())
     .then(async (res) => {
-      const contentType = res.headers.get('content-type');
-      if (contentType.includes('json')) {
+      const contentType = res.headers.get("content-type");
+      if (contentType.includes("json")) {
         return res.json();
       } else {
         throw new Error(
@@ -170,7 +170,7 @@ export const getRawTransaction = async function (
       })
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
       .catch((e: Error) => {
-        logerror('getrawtransaction failed!', e);
+        logerror("getrawtransaction failed!", e);
         return e;
       })
   );
@@ -190,9 +190,9 @@ export const getConfirmations = async function (
     return rpc_getconfirmations(config, txid);
   }
 
-  logwarn('No supported getconfirmations', new Error());
+  logwarn("No supported getconfirmations", new Error());
   return {
-    blockhash: '',
+    blockhash: "",
     confirmations: -1,
   };
 };
@@ -210,29 +210,29 @@ export async function broadcast(
   return fetch(
     url,
     config.withProxy({
-      method: 'POST',
+      method: "POST",
       body: txHex,
     }),
   )
     .then(async (res) => {
-      const contentType = res.headers.get('content-type');
-      if (contentType.includes('json')) {
+      const contentType = res.headers.get("content-type");
+      if (contentType.includes("json")) {
         return res.json();
       } else {
         return res.text();
       }
     })
     .then(async (data) => {
-      if (typeof data === 'string' && data.length === 64) {
+      if (typeof data === "string" && data.length === 64) {
         return data;
-      } else if (typeof data === 'object') {
+      } else if (typeof data === "object") {
         throw new Error(JSON.stringify(data));
-      } else if (typeof data === 'string') {
+      } else if (typeof data === "string") {
         throw new Error(data);
       }
     })
     .catch((e) => {
-      logerror('broadcast failed!', e);
+      logerror("broadcast failed!", e);
       return e;
     });
 }

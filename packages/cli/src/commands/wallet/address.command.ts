@@ -1,14 +1,14 @@
-import { SubCommand } from 'nest-commander';
-import { log, logerror } from 'src/common';
-import { BaseCommand, BaseCommandOptions } from '../base.command';
-import { ConfigService, WalletService } from 'src/providers';
-import { Inject } from '@nestjs/common';
+import { SubCommand } from "nest-commander";
+import { log, logerror } from "../../common";
+import { BaseCommand, BaseCommandOptions } from "../base.command";
+import { ConfigService, WalletService } from "../../providers";
+import { Inject } from "@nestjs/common";
 
 interface AddressCommandOptions extends BaseCommandOptions {}
 
 @SubCommand({
-  name: 'address',
-  description: 'Show address',
+  name: "address",
+  description: "Show address",
 })
 export class AddressCommand extends BaseCommand {
   constructor(
@@ -29,7 +29,7 @@ export class AddressCommand extends BaseCommand {
 
       log(`Your address is ${address}`);
     } catch (error) {
-      logerror('Get address failed!', error);
+      logerror("Get address failed!", error);
     }
   }
 }

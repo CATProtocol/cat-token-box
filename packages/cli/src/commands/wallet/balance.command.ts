@@ -1,25 +1,25 @@
-import { Option, SubCommand } from 'nest-commander';
+import { Option, SubCommand } from "nest-commander";
 import {
   getBalance,
   getAllBalance,
   logerror,
   unScaleByDecimals,
   getTrackerStatus,
-} from 'src/common';
-import { BaseCommand, BaseCommandOptions } from '../base.command';
-import { ConfigService, WalletService } from 'src/providers';
-import { Inject } from '@nestjs/common';
-import { findTokenMetadataById } from 'src/token';
-import { table } from './table';
-import Decimal from 'decimal.js';
+} from "../../common";
+import { BaseCommand, BaseCommandOptions } from "../base.command";
+import { ConfigService, WalletService } from "../../providers";
+import { Inject } from "@nestjs/common";
+import { findTokenMetadataById } from "../../token";
+import { table } from "./table";
+import Decimal from "decimal.js";
 
 interface BalanceCommandOptions extends BaseCommandOptions {
   id?: string;
 }
 
 @SubCommand({
-  name: 'balances',
-  description: 'Get balances of all tokens',
+  name: "balances",
+  description: "Get balances of all tokens",
 })
 export class BalanceCommand extends BaseCommand {
   constructor(
@@ -32,13 +32,13 @@ export class BalanceCommand extends BaseCommand {
   async checkTrackerStatus() {
     const status = await getTrackerStatus(this.configService);
     if (status instanceof Error) {
-      throw new Error('tracker status is abnormal');
+      throw new Error("tracker status is abnormal");
     }
 
     const { trackerBlockHeight, latestBlockHeight } = status;
 
     if (trackerBlockHeight < latestBlockHeight) {
-      console.warn('tracker is behind latest blockchain height');
+      console.warn("tracker is behind latest blockchain height");
       console.warn(
         `processing ${trackerBlockHeight}/${latestBlockHeight}: ${new Decimal(trackerBlockHeight).div(latestBlockHeight).mul(100).toFixed(0)}%`,
       );
@@ -81,7 +81,7 @@ export class BalanceCommand extends BaseCommand {
         const balances = await getAllBalance(this.configService, address);
 
         if (balances.length === 0) {
-          console.log('No tokens found!');
+          console.log("No tokens found!");
           await this.checkTrackerStatus();
           return;
         }
@@ -107,13 +107,13 @@ export class BalanceCommand extends BaseCommand {
         console.log(table(all));
       }
     } catch (error) {
-      logerror('Get Balance failed!', error);
+      logerror("Get Balance failed!", error);
     }
   }
 
   @Option({
-    flags: '-i, --id [tokenId]',
-    description: 'ID of the token',
+    flags: "-i, --id [tokenId]",
+    description: "ID of the token",
   })
   parseId(val: string): string {
     return val;

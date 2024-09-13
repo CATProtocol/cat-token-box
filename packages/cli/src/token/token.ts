@@ -1,5 +1,5 @@
-import { existsSync, readFileSync, writeFileSync } from 'fs';
-import { join } from 'path';
+import { existsSync, readFileSync, writeFileSync } from "fs";
+import { join } from "path";
 import {
   OpenMinterTokenInfo,
   TokenMetadata,
@@ -7,8 +7,8 @@ import {
   scaleByDecimals,
   getTokenMetadata,
   logerror,
-} from 'src/common';
-import { ConfigService } from 'src/providers';
+} from "../common";
+import { ConfigService } from "../providers";
 
 export function scaleConfig(config: OpenMinterTokenInfo): OpenMinterTokenInfo {
   const clone = Object.assign({}, config);
@@ -41,7 +41,7 @@ export function getAllTokenMetadatas(config: ConfigService): TokenMetadata[] {
       return [];
     }
   } catch (error) {
-    logerror('getAllTokenMetadatas failed!', error);
+    logerror("getAllTokenMetadatas failed!", error);
   }
 
   return [];
@@ -76,7 +76,7 @@ function saveTokenMetadata(
   try {
     writeFileSync(path, JSON.stringify(tokens, null, 1));
   } catch (error) {
-    console.error('save token metadata error:', error);
+    console.error("save token metadata error:", error);
   }
 
   return tokens;
@@ -105,5 +105,5 @@ export function addTokenMetadata(
 }
 
 export function getTokenMetadataPath(config: ConfigService) {
-  return join(config.getDataDir(), 'tokens.json');
+  return join(config.getDataDir(), "tokens.json");
 }

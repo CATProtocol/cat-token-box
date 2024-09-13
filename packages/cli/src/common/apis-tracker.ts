@@ -2,24 +2,24 @@ import {
   OpenMinterState,
   ProtocolState,
   ProtocolStateList,
-} from '@cat-protocol/cat-smartcontracts';
-import { OpenMinterContract, TokenContract } from './contact';
-import { OpenMinterTokenInfo, TokenMetadata } from './metadata';
-import { isOpenMinter } from './minterFinder';
-import { getRawTransaction } from './apis';
+} from "@cat-protocol/cat-smartcontracts";
+import { OpenMinterContract, TokenContract } from "./contact";
+import { OpenMinterTokenInfo, TokenMetadata } from "./metadata";
+import { isOpenMinter } from "./minterFinder";
+import { getRawTransaction } from "./apis";
 import {
   getTokenContractP2TR,
   p2tr2Address,
   script2P2TR,
   toP2tr,
-} from './utils';
-import { byteString2Int } from 'scrypt-ts';
-import { createOpenMinterState } from 'src/commands/mint/ft.open-minter';
-import { findTokenMetadataById, scaleConfig } from 'src/token';
-import { logerror } from './log';
-import { ConfigService, SpendService, WalletService } from 'src/providers';
-import { btc } from './btc';
-import fetch from 'node-fetch-cjs';
+} from "./utils";
+import { byteString2Int } from "scrypt-ts";
+import { createOpenMinterState } from "../commands/mint/ft.open-minter";
+import { findTokenMetadataById, scaleConfig } from "../token";
+import { logerror } from "./log";
+import { ConfigService, SpendService, WalletService } from "../providers";
+import { btc } from "./btc";
+import fetch from "node-fetch-cjs";
 
 export type ContractJSON = {
   utxo: {
@@ -148,18 +148,18 @@ const fetchOpenMinterState = async function (
       const { p2tr } = script2P2TR(lockingScriptBuffer);
       if (p2tr === minterP2TR) {
         const mintAmount = byteString2Int(
-          witnesses[MINTAMOUNT_WITNESS_INDEX].toString('hex'),
+          witnesses[MINTAMOUNT_WITNESS_INDEX].toString("hex"),
         );
 
         const preState: OpenMinterState = {
           tokenScript:
-            witnesses[REMAININGSUPPLY_WITNESS_INDEX - 2].toString('hex'),
+            witnesses[REMAININGSUPPLY_WITNESS_INDEX - 2].toString("hex"),
           isPremined:
-            witnesses[REMAININGSUPPLY_WITNESS_INDEX - 1].toString('hex') == '01'
+            witnesses[REMAININGSUPPLY_WITNESS_INDEX - 1].toString("hex") == "01"
               ? true
               : false,
           remainingSupply: byteString2Int(
-            witnesses[REMAININGSUPPLY_WITNESS_INDEX].toString('hex'),
+            witnesses[REMAININGSUPPLY_WITNESS_INDEX].toString("hex"),
           ),
         };
 
@@ -217,7 +217,7 @@ export const getTokenMinter = async function (
               );
             }
 
-            if (typeof c.utxo.satoshis === 'string') {
+            if (typeof c.utxo.satoshis === "string") {
               c.utxo.satoshis = parseInt(c.utxo.satoshis);
             }
 
@@ -231,7 +231,7 @@ export const getTokenMinter = async function (
           }),
         );
       } else {
-        throw new Error('Unkown minter!');
+        throw new Error("Unkown minter!");
       }
     })
     .then((minters) => {
@@ -268,7 +268,7 @@ export const getTokens = async function (
           c.txoStateHashes as ProtocolStateList,
         );
 
-        if (typeof c.utxo.satoshis === 'string') {
+        if (typeof c.utxo.satoshis === "string") {
           c.utxo.satoshis = parseInt(c.utxo.satoshis);
         }
 

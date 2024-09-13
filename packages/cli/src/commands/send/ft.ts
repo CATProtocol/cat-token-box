@@ -20,7 +20,7 @@ import {
   logerror,
   btc,
   verifyContract,
-} from 'src/common';
+} from "../../common";
 import {
   int2ByteString,
   MethodCallOptions,
@@ -28,7 +28,7 @@ import {
   PubKey,
   UTXO,
   fill,
-} from 'scrypt-ts';
+} from "scrypt-ts";
 import {
   emptyTokenAmountArray,
   emptyTokenArray,
@@ -47,8 +47,8 @@ import {
   ChangeInfo,
   MAX_TOKEN_OUTPUT,
   MAX_INPUT,
-} from '@cat-protocol/cat-smartcontracts';
-import { ConfigService, WalletService } from 'src/providers';
+} from "@cat-protocol/cat-smartcontracts";
+import { ConfigService, WalletService } from "../../providers";
 
 async function unlockToken(
   wallet: WalletService,
@@ -78,7 +78,7 @@ async function unlockToken(
     isUserSpend: true,
     userPubKeyPrefix: pubKeyPrefix,
     userPubKey: PubKey(pubkeyX),
-    userSig: sig.toString('hex'),
+    userSig: sig.toString("hex"),
     contractInputIndex: 0n,
   };
 
@@ -117,7 +117,7 @@ async function unlockToken(
     ...callToBufferList(tokenCall),
     // taproot script + cblock
     token.lockingScript.toBuffer(),
-    Buffer.from(cblockToken, 'hex'),
+    Buffer.from(cblockToken, "hex"),
   ];
   revealTx.inputs[tokenInputIndex].witnesses = witnesses;
 
@@ -128,8 +128,8 @@ async function unlockToken(
       tokenInputIndex,
       witnesses,
     );
-    if (typeof res === 'string') {
-      console.error('unlocking token contract failed!', res);
+    if (typeof res === "string") {
+      console.error("unlocking token contract failed!", res);
       return false;
     }
     return true;
@@ -199,7 +199,7 @@ async function unlockGuard(
     ...callToBufferList(transferGuardCall),
     // taproot script + cblock
     transferGuard.lockingScript.toBuffer(),
-    Buffer.from(transferCblock, 'hex'),
+    Buffer.from(transferCblock, "hex"),
   ];
   revealTx.inputs[guardInputIndex].witnesses = witnesses;
 
@@ -210,8 +210,8 @@ async function unlockGuard(
       guardInputIndex,
       witnesses,
     );
-    if (typeof res === 'string') {
-      console.error('unlocking guard contract failed!', res);
+    if (typeof res === "string") {
+      console.error("unlocking guard contract failed!", res);
       return false;
     }
     return true;
@@ -257,7 +257,7 @@ export function createGuardContract(
     .change(changeAddress);
 
   if (commitTx.getChangeOutput() === null) {
-    console.error('Insufficient satoshis balance!');
+    console.error("Insufficient satoshis balance!");
     return null;
   }
   commitTx.outputs[2].satoshis -= 1;
@@ -360,7 +360,7 @@ export async function sendToken(
   ];
 
   if (inputUtxos.length > MAX_INPUT) {
-    throw new Error('to much input');
+    throw new Error("to much input");
   }
 
   const revealTx = new btc.Transaction()
@@ -444,7 +444,7 @@ export async function sendToken(
       let prevPrevTx: btc.Transaction | null = null;
 
       const prevPrevTxId =
-        prevTx.inputs[prevTokenInputIndex].prevTxId.toString('hex');
+        prevTx.inputs[prevTokenInputIndex].prevTxId.toString("hex");
 
       if (cachedTxs.has(prevPrevTxId)) {
         prevPrevTx = cachedTxs.get(prevPrevTxId);
@@ -518,7 +518,7 @@ export async function sendToken(
     (changeTokenState === null ? 0 : Postage.TOKEN_POSTAGE);
 
   if (satoshiChangeAmount <= CHANGE_MIN_POSTAGE) {
-    console.error('Insufficient satoshis balance!');
+    console.error("Insufficient satoshis balance!");
     return null;
   }
 
@@ -531,8 +531,8 @@ export async function sendToken(
     revealTx,
     tokens.map((_, i) => i).concat([tokens.length]),
     [
-      ...new Array(tokens.length).fill(Buffer.from(tokenTapScript, 'hex')),
-      Buffer.from(guardTapScript, 'hex'),
+      ...new Array(tokens.length).fill(Buffer.from(tokenTapScript, "hex")),
+      Buffer.from(guardTapScript, "hex"),
     ],
   );
 
@@ -645,8 +645,8 @@ const calcVsize = async (
     revealTx,
     tokens.map((_, i) => i).concat([tokens.length]),
     [
-      ...new Array(tokens.length).fill(Buffer.from(tokenTapScript, 'hex')),
-      Buffer.from(guardTapScript, 'hex'),
+      ...new Array(tokens.length).fill(Buffer.from(tokenTapScript, "hex")),
+      Buffer.from(guardTapScript, "hex"),
     ],
   );
 

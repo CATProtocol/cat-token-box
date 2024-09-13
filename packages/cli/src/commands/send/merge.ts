@@ -6,10 +6,10 @@ import {
   log,
   TokenMetadata,
   TokenContract,
-} from 'src/common';
-import { ConfigService, SpendService, WalletService } from 'src/providers';
-import { UTXO } from 'scrypt-ts';
-import { calcTotalAmount, sendToken } from './ft';
+} from "../../common";
+import { ConfigService, SpendService, WalletService } from "../../providers";
+import { UTXO } from "scrypt-ts";
+import { calcTotalAmount, sendToken } from "./ft";
 
 async function feeSplitTx(
   configService: ConfigService,
@@ -173,7 +173,7 @@ export async function mergeTokens(
         newToken = result.contracts[0];
         batchTokensTobeMerge.splice(0, 4, ...result.contracts);
       } else {
-        return [tokens, feeUtxos, new Error('merge tokens failed!')];
+        return [tokens, feeUtxos, new Error("merge tokens failed!")];
       }
     }
 
@@ -246,7 +246,7 @@ export async function waitTxConfirm(
   }
 }
 
-export const MERGE_TOKEN_FAILED_ERR = 'broadcast merge token txs failed';
+export const MERGE_TOKEN_FAILED_ERR = "broadcast merge token txs failed";
 
 export function isMergeTxFail(e: Error) {
   return e.message.includes(MERGE_TOKEN_FAILED_ERR);

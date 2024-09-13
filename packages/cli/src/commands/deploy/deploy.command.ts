@@ -1,4 +1,4 @@
-import { Command, Option } from 'nest-commander';
+import { Command, Option } from "nest-commander";
 import {
   MinterType,
   getUtxos,
@@ -12,19 +12,19 @@ import {
   checkTokenInfo,
   btc,
   scaleByDecimals,
-} from 'src/common';
-import { deploy, getMinterInitialTxState } from './ft';
-import { ConfigService } from 'src/providers/configService';
-import { SpendService, WalletService } from 'src/providers';
-import { Inject } from '@nestjs/common';
-import { addTokenMetadata } from 'src/token';
-import { openMint } from '../mint/ft.open-minter';
-import { isAbsolute, join } from 'path';
-import { accessSync, constants, readFileSync } from 'fs';
+} from "../../common";
+import { deploy, getMinterInitialTxState } from "./ft";
+import { ConfigService } from "../../providers/configService";
+import { SpendService, WalletService } from "../../providers";
+import { Inject } from "@nestjs/common";
+import { addTokenMetadata } from "../../token";
+import { openMint } from "../mint/ft.open-minter";
+import { isAbsolute, join } from "path";
+import { accessSync, constants, readFileSync } from "fs";
 import {
   BoardcastCommand,
   BoardcastCommandOptions,
-} from '../boardcast.command';
+} from "../boardcast.command";
 
 interface DeployCommandOptions extends BoardcastCommandOptions {
   config?: string;
@@ -53,8 +53,8 @@ function isEmptyOption(options: DeployCommandOptions) {
 }
 
 @Command({
-  name: 'deploy',
-  description: 'Deploy an open-mint fungible token (FT)',
+  name: "deploy",
+  description: "Deploy an open-mint fungible token (FT)",
 })
 export class DeployCommand extends BoardcastCommand {
   constructor(
@@ -82,8 +82,8 @@ export class DeployCommand extends BoardcastCommand {
 
       if (isEmptyOption(options)) {
         logerror(
-          'Should deploy with `--metadata=your.json` or with options like `--name=cat --symbol=cat --decimals=0 --max=21000000 --premine=0 --limit=1000` ',
-          new Error('No metadata found'),
+          "Should deploy with `--metadata=your.json` or with options like `--name=cat --symbol=cat --decimals=0 --max=21000000 --premine=0 --limit=1000` ",
+          new Error("No metadata found"),
         );
         return;
       }
@@ -91,7 +91,7 @@ export class DeployCommand extends BoardcastCommand {
       const err = checkTokenInfo(info);
 
       if (err instanceof Error) {
-        logerror('Invalid token metadata!', err);
+        logerror("Invalid token metadata!", err);
         return;
       }
 
@@ -104,7 +104,7 @@ export class DeployCommand extends BoardcastCommand {
       );
 
       if (utxos.length === 0) {
-        console.warn('Insufficient satoshi balance!');
+        console.warn("Insufficient satoshi balance!");
         return;
       }
 
@@ -196,31 +196,31 @@ export class DeployCommand extends BoardcastCommand {
         }
       }
     } catch (error) {
-      logerror('Deploy failed!', error);
+      logerror("Deploy failed!", error);
     }
   }
 
   @Option({
-    flags: '-n, --name [name]',
-    name: 'name',
-    description: 'token name',
+    flags: "-n, --name [name]",
+    name: "name",
+    description: "token name",
   })
   parseName(val: string): string {
     if (!val) {
-      logerror("Name can't be empty!", new Error('Empty symbol'));
+      logerror("Name can't be empty!", new Error("Empty symbol"));
       process.exit(0);
     }
     return val;
   }
 
   @Option({
-    flags: '-s, --symbol [symbol]',
-    name: 'symbol',
-    description: 'token symbol',
+    flags: "-s, --symbol [symbol]",
+    name: "symbol",
+    description: "token symbol",
   })
   parseSymbol(val: string): string {
     if (!val) {
-      logerror("Symbol can't be empty!", new Error('Empty symbol'));
+      logerror("Symbol can't be empty!", new Error("Empty symbol"));
       process.exit(0);
     }
 
@@ -228,9 +228,9 @@ export class DeployCommand extends BoardcastCommand {
   }
 
   @Option({
-    flags: '-d, --decimals [decimals]',
-    name: 'decimals',
-    description: 'token decimals',
+    flags: "-d, --decimals [decimals]",
+    name: "decimals",
+    description: "token decimals",
   })
   parseDecimals(val: string): number {
     if (!val) {
@@ -240,19 +240,19 @@ export class DeployCommand extends BoardcastCommand {
     try {
       const decimals = parseInt(val);
       if (isNaN(decimals)) {
-        logwarn('Invalid decimals, use defaut 0', new Error());
+        logwarn("Invalid decimals, use defaut 0", new Error());
       }
       return decimals;
     } catch (error) {
-      logwarn('Invalid decimals, use defaut 0', error);
+      logwarn("Invalid decimals, use defaut 0", error);
     }
     return 0;
   }
 
   @Option({
-    flags: '-l, --limit [limit]',
-    name: 'limit',
-    description: 'limit of per mint',
+    flags: "-l, --limit [limit]",
+    name: "limit",
+    description: "limit of per mint",
   })
   parseLimit(val: string): bigint {
     if (!val) {
@@ -262,33 +262,33 @@ export class DeployCommand extends BoardcastCommand {
     try {
       return BigInt(val);
     } catch (error) {
-      logwarn('Invalid limit, use defaut 1000n', error);
+      logwarn("Invalid limit, use defaut 1000n", error);
     }
     return BigInt(1000);
   }
 
   @Option({
-    flags: '-m, --max [max]',
-    name: 'max',
-    description: 'token max supply',
+    flags: "-m, --max [max]",
+    name: "max",
+    description: "token max supply",
   })
   parseMax(val: string): bigint {
     if (!val) {
-      logerror('Invalid token max supply!', new Error('Empty max supply'));
+      logerror("Invalid token max supply!", new Error("Empty max supply"));
       process.exit(0);
     }
     try {
       return BigInt(val);
     } catch (error) {
-      logerror('Invalid token max supply!', error);
+      logerror("Invalid token max supply!", error);
       process.exit(0);
     }
   }
 
   @Option({
-    flags: '-p, --premine [premine]',
-    name: 'premine',
-    description: 'token premine',
+    flags: "-p, --premine [premine]",
+    name: "premine",
+    description: "token premine",
   })
   parsePremine(val: string): bigint {
     if (!val) {
@@ -297,15 +297,15 @@ export class DeployCommand extends BoardcastCommand {
     try {
       return BigInt(val);
     } catch (error) {
-      logerror('Invalid token premine!', error);
+      logerror("Invalid token premine!", error);
       process.exit(0);
     }
   }
 
   @Option({
-    flags: '-m, --metadata [metadata]',
-    name: 'metadata',
-    description: 'token metadata',
+    flags: "-m, --metadata [metadata]",
+    name: "metadata",
+    description: "token metadata",
   })
   parseMetadata(val: string): string {
     if (!val) {

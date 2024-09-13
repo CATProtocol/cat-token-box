@@ -1,6 +1,6 @@
-import { OpenMinter } from '@cat-protocol/cat-smartcontracts';
-import { MinterType } from './minter';
-import { ArtifactsMD5 } from 'src/main';
+import { OpenMinter } from "@cat-protocol/cat-smartcontracts";
+import { MinterType } from "./minter";
+import { ArtifactsMD5 } from "../main";
 
 export function isOpenMinter(md5: string) {
   return md5 === OpenMinter.getArtifact().md5;

@@ -1,16 +1,16 @@
-import { Injectable } from '@nestjs/common';
-import { accessSync, constants, readFileSync } from 'fs';
-import { CliConfig } from 'src/common';
-import { isAbsolute, join } from 'path';
-import { HttpsProxyAgent } from 'https-proxy-agent';
+import { Injectable } from "@nestjs/common";
+import { accessSync, constants, readFileSync } from "fs";
+import { CliConfig } from "../common";
+import { isAbsolute, join } from "path";
+import { HttpsProxyAgent } from "https-proxy-agent";
 
 @Injectable()
 export class ConfigService {
   constructor() {}
   cliConfig: CliConfig = {
-    network: 'fractal-mainnet',
-    tracker: 'http://127.0.0.1:3000',
-    dataDir: '.',
+    network: "fractal-mainnet",
+    tracker: "http://127.0.0.1:3000",
+    dataDir: ".",
     feeRate: -1,
     maxFeeRate: -1,
     rpc: null,
@@ -22,7 +22,7 @@ export class ConfigService {
       Object.assign(rpc, this.cliConfig.rpc);
     }
 
-    if (one.rpc !== null && typeof one.rpc === 'object') {
+    if (one.rpc !== null && typeof one.rpc === "object") {
       Object.assign(rpc, one.rpc);
     }
 
@@ -43,7 +43,7 @@ export class ConfigService {
     }
 
     try {
-      const config = JSON.parse(readFileSync(configPath, 'utf8'));
+      const config = JSON.parse(readFileSync(configPath, "utf8"));
       this.mergeCliConfig(config);
       return null;
     } catch (error) {
@@ -57,12 +57,12 @@ export class ConfigService {
 
   getApiHost = () => {
     const config = this.getCliConfig();
-    if (config.network === 'btc-signet') {
-      return 'https://mempool.space/signet';
-    } else if (config.network === 'fractal-testnet') {
-      return 'https://mempool-testnet.fractalbitcoin.io';
-    } else if (config.network === 'fractal-mainnet') {
-      return 'https://mempool.fractalbitcoin.io';
+    if (config.network === "btc-signet") {
+      return "https://mempool.space/signet";
+    } else if (config.network === "fractal-testnet") {
+      return "https://mempool-testnet.fractalbitcoin.io";
+    } else if (config.network === "fractal-mainnet") {
+      return "https://mempool.fractalbitcoin.io";
     } else {
       throw new Error(`Unsupport network: ${config.network}`);
     }
@@ -147,7 +147,7 @@ export class ConfigService {
 
   isFractalNetwork = () => {
     const config = this.getCliConfig();
-    return config.network.startsWith('fractal');
+    return config.network.startsWith("fractal");
   };
 
   getDataDir(): string {

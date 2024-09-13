@@ -1,4 +1,4 @@
-import { Command, Option } from 'nest-commander';
+import { Command, Option } from "nest-commander";
 import {
   getUtxos,
   OpenMinterTokenInfo,
@@ -12,20 +12,20 @@ import {
   getTokens,
   btc,
   TokenMetadata,
-} from 'src/common';
-import { openMint } from './ft.open-minter';
-import { ConfigService, SpendService, WalletService } from 'src/providers';
-import { Inject } from '@nestjs/common';
-import { log } from 'console';
-import { findTokenMetadataById, scaleConfig } from 'src/token';
-import Decimal from 'decimal.js';
+} from "../../common";
+import { openMint } from "./ft.open-minter";
+import { ConfigService, SpendService, WalletService } from "../../providers";
+import { Inject } from "@nestjs/common";
+import { log } from "console";
+import { findTokenMetadataById, scaleConfig } from "../../token";
+import Decimal from "decimal.js";
 import {
   BoardcastCommand,
   BoardcastCommandOptions,
-} from '../boardcast.command';
-import { broadcastMergeTokenTxs, mergeTokens } from '../send/merge';
-import { calcTotalAmount, sendToken } from '../send/ft';
-import { pickLargeFeeUtxo } from '../send/pick';
+} from "../boardcast.command";
+import { broadcastMergeTokenTxs, mergeTokens } from "../send/merge";
+import { calcTotalAmount, sendToken } from "../send/ft";
+import { pickLargeFeeUtxo } from "../send/pick";
 interface MintCommandOptions extends BoardcastCommandOptions {
   id: string;
   new?: number;
@@ -36,8 +36,8 @@ function getRandomInt(max: number) {
 }
 
 @Command({
-  name: 'mint',
-  description: 'Mint a token',
+  name: "mint",
+  description: "Mint a token",
 })
 export class MintCommand extends BoardcastCommand {
   constructor(
@@ -88,7 +88,7 @@ export class MintCommand extends BoardcastCommand {
           const feeRate = await this.getFeeRate();
           const feeUtxos = await this.getFeeUTXOs(address);
           if (feeUtxos.length === 0) {
-            console.warn('Insufficient satoshis balance!');
+            console.warn("Insufficient satoshis balance!");
             return;
           }
 
@@ -100,7 +100,7 @@ export class MintCommand extends BoardcastCommand {
           const maxTry = count < MAX_RETRY_COUNT ? count : MAX_RETRY_COUNT;
 
           if (count == 0 && index >= maxTry) {
-            console.error('No available minter UTXO found!');
+            console.error("No available minter UTXO found!");
             return;
           }
 
@@ -119,14 +119,14 @@ export class MintCommand extends BoardcastCommand {
           if (isOpenMinter(token.info.minterMd5)) {
             const minterState = minter.state.data;
             if (minterState.isPremined && amount > scaledInfo.limit) {
-              console.error('The number of minted tokens exceeds the limit!');
+              console.error("The number of minted tokens exceeds the limit!");
               return;
             }
 
             const limit = scaledInfo.limit;
 
             if (!minter.state.data.isPremined && scaledInfo.premine > 0n) {
-              if (typeof amount === 'bigint') {
+              if (typeof amount === "bigint") {
                 if (amount !== scaledInfo.premine) {
                   throw new Error(
                     `first mint amount should equal to premine ${scaledInfo.premine}`,
@@ -175,16 +175,16 @@ export class MintCommand extends BoardcastCommand {
             );
             return;
           } else {
-            throw new Error('unkown minter!');
+            throw new Error("unkown minter!");
           }
         }
 
         console.error(`mint token [${token.info.symbol}] failed`);
       } else {
-        throw new Error('expect a ID option');
+        throw new Error("expect a ID option");
       }
     } catch (error) {
-      logerror('mint failed!', error);
+      logerror("mint failed!", error);
     }
   }
 
@@ -219,7 +219,7 @@ export class MintCommand extends BoardcastCommand {
         );
 
         if (e instanceof Error) {
-          logerror('merge token failed!', e);
+          logerror("merge token failed!", e);
           return;
         }
 
@@ -257,8 +257,8 @@ export class MintCommand extends BoardcastCommand {
   }
 
   @Option({
-    flags: '-i, --id [tokenId]',
-    description: 'ID of the token',
+    flags: "-i, --id [tokenId]",
+    description: "ID of the token",
   })
   parseId(val: string): string {
     return val;
@@ -276,7 +276,7 @@ export class MintCommand extends BoardcastCommand {
     });
 
     if (feeUtxos.length === 0) {
-      console.warn('Insufficient satoshis balance!');
+      console.warn("Insufficient satoshis balance!");
       return [];
     }
     return feeUtxos;
