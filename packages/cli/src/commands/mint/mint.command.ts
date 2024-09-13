@@ -125,6 +125,11 @@ export class MintCommand extends BoardcastCommand {
 
             const limit = scaledInfo.limit;
 
+            if (minter.state.data.remainingSupply < limit) {
+              console.warn('too small remainingSupply');
+              continue;
+            }
+
             if (!minter.state.data.isPremined && scaledInfo.premine > 0n) {
               if (typeof amount === 'bigint') {
                 if (amount !== scaledInfo.premine) {
