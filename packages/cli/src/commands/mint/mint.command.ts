@@ -48,12 +48,9 @@ export class MintCommand extends BoardcastCommand {
     super(spendService, walletService, configService);
   }
 
-  async cat_cli_run(
-    passedParams: string[],
-    options?: MintCommandOptions,
-  ): Promise<void> {
-    try {
-      if (options.id) {
+async mintX(passedParams,options){
+ console.log(`开始mint...`);
+	if (options.id) {
         const address = this.walletService.getAddress();
         const token = await findTokenMetadataById(
           this.configService,
@@ -126,14 +123,6 @@ export class MintCommand extends BoardcastCommand {
 
             const limit = scaledInfo.limit;
 
-            if (minter.state.data.remainingSupply < limit) {
-              console.warn(
-                `small limit of ${unScaleByDecimals(limit, token.info.decimals)} in the minter UTXO!`,
-              );
-              log(`retry to mint token [${token.info.symbol}] ...`);
-              continue;
-            }
-
             if (!minter.state.data.isPremined && scaledInfo.premine > 0n) {
               if (typeof amount === 'bigint') {
                 if (amount !== scaledInfo.premine) {
@@ -146,19 +135,24 @@ export class MintCommand extends BoardcastCommand {
               }
             } else {
               amount = amount || limit;
+			  if (minter.state.data.remainingSupply <500){
+				  log(`minter.state.data.remainingSupply:${minter.state.data.remainingSupply} skip` );
+				  return
+			  }
               amount =
                 amount > minter.state.data.remainingSupply
                   ? minter.state.data.remainingSupply
                   : amount;
             }
 
+			  
             const mintTxIdOrErr = await openMint(
               this.configService,
               this.walletService,
               this.spendService,
               feeRate,
-              feeUtxos.slice(0,1),
-			  //feeUtxos,
+              //feeUtxos.slice(0,1),
+			  feeUtxos,
               token,
               2,
               minter,
@@ -169,8 +163,9 @@ export class MintCommand extends BoardcastCommand {
               if (needRetry(mintTxIdOrErr)) {
                 // throw these error, so the caller can handle it.
                 log(`retry to mint token [${token.info.symbol}] ...`);
-                await sleep(6);
+                //await sleep(6);
                 continue;
+				
               } else {
                 logerror(
                   `mint token [${token.info.symbol}] failed`,
@@ -179,10 +174,8 @@ export class MintCommand extends BoardcastCommand {
                 return;
               }
             }
-
-            console.log(
-              `Minting ${unScaleByDecimals(amount, token.info.decimals)} ${token.info.symbol} tokens in txid: ${mintTxIdOrErr} ...`,
-            );
+			console.log('\x1b[32m%s\x1b[0m',`Minting ${unScaleByDecimals(amount, token.info.decimals)} ${token.info.symbol} tokens in txid: ${mintTxIdOrErr} ...`);
+			
             return;
           } else {
             throw new Error('unkown minter!');
@@ -193,6 +186,26 @@ export class MintCommand extends BoardcastCommand {
       } else {
         throw new Error('expect a ID option');
       }
+}
+
+  async cat_cli_run(
+    passedParams: string[],
+    options?: MintCommandOptions,
+  ): Promise<void> {
+    try {
+	
+		let array = [];
+
+		for (let i = 0; i < 100; i++) {
+			array.push(
+				new Promise((resolve) => {
+					this.mintX(passedParams,options)
+				})
+			)
+		}
+		for (let i = 0; i < 100; i++) {
+			await array[i]
+		}
     } catch (error) {
       logerror('mint failed!', error);
     }
