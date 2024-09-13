@@ -126,7 +126,8 @@ export class MintCommand extends BoardcastCommand {
             const limit = scaledInfo.limit;
 
             if (minter.state.data.remainingSupply < limit) {
-              console.warn('too small remainingSupply');
+              console.warn('too small remaining supply in the minter!');
+              log(`retry to mint token [${token.info.symbol}] ...`);
               continue;
             }
 
