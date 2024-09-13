@@ -55,7 +55,18 @@ export class ConfigService {
     return this.cliConfig;
   }
 
-  getApiHost = () => {
+  getOpenApiHost = () => {
+    const config = this.getCliConfig();
+    if (config.network === 'fractal-testnet') {
+      return 'https://open-api-fractal-testnet.unisat.io';
+    } else if (config.network === 'fractal-mainnet') {
+      return 'https://open-api-fractal.unisat.io';
+    } else {
+      throw new Error(`Unsupport network: ${config.network}`);
+    }
+  };
+
+  getMempoolApiHost = () => {
     const config = this.getCliConfig();
     if (config.network === 'btc-signet') {
       return 'https://mempool.space/signet';

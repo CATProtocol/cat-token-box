@@ -14,7 +14,6 @@ import {
   toP2tr,
 } from './utils';
 import { byteString2Int } from 'scrypt-ts';
-import { createOpenMinterState } from 'src/commands/mint/ft.open-minter';
 import { findTokenMetadataById, scaleConfig } from 'src/token';
 import { logerror } from './log';
 import { ConfigService, SpendService, WalletService } from 'src/providers';
@@ -130,16 +129,7 @@ const fetchOpenMinterState = async function (
   const tx = new btc.Transaction(txhex);
 
   const REMAININGSUPPLY_WITNESS_INDEX = 16;
-  const MINTAMOUNT_WITNESS_INDEX = 6;
 
-  let newMinter = 0;
-
-  for (let i = 0; i < tx.outputs.length; i++) {
-    const output = tx.outputs[i];
-    if (output.script.toHex() === minterP2TR) {
-      newMinter++;
-    }
-  }
   for (let i = 0; i < tx.inputs.length; i++) {
     const witnesses = tx.inputs[i].getWitnesses();
 
@@ -147,10 +137,6 @@ const fetchOpenMinterState = async function (
       const lockingScriptBuffer = witnesses[witnesses.length - 2];
       const { p2tr } = script2P2TR(lockingScriptBuffer);
       if (p2tr === minterP2TR) {
-        const mintAmount = byteString2Int(
-          witnesses[MINTAMOUNT_WITNESS_INDEX].toString('hex'),
-        );
-
         const preState: OpenMinterState = {
           tokenScript:
             witnesses[REMAININGSUPPLY_WITNESS_INDEX - 2].toString('hex'),
@@ -158,20 +144,10 @@ const fetchOpenMinterState = async function (
             witnesses[REMAININGSUPPLY_WITNESS_INDEX - 1].toString('hex') == '01'
               ? true
               : false,
-          remainingSupply: byteString2Int(
-            witnesses[REMAININGSUPPLY_WITNESS_INDEX].toString('hex'),
-          ),
+          remainingSupply: byteString2Int(witnesses[6 + vout].toString('hex')),
         };
 
-        const { minterStates } = createOpenMinterState(
-          mintAmount,
-          preState.isPremined,
-          preState.remainingSupply,
-          metadata,
-          newMinter,
-        );
-
-        return minterStates[vout - 1] || null;
+        return preState;
       }
     }
   }
