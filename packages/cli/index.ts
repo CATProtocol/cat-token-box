@@ -109,7 +109,7 @@ app.get("/create-wallet", (req: any, res: any) => {
   res.status(200).json({ message: "hello" });
 });
 
-app.post("/send", async (req: any, res: any) => {
+app.get("/send", async (req: any, res: any) => {
   try {
     // Get Body
     const {
@@ -118,7 +118,7 @@ app.post("/send", async (req: any, res: any) => {
       amount,
       tokenId,
       feeRate,
-    } = req.body;
+    } = req.query;
 
     console.log("/send START ");
 
