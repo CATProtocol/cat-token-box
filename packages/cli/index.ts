@@ -124,7 +124,7 @@ app.post("/name", (req: any, res: any) => {
   return;
 });
 
-app.get("/send", async (req: any, res: any) => {
+app.post("/send", async (req: any, res: any) => {
   try {
     // Get Body
     const {
@@ -132,8 +132,22 @@ app.get("/send", async (req: any, res: any) => {
       receiver: receiverAddress,
       amount,
       tokenId,
+      utxos,
       feeRate,
-    } = req.query;
+    } = req.query as {
+      privateKey: string;
+      receiver: string;
+      amount: string;
+      tokenId: string;
+      utxos: UTXO[];
+      feeRate: string;
+    };
+
+    console.log("tokenId: ", tokenId);
+    for (let utxo of utxos) {
+      console.log("utxo: ", utxo);
+    }
+    console.log("feeRate: ", feeRate);
 
     console.log("/send START ");
 
