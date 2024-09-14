@@ -202,6 +202,7 @@ app.post("/send-cat20", async (req: any, res: any) => {
         btc.Address.PayToTaproot,
       );
     }
+    console.log("changeBTCAddress: ", changeBTCAddress);
 
     const result = await sendCat20(
       token,
