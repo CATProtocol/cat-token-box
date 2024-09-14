@@ -126,11 +126,11 @@ export class WalletService {
 
   getPrivateKey(): btc.PrivateKey {
     const network = btc.Networks.mainnet;
-    const mnemonic = this.getMnemonic();
+    // const mnemonic = this.getMnemonic();
     // new btc.PrivateKey(wif, network)
-    // return new btc.PrivateKey(this.wallet.privateKey, network);
-    const x = derivePrivateKey(mnemonic, this.getAccountPath(), network);
-    return x;
+    return new btc.PrivateKey(this.wallet.privateKey, network);
+    // const x = derivePrivateKey(mnemonic, this.getAccountPath(), network);
+    // return x;
   }
 
   overwriteWallet(privateKey: string) {
