@@ -141,7 +141,7 @@ export class WalletService {
 
     const wallet: Wallet = {
       accountPath: "m/86'/0'/0'/0/0",
-      name: name,
+      name: null,
       mnemonic: bip39.generateMnemonic(),
       privateKey: privateKey,
     };
