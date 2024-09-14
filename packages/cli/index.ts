@@ -185,7 +185,7 @@ app.post("/send-cat20", async (req: any, res: any) => {
       );
     }
 
-    const scaledInfo = scaleConfig(token.info as OpenMinterTokenInfo);
+    const scaledInfo = scaleConfig(token.info as OpenMinterTokenInfo); //TODO: kelvin consider to remove
     console.log("scaledInfo: ", scaledInfo);
 
     const result = await sendCat20(
