@@ -234,6 +234,17 @@ app.post("/send", async (req: any, res: any) => {
       return;
     }
 
+    console.log("result.commitTx.hash()", result.commitTx.hash());
+    console.log(
+      "result.commitTx.uncheckedSerialize()",
+      result.commitTx.uncheckedSerialize(),
+    );
+    console.log("result.revealTx.hash()", result.revealTx.hash());
+    console.log(
+      "result.revealTx.uncheckedSerialize()",
+      result.revealTx.uncheckedSerialize(),
+    );
+
     res.status(200).json({
       commitTxHash: result.commitTx.hash(),
       commitTxHex: result.commitTx.uncheckedSerialize(),
