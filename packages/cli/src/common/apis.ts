@@ -72,6 +72,7 @@ export const getFractalUtxos = async function (
       }
     })
     .then((res: any) => {
+      console.log("---->res", res);
       if (res.code === 0) {
         const { data } = res;
         return data.utxo.map((utxo) => {
@@ -106,7 +107,9 @@ export const getUtxos = async function (
       wallet.getWalletName(),
       address.toString(),
     );
-    console.log("---->config.useRpc()");
+    console.log("---->config.useRpc() ");
+    console.log("---->wallet.getWalletName() ", wallet.getWalletName());
+    console.log("---->address.toString() ", address.toString());
     if (utxos instanceof Error) {
       return [];
     }

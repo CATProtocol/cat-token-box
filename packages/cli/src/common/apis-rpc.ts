@@ -232,6 +232,7 @@ export const rpc_listunspent = async function (
       }
 
       const utxos: UTXO[] = res.result.map((item: any) => {
+        console.log("---->item ", item);
         return {
           txId: item.txid,
           outputIndex: item.vout,
