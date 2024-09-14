@@ -12,8 +12,7 @@ USER_HOME=$(grep -E '^USER_HOME=' "$ENV_FILE" | cut -d '=' -f 2)
 DATABASE_VOLUME_PATH=$(grep -E '^DATABASE_VOLUME_PATH=' "$ENV_FILE" | cut -d '=' -f 2)
 BITCOIND_DATA_DIR=$(grep -E '^BITCOIND_DATA_DIR=' "$ENV_FILE" | cut -d '=' -f 2)
 
-NESTED_DIRS=("$USER_HOME/data/pgdata" "$USER_HOME/data/bitcoin/data")
-
+NESTED_DIRS=("$USER_HOME/data/pgdata" "$USER_HOME/data/bitcoin")
 for DIR in "${NESTED_DIRS[@]}"; do
   if [ -d "$DIR" ]; then
     echo "Checking directory: $DIR"
@@ -33,6 +32,7 @@ done
 
 echo "Check completed"
 
+sudo cp docker/data/bitcoin.conf "$NESTED_DIRS[1]"
 echo "Starting services"
 docker compose up -d
 
