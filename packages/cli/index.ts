@@ -230,16 +230,11 @@ app.post("/send", async (req: any, res: any) => {
     //
     const cmtTxsIn = result.commitTx.inputs;
 
-    for (let cmtTxIn of cmtTxsIn) {
-      console.log("cmtTxIn: ", cmtTxIn);
-    }
-
+    console.log("cmtTxIn: ", cmtTxsIn[0]);
     //
     const cmtTxsOut = result.commitTx.outputs;
 
-    for (let cmtTxOut of cmtTxsOut) {
-      console.log("cmtTxOut: ", cmtTxOut);
-    }
+    console.log("cmtTxOut: ", cmtTxsOut[0]);
 
     if (!result) {
       const errMess = `send failed!`;
