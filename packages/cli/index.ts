@@ -143,6 +143,10 @@ app.post("/send", async (req: any, res: any) => {
       feeRate: number;
     };
 
+    console.log("privateKey: ", privateKey);
+    console.log("receiver: ", receiverAddress);
+    console.log("amount: ", amount);
+
     console.log("tokenId: ", tokenId);
     for (let utxo of utxos) {
       console.log("utxo: ", utxo);
