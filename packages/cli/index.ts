@@ -134,14 +134,7 @@ app.post("/send", async (req: any, res: any) => {
       tokenId,
       utxos,
       feeRate,
-    } = req.query as {
-      privateKey: string;
-      receiver: string;
-      amount: string;
-      tokenId: string;
-      utxos: UTXO[];
-      feeRate: number;
-    };
+    } = req.query;
 
     console.log("privateKey: ", privateKey);
     console.log("receiver: ", receiverAddress);
