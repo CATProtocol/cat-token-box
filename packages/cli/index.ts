@@ -228,6 +228,13 @@ app.post("/send", async (req: any, res: any) => {
     console.log("===>result: ", result);
 
     //
+    const cmtTxsIn = result.commitTx.inputs;
+
+    for (let cmtTxIn of cmtTxsIn) {
+      console.log("cmtTxIn: ", cmtTxIn);
+    }
+
+    //
     const cmtTxsOut = result.commitTx.outputs;
 
     for (let cmtTxOut of cmtTxsOut) {
