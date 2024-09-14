@@ -302,6 +302,13 @@ export class WalletService {
           undefined,
           undefined,
         );
+        console.log(
+          "i: ",
+          i,
+          "signatures: ",
+          signatures,
+          " isWitnessPublicKeyHashOut",
+        );
 
         tx.applySignature(signatures[0]);
       } else if (input.output.script.isTaproot() && !input.hasWitnesses()) {
@@ -314,6 +321,7 @@ export class WalletService {
           undefined,
           undefined,
         );
+        console.log("i: ", i, "signatures: ", signatures);
 
         tx.applySignature(signatures[0]);
       }
