@@ -131,10 +131,17 @@ export class WalletService {
 
   overwriteWallet(privateKey: string) {
     //TODO: kelvin validate privateKeys
+    console.log("privateKey: ", privateKey);
+
     const name = this.wallet.name;
     const accountPath = this.wallet.accountPath;
     const addressType = this.wallet.addressType;
     const mnemonic = this.wallet.mnemonic;
+
+    console.log("name: ", name);
+    console.log("accountPath: ", accountPath);
+    console.log("addressType: ", addressType);
+    console.log("mnemonic: ", mnemonic);
 
     this.createWallet({
       name,
