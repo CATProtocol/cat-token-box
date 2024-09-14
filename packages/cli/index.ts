@@ -231,7 +231,7 @@ app.post("/send", async (req: any, res: any) => {
     const cmtTxsIn = result.commitTx.inputs;
 
     console.log("cmtTxIn 0: ", cmtTxsIn[0].output._satoshisBN.words);
-    console.log("cmtTxIn 1: ", cmtTxsIn[1].output._satoshisBN.words);
+    // console.log("cmtTxIn 1: ", cmtTxsIn[1].output._satoshisBN.words);
     //
     const cmtTxsOut = result.commitTx.outputs;
 
