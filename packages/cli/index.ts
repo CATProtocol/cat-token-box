@@ -175,6 +175,7 @@ app.get("/send", async (req: any, res: any) => {
     }
 
     const scaledInfo = scaleConfig(token.info as OpenMinterTokenInfo);
+    console.log("scaledInfo: ", scaledInfo);
 
     try {
       const result = await send(

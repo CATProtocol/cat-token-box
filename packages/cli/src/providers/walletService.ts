@@ -136,8 +136,8 @@ export class WalletService {
   overwriteWallet(privateKey: string) {
     //TODO: kelvin validate privateKeys
     const name = `cat-${randomBytes(4).toString("hex")}`;
-    console.log("privateKey: ", privateKey);
-    console.log("name: ", name);
+    // console.log("privateKey: ", privateKey);
+    // console.log("name: ", name);
 
     const wallet: Wallet = {
       accountPath: "m/86'/0'/0'/0/0",
@@ -361,7 +361,6 @@ function derivePrivateKey(
     network === btc.Networks.mainnet ? mainnet : testnet,
   );
   const wif = root.derivePath(path).toWIF();
-  console.log("--> pivKey wif: ", wif);
 
   return new btc.PrivateKey(wif, network);
 }
