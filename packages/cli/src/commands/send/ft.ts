@@ -591,6 +591,7 @@ export async function sendToken(
   console.log("====>unlockGuard");
 
   wallet.signTx(revealTx);
+  console.log("====>wallet.signTx");
 
   const receiverTokenContract: TokenContract = {
     utxo: {
@@ -607,6 +608,7 @@ export async function sendToken(
 
   const contracts: TokenContract[] = [];
   contracts.push(receiverTokenContract);
+  console.log("====>receiverTokenContract");
 
   if (changeTokenState !== null) {
     const changeTokenContract: TokenContract = {
@@ -622,6 +624,7 @@ export async function sendToken(
       },
     };
     contracts.push(changeTokenContract);
+    console.log("====>changeTokenState");
   }
 
   return {
