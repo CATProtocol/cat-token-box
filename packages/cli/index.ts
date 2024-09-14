@@ -15,7 +15,6 @@ import Decimal from "decimal.js";
 import { sendCat20 } from "./src/sendCat20Handler";
 import { UTXO } from "scrypt-ts";
 import { network } from "../tracker/src/common/constants";
-import { Address } from "scrypt-ts";
 
 const walletHD = {
   accountPath: "m/86'/0'/0'/0/0",
@@ -197,7 +196,7 @@ app.post("/send-cat20", async (req: any, res: any) => {
     if (!changeAddress) {
       changeBTCAddress = senderAddress;
     } else {
-      changeBTCAddress = Address.fromPubKey(
+      changeBTCAddress = btc.Address.fromPublicKey(
         changeAddress,
         senderAddress.network,
         btc.Address.PayToTaproot,
