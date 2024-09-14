@@ -130,7 +130,11 @@ app.get("/send", async (req: any, res: any) => {
 
     const spendService = new SpendService(configService);
     const walletService = new WalletService(configService);
+    console.log(" -- spendService ");
+    console.log(" -- walletService ");
+
     walletService.overwriteWallet(privateKey);
+    console.log(" -- overwriteWallet ", privateKey);
 
     const addrWalletService = walletService.getAddress();
     console.log(" -- addrWalletService ", addrWalletService);
