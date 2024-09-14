@@ -27,14 +27,25 @@ export async function send(
 
   let feeUtxos = await getUtxos(configService, walletService, address);
 
+  console.log("========feeUtxos ori+++++++");
+  for (const utxo of feeUtxos) {
+    console.log("utxo: ", utxo);
+  }
+
   feeUtxos = feeUtxos.filter((utxo) => {
     return spendService.isUnspent(utxo);
   });
 
+  console.log("========feeUtxos filtered+++++++");
+  for (const utxo of feeUtxos) {
+    console.log("utxo: ", utxo);
+  }
+
   if (feeUtxos.length === 0) {
     console.warn("Insufficient satoshis balance!");
-    // return;
+    return;
   }
+  console.log("pas feeUtxos.length === 0");
 
   const res = await getTokens(configService, spendService, token, address);
 
