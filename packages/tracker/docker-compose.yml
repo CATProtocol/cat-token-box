@@ -21,7 +21,7 @@ services:
   bitcoind:
     image: $FB_FULL_NODE_IMAGE
     restart: always
-    entrypoint: ["bitcoind", "-datadir=/data/", "-maxtipage=504576000", "-reindex"]
+    entrypoint: ["bitcoind", "-datadir=/data/", "-maxtipage=504576000"]
     command: ""
     healthcheck:
       test: ["CMD", "bitcoin-cli", "-datadir=/data/", "getblockchaininfo"]
