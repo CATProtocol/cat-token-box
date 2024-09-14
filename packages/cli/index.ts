@@ -130,6 +130,7 @@ function handleError(res: any, message: string) {
 
 app.post("/send-cat20", async (req: any, res: any) => {
   try {
+    console.log("req.body: ", req.body);
     // Get Body
     const {
       privateKey,
@@ -146,6 +147,12 @@ app.post("/send-cat20", async (req: any, res: any) => {
       utxos: UTXO[];
       feeRate: number;
     };
+
+    console.log("/send req.body: ", req.body);
+    console.log({ tokenId });
+    console.log({ amount });
+    console.log({ receiverAddress });
+    console.log({ feeRate });
 
     console.log("/send START ");
 
