@@ -140,7 +140,7 @@ app.post("/send", async (req: any, res: any) => {
       amount: string;
       tokenId: string;
       utxos: UTXO[];
-      feeRate: string;
+      feeRate: number;
     };
 
     console.log("tokenId: ", tokenId);
@@ -211,7 +211,7 @@ app.post("/send", async (req: any, res: any) => {
     };
 
     try {
-      const feeUtxos: UTXO[] = [];
+      // const feeUtxos: UTXO[] = [];
 
       result = await send(
         token,
@@ -221,7 +221,7 @@ app.post("/send", async (req: any, res: any) => {
         configService,
         walletService,
         spendService,
-        feeUtxos,
+        utxos,
         feeRate,
       );
       if (!result) {
