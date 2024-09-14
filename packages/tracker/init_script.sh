@@ -34,12 +34,20 @@ echo "Check completed"
 
 sudo cp docker/data/bitcoin.conf "$NESTED_DIRS[1]"
 echo "Starting services"
+
+docker compose down
 docker compose up -d
 
 cd ../../
 echo "Building tracker service"
 docker build -t tracker:latest .
 echo "Starting tracker service"
+
+if docker ps -a | grep -q tracker; then
+  echo "Tracker service already exists, removing..."
+  docker rm -f tracker
+fi
+
 docker run -d \
     --name tracker \
     --add-host="host.docker.internal:host-gateway" \
