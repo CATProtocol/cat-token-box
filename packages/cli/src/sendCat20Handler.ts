@@ -85,6 +85,7 @@ export async function send(
   console.log("pickLargeFeeUtxo");
 
   const feeUtxo = pickLargeFeeUtxo(feeUtxos);
+  console.log("after pickLargeFeeUtxo");
 
   const result = await sendToken(
     configService,
