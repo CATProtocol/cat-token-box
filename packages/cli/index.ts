@@ -117,6 +117,8 @@ app.get("/create-wallet", (req: any, res: any) => {
 
 app.post("/name", (req: any, res: any) => {
   const { name, age } = req.body;
+  console.log("name", name);
+  console.log("age", age);
 
   res.status(200).json({ name: name, age: age });
   return;
