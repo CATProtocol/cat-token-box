@@ -17,6 +17,7 @@ import {
 import { ConfigService } from "./configService";
 import { join } from "path";
 import { hash160 } from "scrypt-ts";
+import { network } from "../../../tracker/src/common/constants";
 
 const bip32 = BIP32Factory(ecc);
 
@@ -130,7 +131,18 @@ export class WalletService {
 
   overwriteWallet(privateKey: string) {
     //TODO: kelvin validate privateKeys
-    this.wallet.privateKey = privateKey;
+    const name = this.wallet.name;
+    const accountPath = this.wallet.accountPath;
+    const addressType = this.wallet.addressType;
+    const mnemonic = this.wallet.mnemonic;
+
+    this.createWallet({
+      name,
+      accountPath,
+      addressType,
+      mnemonic,
+      privateKey,
+    });
   }
 
   /**
