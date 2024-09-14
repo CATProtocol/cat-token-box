@@ -52,6 +52,11 @@ export async function findTokenMetadataById(
   id: string,
 ): Promise<TokenMetadata | null> {
   const tokens = getAllTokenMetadatas(config);
+  console.log("id: ", id);
+  for (const token of tokens) {
+    console.log("tokens: ", token);
+  }
+
   let token = tokens.find((token) => token.tokenId === id);
   if (token) {
     return token;
