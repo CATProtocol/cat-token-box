@@ -233,22 +233,13 @@ app.post("/send", async (req: any, res: any) => {
       res.status(500).json({ error: errMess });
       return;
     }
-    console.log("===>here====");
     console.log("result.commitTx.id", result.commitTx.id);
-    // console.log(
-    //   "result.commitTx.uncheckedSerialize()",
-    //   result.commitTx.uncheckedSerialize(),
-    // );
     console.log("result.revealTx.id", result.revealTx.id);
-    // console.log(
-    //   "result.revealTx.uncheckedSerialize()",
-    //   result.revealTx.uncheckedSerialize(),
-    // );
 
     res.status(200).json({
-      commitTxHash: result.commitTx.hash(),
+      commitTxHash: result.commitTx.id,
       commitTxHex: result.commitTx.uncheckedSerialize(),
-      revealTxHash: result.revealTx.hash(),
+      revealTxHash: result.revealTx.id,
       revealTxHex: result.revealTx.uncheckedSerialize(),
       networkFee: 0,
     });
