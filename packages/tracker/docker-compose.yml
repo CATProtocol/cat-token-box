@@ -1,3 +1,7 @@
+networks:
+  cat20_network:
+    external: true
+
 services:
   postgres:
     image: $POSTGRES_IMAGE
@@ -12,6 +16,8 @@ services:
       - "${DATABASE_PORT}:${DATABASE_PORT}"
     volumes:
       - $DATABASE_VOLUME_PATH:$DATABASE_DATA_DIR
+    networks:
+      - cat20_network
   bitcoind:
     image: $FB_FULL_NODE_IMAGE
     restart: always
@@ -42,3 +48,5 @@ services:
         labels: "env,filebeat,name"
         max-size: "1g"
         max-file: "3"
+    networks:
+      - cat20_network

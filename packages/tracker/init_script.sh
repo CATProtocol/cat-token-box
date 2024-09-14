@@ -32,10 +32,19 @@ done
 
 echo "Check completed"
 
-sudo cp docker/data/bitcoin.conf "$NESTED_DIRS[1]"
+sudo cp docker/data/bitcoin.conf "${NESTED_DIRS[1]}"
 echo "Starting services"
 
 docker compose down
+
+# Check if the network exists
+if ! docker network ls | grep -q cat20_network; then
+  echo "Creating network cat20_network"
+  docker network create cat20_network
+else
+  echo "Network cat20_network already exists"
+fi
+
 docker compose up -d
 
 cd ../../
@@ -50,9 +59,10 @@ fi
 
 docker run -d \
     --name tracker \
+    --network cat20_network \
     --add-host="host.docker.internal:host-gateway" \
     -e DATABASE_HOST="host.docker.internal" \
-    -e RPC_HOST="host.docker.internal" \
+    -e BITCOIND_RPC_HOST="bitcoind" \
     -p 3000:3000 \
     tracker:latest
 
