@@ -115,7 +115,11 @@ app.get("/create-wallet", (req: any, res: any) => {
   res.status(200).json({ message: "hello" });
 });
 
+<<<<<<< HEAD
 app.pos("/kelvin", (req: any, res: any) => {
+=======
+app.post("/kelvin", (req: any, res: any) => {
+>>>>>>> 6aed216 (update code)
   res.status(200).json({ kelvin: "kelvin" });
   return;
 });
