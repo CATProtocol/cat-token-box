@@ -233,7 +233,7 @@ app.post("/send", async (req: any, res: any) => {
       res.status(500).json({ error: errMess });
       return;
     }
-
+    console.log("===>here====");
     console.log("result.commitTx.hash()", result.commitTx.hash());
     console.log(
       "result.commitTx.uncheckedSerialize()",
