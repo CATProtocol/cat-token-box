@@ -252,6 +252,8 @@ export const rpc_listunspent = async function (
       return utxos;
     })
     .catch((e: Error) => {
+      console.log("---->err ", e);
+
       return e;
     });
 };
