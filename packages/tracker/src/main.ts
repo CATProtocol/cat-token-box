@@ -14,7 +14,9 @@ async function bootstrap() {
     .setLicense('MIT License', 'https://opensource.org/licenses/MIT')
     .setContact('CAT Protocol', 'https://catprotocol.org', '')
     .addServer(`https://tracker.catprotocol.org/api`)
-    .addServer(`http://127.0.0.1:${process.env.API_PORT || 3000}/api`)
+    .addServer(
+      `http://127.0.0.1:${process.env.CAT_PROTOCOL_API_PORT || 3000}/api`,
+    )
     .build();
   const swaggerDocument = SwaggerModule.createDocument(app, swaggerConfig);
   SwaggerModule.setup('/', app, swaggerDocument, {
@@ -30,8 +32,10 @@ async function bootstrap() {
   app.setGlobalPrefix('api');
   app.enableCors();
 
-  await app.listen(process.env.API_PORT || 3000);
-  console.log(`Application is running on: ${await app.getUrl()}`);
+  await app.listen(process.env.CAT_PROTOCOL_API_PORT || 3000);
+  console.log(
+    `Application is running on: ${await app.getUrl()}, genesis block height: ${process.env.CAT_PROTOCOL_GENESIS_BLOCK_HEIGHT}`,
+  );
 }
 
 bootstrap();

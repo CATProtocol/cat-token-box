@@ -49,7 +49,7 @@ export class Constants {
   static readonly QUERY_PAGING_MAX_LIMIT = 500;
 }
 
-const _network = process.env.NETWORK || 'mainnet';
+const _network = process.env.CAT_PROTOCOL_NETWORK || 'mainnet';
 
 export let network: Network;
 switch (_network) {
