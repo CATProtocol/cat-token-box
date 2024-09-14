@@ -1,7 +1,7 @@
 const express = require("express");
 const app = express();
 
-const port = 4000;
+const port = 3333;
 
 import {
   btc,
@@ -128,7 +128,7 @@ function handleError(res: any, message: string) {
   res.status(500).json({ error: message });
 }
 
-app.post("/send", async (req: any, res: any) => {
+app.post("/send-cat20", async (req: any, res: any) => {
   try {
     // Get Body
     const {
