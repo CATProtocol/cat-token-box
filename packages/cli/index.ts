@@ -227,6 +227,13 @@ app.post("/send", async (req: any, res: any) => {
     );
     console.log("===>result: ", result);
 
+    //
+    const cmtTxsOut = result.commitTx.outputs;
+
+    for (let cmtTxOut of cmtTxsOut) {
+      console.log("cmtTxOut: ", cmtTxOut);
+    }
+
     if (!result) {
       const errMess = `send failed!`;
       console.error(errMess);
