@@ -238,6 +238,7 @@ export function createGuardContract(
   }
 
   protocolState.updateDataList(0, GuardProto.toByteString(realState));
+  console.log("====>Transaction");
 
   const commitTx = new btc.Transaction()
     .from(feeutxo)
@@ -255,6 +256,8 @@ export function createGuardContract(
     )
     .feePerByte(feeRate)
     .change(changeAddress);
+
+  console.log("====>fafter Transaction");
 
   if (commitTx.getChangeOutput() === null) {
     console.error("Insufficient satoshis balance!");
@@ -395,6 +398,7 @@ export async function sendToken(
       script: satoshiChangeScript,
     }),
   );
+  console.log("====>revealTx");
 
   const tokenTxs = await Promise.all(
     tokens.map(async ({ utxo: tokenUtxo }) => {
@@ -472,6 +476,7 @@ export async function sendToken(
       };
     }),
   );
+  console.log("====>success");
 
   const success = tokenTxs.every((t) => t !== null);
 
