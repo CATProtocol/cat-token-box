@@ -147,7 +147,6 @@ export class WalletService {
     };
 
     this.createWallet(wallet);
-    console.log("wif: ", this.getWif());
   }
 
   /**

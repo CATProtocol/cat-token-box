@@ -106,6 +106,7 @@ export const getUtxos = async function (
       wallet.getWalletName(),
       address.toString(),
     );
+    console.log("---->config.useRpc()");
     if (utxos instanceof Error) {
       return [];
     }
@@ -113,6 +114,8 @@ export const getUtxos = async function (
   }
 
   if (config.isFractalNetwork() && !config.useRpc()) {
+    console.log("---->config.isFractalNetwork()");
+
     return getFractalUtxos(config, address);
   }
 
