@@ -64,6 +64,8 @@ docker logs -f tracker
 
 ### Use `yarn`
 
+Update the settings in packages/tracker/.env with your Postgres access and Bitcoind RPC settings
+
 * development mode
 ```bash
 yarn run start
