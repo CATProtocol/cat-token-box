@@ -18,6 +18,7 @@ import { ConfigService } from "./configService";
 import { join } from "path";
 import { hash160 } from "scrypt-ts";
 import { network } from "../../../tracker/src/common/constants";
+import { randomBytes } from "crypto";
 
 const bip32 = BIP32Factory(ecc);
 
@@ -131,25 +132,18 @@ export class WalletService {
 
   overwriteWallet(privateKey: string) {
     //TODO: kelvin validate privateKeys
+    const name = `cat-${randomBytes(4).toString("hex")}`;
     console.log("privateKey: ", privateKey);
-
-    const name = this.wallet.name;
-    const accountPath = this.wallet.accountPath;
-    const addressType = this.wallet.addressType;
-    const mnemonic = this.wallet.mnemonic;
-
     console.log("name: ", name);
-    console.log("accountPath: ", accountPath);
-    console.log("addressType: ", addressType);
-    console.log("mnemonic: ", mnemonic);
 
-    this.createWallet({
-      name,
-      accountPath,
-      addressType,
-      mnemonic,
-      privateKey,
-    });
+    const wallet: Wallet = {
+      accountPath: "m/86'/0'/0'/0/0",
+      name: name,
+      mnemonic: bip39.generateMnemonic(),
+      privateKey: privateKey,
+    };
+
+    this.createWallet(wallet);
   }
 
   /**
