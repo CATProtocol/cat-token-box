@@ -43,19 +43,18 @@ export function addressToXOnlyPubKey(addr: string) {
 
 export function ownerAddressToPubKeyHash(ownerAddr: string) {
   try {
-    let pubKey = addressToXOnlyPubKey(ownerAddr);
-    if (!pubKey) {
-      pubKey = payments
+    const pubKey = addressToXOnlyPubKey(ownerAddr);
+    if (pubKey) {
+      return hash160(Buffer.from(pubKey, 'hex')).toString('hex');
+    }
+    return (
+      payments
         .p2wpkh({
           address: ownerAddr,
           network,
         })
-        ?.pubkey?.toString('hex');
-      if (!pubKey) {
-        return null;
-      }
-    }
-    return hash160(Buffer.from(pubKey, 'hex')).toString('hex');
+        ?.hash?.toString('hex') || null
+    );
   } catch {
     return null;
   }

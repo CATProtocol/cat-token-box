@@ -125,6 +125,14 @@ export class MintCommand extends BoardcastCommand {
 
             const limit = scaledInfo.limit;
 
+            if (minter.state.data.remainingSupply < limit) {
+              console.warn(
+                `small limit of ${unScaleByDecimals(limit, token.info.decimals)} in the minter UTXO!`,
+              );
+              log(`retry to mint token [${token.info.symbol}] ...`);
+              continue;
+            }
+
             if (!minter.state.data.isPremined && scaledInfo.premine > 0n) {
               if (typeof amount === 'bigint') {
                 if (amount !== scaledInfo.premine) {
