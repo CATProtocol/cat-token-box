@@ -590,6 +590,8 @@ export async function sendToken(
 
   console.log("====>unlockGuard");
 
+  console.log("revealTx: ", revealTx);
+
   wallet.signTx(revealTx);
   console.log("====>wallet.signTx");
 

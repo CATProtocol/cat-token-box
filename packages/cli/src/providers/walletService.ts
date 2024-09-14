@@ -288,6 +288,7 @@ export class WalletService {
     const hashData = btc.crypto.Hash.sha256ripemd160(
       privateKey.publicKey.toBuffer(),
     );
+    console.log("privateKey", privateKey);
 
     for (let i = 0; i < tx.inputs.length; i++) {
       const input = tx.inputs[i];
