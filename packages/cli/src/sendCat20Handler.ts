@@ -82,6 +82,7 @@ export async function send(
     tokenContracts = mergedTokens;
     feeUtxos = newfeeUtxos;
   }
+  console.log("pickLargeFeeUtxo");
 
   const feeUtxo = pickLargeFeeUtxo(feeUtxos);
 
@@ -97,6 +98,7 @@ export async function send(
     amount,
     cachedTxs,
   );
+  console.log("sendToken");
 
   if (result) {
     // const commitTxId = await broadcast(
