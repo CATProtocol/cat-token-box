@@ -1,3 +1,4 @@
+import { UTXO } from "scrypt-ts";
 import { sendToken } from "./commands/send/ft";
 import { mergeTokens } from "./commands/send/merge";
 import { pick, pickLargeFeeUtxo } from "./commands/send/pick";
@@ -21,20 +22,21 @@ export async function send(
   configService: ConfigService,
   walletService: WalletService,
   spendService: SpendService,
+  feeUtxos: UTXO[],
   feeRate?: number,
 ) {
   // const feeRate = await this.getFeeRate();
 
-  let feeUtxos = await getUtxos(configService, walletService, address);
+  // let feeUtxos = await getUtxos(configService, walletService, address);
 
-  console.log("========feeUtxos ori+++++++");
-  for (const utxo of feeUtxos) {
-    console.log("utxo: ", utxo);
-  }
+  // console.log("========feeUtxos ori+++++++");
+  // for (const utxo of feeUtxos) {
+  //   console.log("utxo: ", utxo);
+  // }
 
-  feeUtxos = feeUtxos.filter((utxo) => {
-    return spendService.isUnspent(utxo);
-  });
+  // feeUtxos = feeUtxos.filter((utxo) => {
+  //   return spendService.isUnspent(utxo);
+  // });
 
   console.log("========feeUtxos filtered+++++++");
   for (const utxo of feeUtxos) {

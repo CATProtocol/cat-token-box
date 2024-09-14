@@ -14,6 +14,7 @@ import { ConfigService, SpendService, WalletService } from "./src/providers";
 import { findTokenMetadataById, scaleConfig } from "./src/token";
 import Decimal from "decimal.js";
 import { send } from "./src/processor";
+import { UTXO } from "scrypt-ts";
 
 const walletHD = {
   accountPath: "m/86'/0'/0'/0/0",
@@ -114,6 +115,11 @@ app.get("/create-wallet", (req: any, res: any) => {
   res.status(200).json({ message: "hello" });
 });
 
+app.pos("/kelvin", (req: any, res: any) => {
+  res.status(200).json({ kelvin: "kelvin" });
+  return;
+});
+
 app.get("/send", async (req: any, res: any) => {
   try {
     // Get Body
@@ -187,6 +193,8 @@ app.get("/send", async (req: any, res: any) => {
     };
 
     try {
+      const feeUtxos: UTXO[] = [];
+
       result = await send(
         token,
         receiver,
@@ -195,6 +203,7 @@ app.get("/send", async (req: any, res: any) => {
         configService,
         walletService,
         spendService,
+        feeUtxos,
         feeRate,
       );
       if (!result) {
