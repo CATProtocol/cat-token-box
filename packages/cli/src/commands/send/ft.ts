@@ -546,6 +546,8 @@ export async function sendToken(
     satoshis: int2ByteString(BigInt(satoshiChangeAmount), 8n),
   };
 
+  console.log("====>ChangeInfo");
+
   const verify = config.getVerify();
 
   for (let i = 0; i < tokens.length; i++) {
@@ -585,6 +587,8 @@ export async function sendToken(
   if (!res) {
     return null;
   }
+
+  console.log("====>unlockGuard");
 
   wallet.signTx(revealTx);
 
@@ -654,6 +658,7 @@ const calcVsize = async (
       Buffer.from(guardTapScript, "hex"),
     ],
   );
+  console.log("====>calcVsize");
 
   const guardInputIndex = tokens.length;
 
@@ -677,6 +682,8 @@ const calcVsize = async (
     );
   }
 
+  console.log("====>unlockToken");
+
   await unlockGuard(
     guardContract,
     guardInfo,
@@ -689,10 +696,15 @@ const calcVsize = async (
     txCtxs[guardInputIndex],
     false,
   );
+  console.log("====>unlockGuard");
 
   wallet.signTx(revealTx);
+  console.log("====>signTx");
+
   const vsize = revealTx.vsize;
   resetTx(revealTx);
+  console.log("====>resetTx");
+
   return vsize;
 };
 
