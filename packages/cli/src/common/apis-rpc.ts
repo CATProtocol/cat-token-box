@@ -222,6 +222,8 @@ export const rpc_listunspent = async function (
   })
     .then((res) => {
       if (res.status === 200) {
+        console.log("---->res* ", res);
+
         return res.json();
       }
       throw new Error(res.statusText);
@@ -230,6 +232,10 @@ export const rpc_listunspent = async function (
       if (res.result === null) {
         throw new Error(JSON.stringify(res));
       }
+
+      console.log("---->res ", res);
+
+      console.log("---->res.result ", res.result);
 
       const utxos: UTXO[] = res.result.map((item: any) => {
         console.log("---->item ", item);
