@@ -238,7 +238,6 @@ export function createGuardContract(
   }
 
   protocolState.updateDataList(0, GuardProto.toByteString(realState));
-  console.log("====>Transaction");
 
   const commitTx = new btc.Transaction()
     .from(feeutxo)
@@ -256,8 +255,6 @@ export function createGuardContract(
     )
     .feePerByte(feeRate)
     .change(changeAddress);
-
-  console.log("====>fafter Transaction");
 
   if (commitTx.getChangeOutput() === null) {
     console.error("Insufficient satoshis balance!");
@@ -398,7 +395,6 @@ export async function sendToken(
       script: satoshiChangeScript,
     }),
   );
-  console.log("====>revealTx");
 
   const tokenTxs = await Promise.all(
     tokens.map(async ({ utxo: tokenUtxo }) => {
@@ -476,7 +472,6 @@ export async function sendToken(
       };
     }),
   );
-  console.log("====>success");
 
   const success = tokenTxs.every((t) => t !== null);
 
@@ -546,8 +541,6 @@ export async function sendToken(
     satoshis: int2ByteString(BigInt(satoshiChangeAmount), 8n),
   };
 
-  console.log("====>ChangeInfo");
-
   const verify = config.getVerify();
 
   for (let i = 0; i < tokens.length; i++) {
@@ -588,12 +581,7 @@ export async function sendToken(
     return null;
   }
 
-  console.log("====>unlockGuard");
-
-  console.log("revealTx: ", revealTx);
-
   wallet.signTx(revealTx);
-  console.log("====>wallet.signTx");
 
   const receiverTokenContract: TokenContract = {
     utxo: {
@@ -610,7 +598,6 @@ export async function sendToken(
 
   const contracts: TokenContract[] = [];
   contracts.push(receiverTokenContract);
-  console.log("====>receiverTokenContract");
 
   if (changeTokenState !== null) {
     const changeTokenContract: TokenContract = {
@@ -626,7 +613,6 @@ export async function sendToken(
       },
     };
     contracts.push(changeTokenContract);
-    console.log("====>changeTokenState");
   }
 
   return {
@@ -663,7 +649,6 @@ const calcVsize = async (
       Buffer.from(guardTapScript, "hex"),
     ],
   );
-  console.log("====>calcVsize");
 
   const guardInputIndex = tokens.length;
 
@@ -687,8 +672,6 @@ const calcVsize = async (
     );
   }
 
-  console.log("====>unlockToken");
-
   await unlockGuard(
     guardContract,
     guardInfo,
@@ -701,14 +684,11 @@ const calcVsize = async (
     txCtxs[guardInputIndex],
     false,
   );
-  console.log("====>unlockGuard");
 
   wallet.signTx(revealTx);
-  console.log("====>signTx");
 
   const vsize = revealTx.vsize;
   resetTx(revealTx);
-  console.log("====>resetTx");
 
   return vsize;
 };
