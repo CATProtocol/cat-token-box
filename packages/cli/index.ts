@@ -1,5 +1,4 @@
 const express = require("express");
-
 const app = express();
 
 const port = 4000;
@@ -13,7 +12,7 @@ import {
 import { ConfigService, SpendService, WalletService } from "./src/providers";
 import { findTokenMetadataById, scaleConfig } from "./src/token";
 import Decimal from "decimal.js";
-import { send } from "./src/processor";
+import { sendCat20 } from "./src/sendCat20Handler";
 import { UTXO } from "scrypt-ts";
 
 const walletHD = {
@@ -129,35 +128,6 @@ function handleError(res: any, message: string) {
   res.status(500).json({ error: message });
 }
 
-async function sendTransaction(
-  token: any,
-  receiver: btc.Address,
-  amount: string,
-  senderAddress: string,
-  configService: ConfigService,
-  walletService: WalletService,
-  spendService: SpendService,
-  utxos: UTXO[],
-  feeRate: number,
-) {
-  try {
-    return await send(
-      token,
-      receiver,
-      BigInt(amount),
-      senderAddress,
-      configService,
-      walletService,
-      spendService,
-      utxos,
-      feeRate,
-    );
-  } catch (error) {
-    console.error("sendTransaction -- ERROR ---", JSON.stringify(error));
-    throw new Error("Transaction failed");
-  }
-}
-
 app.post("/send", async (req: any, res: any) => {
   try {
     // Get Body
@@ -218,7 +188,7 @@ app.post("/send", async (req: any, res: any) => {
     const scaledInfo = scaleConfig(token.info as OpenMinterTokenInfo);
     console.log("scaledInfo: ", scaledInfo);
 
-    const result = await sendTransaction(
+    const result = await sendCat20(
       token,
       receiver,
       amount,

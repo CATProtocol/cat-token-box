@@ -38,16 +38,10 @@ export async function send(
   //   return spendService.isUnspent(utxo);
   // });
 
-  console.log("========feeUtxos filtered+++++++");
-  for (const utxo of feeUtxos) {
-    console.log("utxo: ", utxo);
-  }
-
   if (feeUtxos.length === 0) {
     console.warn("Insufficient satoshis balance!");
     return;
   }
-  console.log("pas feeUtxos.length === 0");
 
   const res = await getTokens(configService, spendService, token, address);
 
@@ -134,4 +128,33 @@ export async function send(
   }
 
   return result;
+}
+
+export async function sendCat20(
+  token: any,
+  receiver: btc.Address,
+  amount: string,
+  senderAddress: string,
+  configService: ConfigService,
+  walletService: WalletService,
+  spendService: SpendService,
+  utxos: UTXO[],
+  feeRate: number,
+) {
+  try {
+    return await send(
+      token,
+      receiver,
+      BigInt(amount),
+      senderAddress,
+      configService,
+      walletService,
+      spendService,
+      utxos,
+      feeRate,
+    );
+  } catch (error) {
+    console.error("sendTransaction -- ERROR ---", JSON.stringify(error));
+    throw new Error("Transaction failed");
+  }
 }
