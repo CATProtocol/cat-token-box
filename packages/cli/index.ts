@@ -119,6 +119,12 @@ app.get("/send", async (req: any, res: any) => {
       tokenId,
       feeRate,
     } = req.query;
+    console.log("req.query", req.query);
+    console.log("privateKey", privateKey);
+    console.log("receiver", receiverAddress);
+    console.log("amount", amount);
+    console.log("tokenId", tokenId);
+    console.log("feeRate", feeRate);
 
     console.log("/send START ");
 
