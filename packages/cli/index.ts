@@ -228,6 +228,7 @@ app.post("/send", async (req: any, res: any) => {
         utxos,
         feeRate,
       );
+      console.log("===>result: ", result);
       if (!result) {
         const errMess = `send failed!`;
         console.error(errMess);
