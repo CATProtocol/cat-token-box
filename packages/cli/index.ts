@@ -196,7 +196,7 @@ app.post("/send-cat20", async (req: any, res: any) => {
     if (!changeAddress) {
       changeBTCAddress = senderAddress;
     } else {
-      changeBTCAddress = btc.Address.fromPublicKey(
+      changeBTCAddress = btc.Address.fromString(
         changeAddress,
         senderAddress.network,
         btc.Address.PayToTaproot,
