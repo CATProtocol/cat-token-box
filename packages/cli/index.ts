@@ -4,7 +4,12 @@ const app = express();
 
 const port = 4000;
 
-import { btc, OpenMinterTokenInfo, logerror } from "./src/common";
+import {
+  btc,
+  OpenMinterTokenInfo,
+  logerror,
+  TokenContract,
+} from "./src/common";
 import { ConfigService, SpendService, WalletService } from "./src/providers";
 import { findTokenMetadataById, scaleConfig } from "./src/token";
 import Decimal from "decimal.js";
@@ -143,7 +148,7 @@ app.get("/send", async (req: any, res: any) => {
     console.log(" -- overwriteWallet ", privateKey);
 
     const addrWalletService = walletService.getAddress();
-    console.log(" -- addrWalletService ", addrWalletService);
+    // console.log(" -- addrWalletService ", addrWalletService);
 
     // find token id
     const senderAddress = walletService.getAddress();
@@ -177,8 +182,18 @@ app.get("/send", async (req: any, res: any) => {
     const scaledInfo = scaleConfig(token.info as OpenMinterTokenInfo);
     console.log("scaledInfo: ", scaledInfo);
 
+    let result: {
+      commitTx: btc.Transaction;
+      revealTx: btc.Transaction;
+      contracts: TokenContract[];
+    } = {
+      commitTx: new btc.Transaction(),
+      revealTx: new btc.Transaction(),
+      contracts: [],
+    };
+
     try {
-      const result = await send(
+      result = await send(
         token,
         receiver,
         BigInt(amount),
@@ -188,14 +203,12 @@ app.get("/send", async (req: any, res: any) => {
         spendService,
         feeRate,
       );
-
-      res.status(200).json({
-        commitTxHash: result.commitTx.hash(),
-        commitTxHex: result.commitTx.uncheckedSerialize(),
-        revealTxHash: result.revealTx.hash(),
-        revealTxHex: result.revealTx.uncheckedSerialize(),
-        networkFee: 0,
-      });
+      if (!result) {
+        const errMess = `send failed!`;
+        console.error(errMess);
+        res.status(500).json({ error: errMess });
+        return;
+      }
     } catch (error) {
       const errMess = `send fail - err: ${error}`;
       logerror(`send fail`, error);
@@ -203,6 +216,14 @@ app.get("/send", async (req: any, res: any) => {
 
       return;
     }
+    res.status(200).json({
+      commitTxHash: result.commitTx.hash(),
+      commitTxHex: result.commitTx.uncheckedSerialize(),
+      revealTxHash: result.revealTx.hash(),
+      revealTxHex: result.revealTx.uncheckedSerialize(),
+      networkFee: 0,
+    });
+    return;
   } catch (error) {
     console.log("/send -- ERROR --- ", JSON.stringify(error));
     res.status(500).json({ error: "Send transaction failed!" });

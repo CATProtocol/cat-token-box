@@ -33,7 +33,7 @@ export async function send(
 
   if (feeUtxos.length === 0) {
     console.warn("Insufficient satoshis balance!");
-    return;
+    // return;
   }
 
   const res = await getTokens(configService, spendService, token, address);
