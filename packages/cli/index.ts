@@ -124,6 +124,40 @@ app.post("/name", (req: any, res: any) => {
   return;
 });
 
+function handleError(res: any, message: string) {
+  console.error(message);
+  res.status(500).json({ error: message });
+}
+
+async function sendTransaction(
+  token: any,
+  receiver: btc.Address,
+  amount: string,
+  senderAddress: string,
+  configService: ConfigService,
+  walletService: WalletService,
+  spendService: SpendService,
+  utxos: UTXO[],
+  feeRate: number,
+) {
+  try {
+    return await send(
+      token,
+      receiver,
+      BigInt(amount),
+      senderAddress,
+      configService,
+      walletService,
+      spendService,
+      utxos,
+      feeRate,
+    );
+  } catch (error) {
+    console.error("sendTransaction -- ERROR ---", JSON.stringify(error));
+    throw new Error("Transaction failed");
+  }
+}
+
 app.post("/send", async (req: any, res: any) => {
   try {
     // Get Body
@@ -143,16 +177,6 @@ app.post("/send", async (req: any, res: any) => {
       feeRate: number;
     };
 
-    console.log("privateKey: ", privateKey);
-    console.log("receiver: ", receiverAddress);
-    console.log("amount: ", amount);
-
-    console.log("tokenId: ", tokenId);
-    for (let utxo of utxos) {
-      console.log("utxo: ", utxo);
-    }
-    console.log("feeRate: ", feeRate);
-
     console.log("/send START ");
 
     let configService = new ConfigService();
@@ -163,24 +187,17 @@ app.post("/send", async (req: any, res: any) => {
 
     const spendService = new SpendService(configService);
     const walletService = new WalletService(configService);
-    console.log(" -- spendService ");
-    console.log(" -- walletService ");
 
     walletService.overwriteWallet(privateKey);
-    console.log(" -- overwriteWallet ", privateKey);
-
-    const addrWalletService = walletService.getAddress();
-    // console.log(" -- addrWalletService ", addrWalletService);
+    console.log(" -- overwriteWallet ");
+    console.log("New wallet address: ", walletService.getAddress());
 
     // find token id
     const senderAddress = walletService.getAddress();
     const token = await findTokenMetadataById(configService, tokenId);
 
     if (!token) {
-      const errMess = `No token metadata found for tokenId: ${tokenId}`;
-      console.error(errMess);
-      res.status(500).json({ error: errMess });
-      return;
+      return handleError(res, `Token not found: ${tokenId}`);
     }
 
     let receiver: btc.Address;
@@ -189,35 +206,22 @@ app.post("/send", async (req: any, res: any) => {
       receiver = btc.Address.fromString(receiverAddress);
 
       if (receiver.type !== "taproot") {
-        const errMess = `Invalid address type: ${receiver.type}`;
-        console.error(errMess);
-        res.status(500).json({ error: errMess });
-        return;
+        return handleError(res, `Invalid address type: ${receiver.type}`);
       }
     } catch (error) {
-      const errMess = `Invalid receiver address: "${receiverAddress}" - err: ${error}`;
-      console.error(errMess);
-      res.status(500).json({ error: errMess });
-      return;
+      return handleError(
+        res,
+        `Invalid receiver address: "${receiverAddress}" - err: ${error}`,
+      );
     }
 
     const scaledInfo = scaleConfig(token.info as OpenMinterTokenInfo);
     console.log("scaledInfo: ", scaledInfo);
 
-    let result: {
-      commitTx: btc.Transaction;
-      revealTx: btc.Transaction;
-      contracts: TokenContract[];
-    } = {
-      commitTx: new btc.Transaction(),
-      revealTx: new btc.Transaction(),
-      contracts: [],
-    };
-
-    result = await send(
+    const result = await sendTransaction(
       token,
       receiver,
-      BigInt(amount),
+      amount,
       senderAddress,
       configService,
       walletService,
@@ -225,38 +229,24 @@ app.post("/send", async (req: any, res: any) => {
       utxos,
       feeRate,
     );
-    console.log("===>result: ", result);
-
-    //
-    const cmtTxsIn = result.commitTx.inputs;
-
-    console.log("cmtTxIn 0: ", cmtTxsIn[0].output._satoshisBN.words);
-    // console.log("cmtTxIn 1: ", cmtTxsIn[1].output._satoshisBN.words);
-    //
-    const cmtTxsOut = result.commitTx.outputs;
-
-    console.log("cmtTxOut 0: ", cmtTxsOut[0]);
-    console.log("cmtTxOut 1: ", cmtTxsOut[1]);
-    console.log("input Amt: ", result.commitTx.getFee());
-    console.log("output Amt: ", result.revealTx.getFee());
 
     if (!result) {
-      const errMess = `send failed!`;
-      console.error(errMess);
-      res.status(500).json({ error: errMess });
-      return;
+      return handleError(res, `send failed!`);
     }
+
+    const networkFee = result.commitTx.getFee() + result.revealTx.getFee();
+
     console.log("result.commitTx.id", result.commitTx.id);
     console.log("result.revealTx.id", result.revealTx.id);
+    console.log("Total network fee: ", networkFee);
 
     res.status(200).json({
       commitTxHash: result.commitTx.id,
       commitTxHex: result.commitTx.uncheckedSerialize(),
       revealTxHash: result.revealTx.id,
       revealTxHex: result.revealTx.uncheckedSerialize(),
-      networkFee: 0,
+      networkFee: networkFee,
     });
-    return;
   } catch (error) {
     console.log("/send -- ERROR --- ", JSON.stringify(error));
     res.status(500).json({ error: "Send transaction failed!" });
