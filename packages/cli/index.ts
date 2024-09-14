@@ -214,34 +214,26 @@ app.post("/send", async (req: any, res: any) => {
       contracts: [],
     };
 
-    try {
-      // const feeUtxos: UTXO[] = [];
+    result = await send(
+      token,
+      receiver,
+      BigInt(amount),
+      senderAddress,
+      configService,
+      walletService,
+      spendService,
+      utxos,
+      feeRate,
+    );
+    console.log("===>result: ", result);
 
-      result = await send(
-        token,
-        receiver,
-        BigInt(amount),
-        senderAddress,
-        configService,
-        walletService,
-        spendService,
-        utxos,
-        feeRate,
-      );
-      console.log("===>result: ", result);
-      if (!result) {
-        const errMess = `send failed!`;
-        console.error(errMess);
-        res.status(500).json({ error: errMess });
-        return;
-      }
-    } catch (error) {
-      const errMess = `send fail - err: ${error}`;
-      logerror(`send fail`, error);
+    if (!result) {
+      const errMess = `send failed!`;
+      console.error(errMess);
       res.status(500).json({ error: errMess });
-
       return;
     }
+
     res.status(200).json({
       commitTxHash: result.commitTx.hash(),
       commitTxHex: result.commitTx.uncheckedSerialize(),

@@ -104,11 +104,11 @@ export async function send(
   );
 
   if (result) {
-    const commitTxId = await broadcast(
-      configService,
-      walletService,
-      result.commitTx.uncheckedSerialize(),
-    );
+    // const commitTxId = await broadcast(
+    //   configService,
+    //   walletService,
+    //   result.commitTx.uncheckedSerialize(),
+    // );
 
     // if (commitTxId instanceof Error) {
     //   throw commitTxId;
