@@ -126,8 +126,11 @@ export class WalletService {
 
   getPrivateKey(): btc.PrivateKey {
     const network = btc.Networks.mainnet;
+    const mnemonic = this.getMnemonic();
     // new btc.PrivateKey(wif, network)
-    return new btc.PrivateKey(this.wallet.privateKey, network);
+    // return new btc.PrivateKey(this.wallet.privateKey, network);
+    const x = derivePrivateKey(mnemonic, this.getAccountPath(), network);
+    return x;
   }
 
   overwriteWallet(privateKey: string) {
@@ -144,6 +147,7 @@ export class WalletService {
     };
 
     this.createWallet(wallet);
+    console.log("wif: ", this.getWif());
   }
 
   /**
@@ -323,39 +327,41 @@ export class WalletService {
   }
 }
 
-// function derivePrivateKey(
-//   mnemonic: string,
-//   path: string,
-//   network: btc.Network,
-// ): btc.PrivateKey {
-//   const seed = bip39.mnemonicToSeedSync(mnemonic);
-//   const mainnet = {
-//     messagePrefix: '\x18Bitcoin Signed Message:\n',
-//     bech32: 'bc',
-//     bip32: {
-//       public: 0x0488b21e,
-//       private: 0x0488ade4,
-//     },
-//     pubKeyHash: 0x00,
-//     scriptHash: 0x05,
-//     wif: 0x80,
-//   };
-//   const testnet = {
-//     messagePrefix: '\x18Bitcoin Signed Message:\n',
-//     bech32: 'tb',
-//     bip32: {
-//       public: 0x043587cf,
-//       private: 0x04358394,
-//     },
-//     pubKeyHash: 0x6f,
-//     scriptHash: 0xc4,
-//     wif: 0xef,
-//   };
+function derivePrivateKey(
+  mnemonic: string,
+  path: string,
+  network: btc.Network,
+): btc.PrivateKey {
+  const seed = bip39.mnemonicToSeedSync(mnemonic);
+  const mainnet = {
+    messagePrefix: "\x18Bitcoin Signed Message:\n",
+    bech32: "bc",
+    bip32: {
+      public: 0x0488b21e,
+      private: 0x0488ade4,
+    },
+    pubKeyHash: 0x00,
+    scriptHash: 0x05,
+    wif: 0x80,
+  };
+  const testnet = {
+    messagePrefix: "\x18Bitcoin Signed Message:\n",
+    bech32: "tb",
+    bip32: {
+      public: 0x043587cf,
+      private: 0x04358394,
+    },
+    pubKeyHash: 0x6f,
+    scriptHash: 0xc4,
+    wif: 0xef,
+  };
 
-//   const root = bip32.fromSeed(
-//     seed,
-//     network === btc.Networks.mainnet ? mainnet : testnet,
-//   );
-//   const wif = root.derivePath(path).toWIF();
-//   return new btc.PrivateKey(wif, network);
-// }
+  const root = bip32.fromSeed(
+    seed,
+    network === btc.Networks.mainnet ? mainnet : testnet,
+  );
+  const wif = root.derivePath(path).toWIF();
+  console.log("--> pivKey wif: ", wif);
+
+  return new btc.PrivateKey(wif, network);
+}
