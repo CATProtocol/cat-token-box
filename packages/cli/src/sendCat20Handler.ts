@@ -98,29 +98,29 @@ export async function send(
   );
 
   if (result) {
-    const commitTxId = await broadcast(
-      configService,
-      walletService,
-      result.commitTx.uncheckedSerialize(),
-    );
+    // const commitTxId = await broadcast(
+    //   configService,
+    //   walletService,
+    //   result.commitTx.uncheckedSerialize(),
+    // );
 
-    if (commitTxId instanceof Error) {
-      throw commitTxId;
-    }
+    // if (commitTxId instanceof Error) {
+    //   throw commitTxId;
+    // }
 
-    spendService.updateSpends(result.commitTx);
+    // spendService.updateSpends(result.commitTx);
 
-    const revealTxId = await broadcast(
-      configService,
-      walletService,
-      result.revealTx.uncheckedSerialize(),
-    );
+    // const revealTxId = await broadcast(
+    //   configService,
+    //   walletService,
+    //   result.revealTx.uncheckedSerialize(),
+    // );
 
-    if (revealTxId instanceof Error) {
-      throw revealTxId;
-    }
+    // if (revealTxId instanceof Error) {
+    //   throw revealTxId;
+    // }
 
-    spendService.updateSpends(result.revealTx);
+    // spendService.updateSpends(result.revealTx);
 
     console.log(
       `Sending ${unScaleByDecimals(amount, token.info.decimals)} ${token.info.symbol} tokens to ${receiver} \nin txid: ${result.revealTx.id}`,

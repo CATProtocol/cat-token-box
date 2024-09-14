@@ -14,6 +14,8 @@ import { findTokenMetadataById, scaleConfig } from "./src/token";
 import Decimal from "decimal.js";
 import { sendCat20 } from "./src/sendCat20Handler";
 import { UTXO } from "scrypt-ts";
+import { network } from "../tracker/src/common/constants";
+import { Address } from "scrypt-ts";
 
 const walletHD = {
   accountPath: "m/86'/0'/0'/0/0",
@@ -131,13 +133,14 @@ function handleError(res: any, message: string) {
 app.post("/send-cat20", async (req: any, res: any) => {
   try {
     // Get Body
-    const {
+    let {
       privateKey,
       receiver: receiverAddress,
       amount,
       tokenId,
       utxos,
       feeRate,
+      changeAddress,
     } = req.body as {
       privateKey: string;
       receiver: string;
@@ -145,6 +148,7 @@ app.post("/send-cat20", async (req: any, res: any) => {
       tokenId: string;
       utxos: UTXO[];
       feeRate: number;
+      changeAddress: string;
     };
 
     console.log("/send START ");
@@ -188,11 +192,23 @@ app.post("/send-cat20", async (req: any, res: any) => {
     const scaledInfo = scaleConfig(token.info as OpenMinterTokenInfo); //TODO: kelvin consider to remove
     console.log("scaledInfo: ", scaledInfo);
 
+    let changeBTCAddress;
+    console.log("changeAddress: ", changeAddress);
+    if (!changeAddress) {
+      changeBTCAddress = senderAddress;
+    } else {
+      changeBTCAddress = Address.fromPubKey(
+        changeAddress,
+        senderAddress.network,
+        btc.Address.PayToTaproot,
+      );
+    }
+
     const result = await sendCat20(
       token,
       receiver,
       amount,
-      senderAddress,
+      changeBTCAddress,
       configService,
       walletService,
       spendService,
