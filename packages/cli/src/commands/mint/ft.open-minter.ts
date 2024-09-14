@@ -32,6 +32,7 @@ import {
     getTxCtx,
     ChangeInfo,
     int32,
+    OpenMinterV2,
 } from '@cat-protocol/cat-smartcontracts';
 import { ConfigService, SpendService, WalletService } from 'src/providers';
 import { scaleConfig } from 'src/token';
@@ -57,7 +58,7 @@ const getPremineAddress = async (config: ConfigService, wallet: WalletService, u
 
 const calcVsize = async (
     wallet: WalletService,
-    minter: OpenMinter,
+    minter: OpenMinter | OpenMinterV2,
     newState: ProtocolState,
     tokenMint: CAT20State,
     splitAmountList: Array<bigint>,
@@ -165,6 +166,7 @@ export async function openMint(
     newMinter: number,  /* number of new minter utxo */
     minterContract: OpenMinterContract,
     mintAmount: bigint,
+    openMinterVersin: number = 2,
 ): Promise<string | Error> {
     const { utxo: minterUtxo, state: { protocolState, data: preState } } = minterContract;
 
@@ -214,7 +216,7 @@ export async function openMint(
 
 
     const { tapScript: minterTapScript, cblock: cblockToken, contract: minter }
-        = getOpenMinterContractP2TR(genesisId, scaledInfo.max, scaledInfo.premine, scaledInfo.limit, premineAddress);
+        = getOpenMinterContractP2TR(genesisId, scaledInfo.max, scaledInfo.premine, scaledInfo.limit, premineAddress, openMinterVersin);
 
     const changeScript = btc.Script.fromAddress(address);
 

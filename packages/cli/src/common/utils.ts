@@ -7,6 +7,7 @@ import {
   int32,
   CAT20,
   OpenMinter,
+  OpenMinterV2,
 } from '@cat-protocol/cat-smartcontracts';
 
 import { btc } from './btc';
@@ -163,8 +164,12 @@ export function getOpenMinterContract(
   premine: int32,
   limit: int32,
   premineAddress: ByteString,
+  version: number = 2,
 ) {
-  return new OpenMinter(genesisId, max, premine, limit, premineAddress);
+  if (version === 1) {
+    return new OpenMinter(genesisId, max, premine, limit, premineAddress);
+  }
+  return new OpenMinterV2(genesisId, max, premine, limit, premineAddress);
 }
 
 export function getOpenMinterContractP2TR(
@@ -173,9 +178,17 @@ export function getOpenMinterContractP2TR(
   premine: int32,
   limit: int32,
   premineAddress: ByteString,
+  version: number = 2,
 ) {
   return contract2P2TR(
-    getOpenMinterContract(genesisId, max, premine, limit, premineAddress),
+    getOpenMinterContract(
+      genesisId,
+      max,
+      premine,
+      limit,
+      premineAddress,
+      version,
+    ),
   );
 }
 

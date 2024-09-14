@@ -12,6 +12,7 @@ import {
   getTokens,
   btc,
   TokenMetadata,
+  getOpenMinterVersion,
 } from 'src/common';
 import { openMint } from './ft.open-minter';
 import { ConfigService, SpendService, WalletService } from 'src/providers';
@@ -161,6 +162,7 @@ export class MintCommand extends BoardcastCommand {
               2,
               minter,
               amount,
+              getOpenMinterVersion(token.info.minterMd5),
             );
 
             if (mintTxIdOrErr instanceof Error) {
