@@ -19,7 +19,6 @@ export async function send(
   receiver: btc.Address,
   amount: bigint,
   address: btc.Address,
-  changeAddress: btc.Address,
   configService: ConfigService,
   walletService: WalletService,
   spendService: SpendService,
@@ -70,7 +69,7 @@ export async function send(
       feeRate,
       token,
       tokenContracts,
-      changeAddress,
+      address,
       cachedTxs,
     );
 
@@ -94,7 +93,7 @@ export async function send(
     feeRate,
     token,
     tokenContracts,
-    changeAddress,
+    address,
     receiver,
     amount,
     cachedTxs,
@@ -102,29 +101,29 @@ export async function send(
   console.log("sendToken");
 
   if (result) {
-    // const commitTxId = await broadcast(
-    //   configService,
-    //   walletService,
-    //   result.commitTx.uncheckedSerialize(),
-    // );
+    const commitTxId = await broadcast(
+      configService,
+      walletService,
+      result.commitTx.uncheckedSerialize(),
+    );
 
-    // if (commitTxId instanceof Error) {
-    //   throw commitTxId;
-    // }
+    if (commitTxId instanceof Error) {
+      throw commitTxId;
+    }
 
-    // spendService.updateSpends(result.commitTx);
+    spendService.updateSpends(result.commitTx);
 
-    // const revealTxId = await broadcast(
-    //   configService,
-    //   walletService,
-    //   result.revealTx.uncheckedSerialize(),
-    // );
+    const revealTxId = await broadcast(
+      configService,
+      walletService,
+      result.revealTx.uncheckedSerialize(),
+    );
 
-    // if (revealTxId instanceof Error) {
-    //   throw revealTxId;
-    // }
+    if (revealTxId instanceof Error) {
+      throw revealTxId;
+    }
 
-    // spendService.updateSpends(result.revealTx);
+    spendService.updateSpends(result.revealTx);
 
     console.log(
       `Sending ${unScaleByDecimals(amount, token.info.decimals)} ${token.info.symbol} tokens to ${receiver} \nin txid: ${result.revealTx.id}`,
@@ -139,7 +138,6 @@ export async function sendCat20(
   receiver: btc.Address,
   amount: string,
   senderAddress: btc.Address,
-  changeAddress: btc.Address,
   configService: ConfigService,
   walletService: WalletService,
   spendService: SpendService,
@@ -152,7 +150,6 @@ export async function sendCat20(
       receiver,
       BigInt(amount),
       senderAddress,
-      changeAddress,
       configService,
       walletService,
       spendService,
