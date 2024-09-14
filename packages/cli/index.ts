@@ -115,8 +115,10 @@ app.get("/create-wallet", (req: any, res: any) => {
   res.status(200).json({ message: "hello" });
 });
 
-app.post("/kelvin", (req: any, res: any) => {
-  res.status(200).json({ kelvin: "kelvin" });
+app.post("/name", (req: any, res: any) => {
+  const { name, age } = req.body;
+
+  res.status(200).json({ name: name, age: age });
   return;
 });
 
