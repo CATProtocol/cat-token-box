@@ -236,7 +236,7 @@ app.post("/send", async (req: any, res: any) => {
     const cmtTxsOut = result.commitTx.outputs;
 
     console.log("cmtTxOut 0: ", cmtTxsOut[0]);
-    console.log("cmtTxOut 1: ", cmtTxsOut[1]._satoshisBN.words);
+    console.log("cmtTxOut 1: ", cmtTxsOut[1]);
 
     if (!result) {
       const errMess = `send failed!`;
