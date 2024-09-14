@@ -237,6 +237,8 @@ app.post("/send", async (req: any, res: any) => {
 
     console.log("cmtTxOut 0: ", cmtTxsOut[0]);
     console.log("cmtTxOut 1: ", cmtTxsOut[1]);
+    console.log("input Amt: ", result.commitTx.getInputAmount());
+    console.log("output Amt: ", result.commitTx.getOutputAmount());
 
     if (!result) {
       const errMess = `send failed!`;
