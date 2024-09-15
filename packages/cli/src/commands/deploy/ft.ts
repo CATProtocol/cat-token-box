@@ -25,6 +25,8 @@ import {
 } from '@cat-protocol/cat-smartcontracts';
 import { ConfigService, WalletService } from 'src/providers';
 import { scaleConfig } from 'src/token';
+import { OpenMinterV2State } from '@cat-protocol/cat-smartcontracts';
+import { OpenMinterV2Proto } from '@cat-protocol/cat-smartcontracts';
 
 function getMinter(
   wallet: WalletService,
@@ -48,15 +50,19 @@ export function getMinterInitialTxState(
   tokenInfo: TokenInfo,
 ): {
   protocolState: ProtocolState;
-  data: OpenMinterState;
+  data: OpenMinterV2State;
 } {
   const protocolState = ProtocolState.getEmptyState();
   const scaledTokenInfo = scaleConfig(tokenInfo as OpenMinterTokenInfo);
   const maxCount = scaledTokenInfo.max / scaledTokenInfo.limit;
   const premineCount = scaledTokenInfo.premine / scaledTokenInfo.limit;
   const remainingSupply = maxCount - premineCount;
-  const minterState = OpenMinterProto.create(tokenP2TR, false, remainingSupply);
-  const outputState = OpenMinterProto.toByteString(minterState);
+  const minterState = OpenMinterV2Proto.create(
+    tokenP2TR,
+    false,
+    remainingSupply,
+  );
+  const outputState = OpenMinterV2Proto.toByteString(minterState);
   protocolState.updateDataList(0, outputState);
   return {
     protocolState,
@@ -222,8 +228,9 @@ export async function deploy(
   commitTx.outputs[1].satoshis = revealTxFee;
 
   commitTx.change(changeAddress);
-
-  commitTx.outputs[2].satoshis -= 1;
+  if (commitTx.outputs[2] && commitTx.outputs[2].satoshi > 1) {
+    commitTx.outputs[2].satoshis -= 1;
+  }
 
   wallet.signTx(commitTx);
 

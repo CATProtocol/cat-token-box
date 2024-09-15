@@ -20,6 +20,7 @@ import { ConfigService, SpendService, WalletService } from 'src/providers';
 import { btc } from './btc';
 import fetch from 'node-fetch-cjs';
 import { MinterType } from './minter';
+import { OpenMinterV2State } from '@cat-protocol/cat-smartcontracts';
 
 export type ContractJSON = {
   utxo: {
@@ -108,7 +109,7 @@ const fetchOpenMinterState = async function (
   metadata: TokenMetadata,
   txId: string,
   vout: number,
-): Promise<OpenMinterState | null> {
+): Promise<OpenMinterState | OpenMinterV2State | null> {
   const minterP2TR = toP2tr(metadata.minterAddr);
   const tokenP2TR = toP2tr(metadata.tokenAddr);
   const info = metadata.info as OpenMinterTokenInfo;
@@ -117,7 +118,7 @@ const fetchOpenMinterState = async function (
     if (metadata.info.minterMd5 == MinterType.OPEN_MINTER_V2) {
       return {
         isPremined: false,
-        remainingSupply:
+        remainingSupplyCount:
           (scaledInfo.max - scaledInfo.premine) / scaledInfo.limit,
         tokenScript: tokenP2TR,
       };
@@ -146,6 +147,18 @@ const fetchOpenMinterState = async function (
       const lockingScriptBuffer = witnesses[witnesses.length - 2];
       const { p2tr } = script2P2TR(lockingScriptBuffer);
       if (p2tr === minterP2TR) {
+        if (metadata.info.minterMd5 == MinterType.OPEN_MINTER_V2) {
+          const preState: OpenMinterV2State = {
+            tokenScript:
+              witnesses[REMAININGSUPPLY_WITNESS_INDEX - 2].toString('hex'),
+            isPremined: true,
+            remainingSupplyCount: byteString2Int(
+              witnesses[6 + vout].toString('hex'),
+            ),
+          };
+
+          return preState;
+        }
         const preState: OpenMinterState = {
           tokenScript:
             witnesses[REMAININGSUPPLY_WITNESS_INDEX - 2].toString('hex'),

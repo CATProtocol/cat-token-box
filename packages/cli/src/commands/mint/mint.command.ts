@@ -15,7 +15,7 @@ import {
   getOpenMinterVersion,
   MinterType,
 } from 'src/common';
-import { openMint } from './ft.open-minter';
+import { openMint, pickOpenMinterStateFeild } from './ft.open-minter';
 import { ConfigService, SpendService, WalletService } from 'src/providers';
 import { Inject } from '@nestjs/common';
 import { log } from 'console';
@@ -128,7 +128,10 @@ export class MintCommand extends BoardcastCommand {
             const limit = scaledInfo.limit;
 
             if (
-              minter.state.data.remainingSupply < limit &&
+              pickOpenMinterStateFeild<bigint>(
+                minter.state.data,
+                'remainingSupply',
+              ) < limit &&
               token.info.minterMd5 === MinterType.OPEN_MINTER_V1
             ) {
               console.warn(
@@ -151,8 +154,15 @@ export class MintCommand extends BoardcastCommand {
             } else {
               amount = amount || limit;
               amount =
-                amount > minter.state.data.remainingSupply
-                  ? minter.state.data.remainingSupply
+                amount >
+                pickOpenMinterStateFeild<bigint>(
+                  minter.state.data,
+                  'remainingSupply',
+                )
+                  ? pickOpenMinterStateFeild<bigint>(
+                      minter.state.data,
+                      'remainingSupply',
+                    )
                   : amount;
             }
 

@@ -115,24 +115,6 @@
             "genericTypes": []
         },
         {
-            "name": "OpenMinterState",
-            "params": [
-                {
-                    "name": "tokenScript",
-                    "type": "bytes"
-                },
-                {
-                    "name": "isPremined",
-                    "type": "bool"
-                },
-                {
-                    "name": "remainingSupply",
-                    "type": "int"
-                }
-            ],
-            "genericTypes": []
-        },
-        {
             "name": "CAT20State",
             "params": [
                 {
@@ -281,6 +263,24 @@
             "genericTypes": []
         },
         {
+            "name": "OpenMinterV2State",
+            "params": [
+                {
+                    "name": "tokenScript",
+                    "type": "bytes"
+                },
+                {
+                    "name": "isPremined",
+                    "type": "bool"
+                },
+                {
+                    "name": "remainingSupplyCount",
+                    "type": "int"
+                }
+            ],
+            "genericTypes": []
+        },
+        {
             "name": "ChangeInfo",
             "params": [
                 {
@@ -309,12 +309,6 @@
             "genericTypes": []
         },
         {
-            "name": "OpenMinterProto",
-            "params": [],
-            "properties": [],
-            "genericTypes": []
-        },
-        {
             "name": "CAT20Proto",
             "params": [],
             "properties": [],
@@ -328,6 +322,12 @@
         },
         {
             "name": "TxProof",
+            "params": [],
+            "properties": [],
+            "genericTypes": []
+        },
+        {
+            "name": "OpenMinterV2Proto",
             "params": [],
             "properties": [],
             "genericTypes": []
@@ -380,7 +380,7 @@
                 },
                 {
                     "name": "preState",
-                    "type": "OpenMinterState"
+                    "type": "OpenMinterV2State"
                 },
                 {
                     "name": "preTxStatesInfo",

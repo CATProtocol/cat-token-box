@@ -5,9 +5,9 @@ import {
     TaprootSmartContract,
 } from '../src/lib/catTx'
 import {
-    OpenMinterProto,
-    OpenMinterState,
-} from '../src/contracts/token/openMinterProto'
+    OpenMinterV2Proto,
+    OpenMinterV2State,
+} from '../src/contracts/token/openMinterV2Proto'
 import { int32 } from '../src/contracts/utils/txUtil'
 import { CAT20Proto, CAT20State } from '../src/contracts/token/cat20Proto'
 import { getTxCtx } from '../src/lib/txTools'
@@ -33,7 +33,7 @@ export async function openMinterV2Deploy(
     options: {
         wrongRemainingSupply?: boolean
     } = {}
-): Promise<ContractIns<OpenMinterState>> {
+): Promise<ContractIns<OpenMinterV2State>> {
     const openMinterTaproot = TaprootSmartContract.create(openMinter)
     const tokenScript = await getTokenScript(openMinterTaproot.lockingScriptHex)
     // tx deploy
@@ -43,14 +43,14 @@ export async function openMinterV2Deploy(
     if (options.wrongRemainingSupply) {
         remainingSupply -= 1n
     }
-    const openMinterState = OpenMinterProto.create(
+    const openMinterState = OpenMinterV2Proto.create(
         tokenScript,
         false,
         remainingSupply
     )
     const atIndex = catTx.addStateContractOutput(
         openMinterTaproot.lockingScript,
-        OpenMinterProto.toByteString(openMinterState)
+        OpenMinterV2Proto.toByteString(openMinterState)
     )
     catTx.sign(seckey)
     const preCatTx = CatTx.create()
@@ -67,7 +67,7 @@ export async function openMinterV2Deploy(
 
 export async function openMinterCall(
     keyInfo: KeyInfo,
-    contractIns: ContractIns<OpenMinterState>,
+    contractIns: ContractIns<OpenMinterV2State>,
     tokenState: CAT20State,
     max: int32,
     premine: int32,
@@ -77,13 +77,13 @@ export async function openMinterCall(
         minterExceeedLimit?: boolean
         wrongRemainingSupply?: boolean
     } = {}
-): Promise<ContractCallResult<OpenMinterState | CAT20State>> {
+): Promise<ContractCallResult<OpenMinterV2State | CAT20State>> {
     if (options.wrongRemainingSupply) {
         max -= 1n
     }
     // if
-    const splitAmountList = OpenMinterProto.getSplitAmountListForV2(
-        contractIns.state.remainingSupply,
+    const splitAmountList = OpenMinterV2Proto.getSplitAmountList(
+        contractIns.state.remainingSupplyCount,
         contractIns.state.isPremined,
         premine
     )
@@ -92,19 +92,19 @@ export async function openMinterCall(
         contractIns.catTx,
         contractIns.atOutputIndex
     )
-    const nexts: ContractIns<OpenMinterState | CAT20State>[] = []
+    const nexts: ContractIns<OpenMinterV2State | CAT20State>[] = []
     const openMinterState = contractIns.state
     for (let i = 0; i < splitAmountList.length; i++) {
         const amount = splitAmountList[i]
         if (amount > 0n) {
-            const splitMinterState = OpenMinterProto.create(
+            const splitMinterState = OpenMinterV2Proto.create(
                 openMinterState.tokenScript,
                 true,
                 amount
             )
             const atOutputIndex = catTx.addStateContractOutput(
                 contractIns.contractTaproot.lockingScript,
-                OpenMinterProto.toByteString(splitMinterState)
+                OpenMinterV2Proto.toByteString(splitMinterState)
             )
             nexts.push({
                 catTx: catTx,

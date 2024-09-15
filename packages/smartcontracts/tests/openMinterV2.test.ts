@@ -9,9 +9,9 @@ import { getOutpointString } from '../src/lib/txTools'
 import { OpenMinterV2 } from '../src/contracts/token/openMinterV2'
 import { getBtcDummyUtxo, getDummyGenesisTx } from './utils/txHelper'
 import {
-    OpenMinterProto,
-    OpenMinterState,
-} from '../src/contracts/token/openMinterProto'
+    OpenMinterV2Proto,
+    OpenMinterV2State,
+} from '../src/contracts/token/openMinterV2Proto'
 import { CAT20Proto, CAT20State } from '../src/contracts/token/cat20Proto'
 import { KeyInfo, getKeyInfoFromWif, getPrivKey } from './utils/privateKey'
 import { openMinterCall, openMinterV2Deploy } from './openMinterV2'
@@ -120,16 +120,16 @@ describe('Test SmartContract `OpenMinterV2`', () => {
                 guardInfo.lockingScriptHex
             )
             const tokenTaproot = TaprootSmartContract.create(token)
-            const openMinterState = OpenMinterProto.create(
+            const openMinterState = OpenMinterV2Proto.create(
                 tokenTaproot.lockingScriptHex,
                 false,
                 maxCount - premineCount
             )
             const atIndex = revealCatTx.addStateContractOutput(
                 openMinterV2Taproot.lockingScript,
-                OpenMinterProto.toByteString(openMinterState)
+                OpenMinterV2Proto.toByteString(openMinterState)
             )
-            const openMinterIns: ContractIns<OpenMinterState> = {
+            const openMinterIns: ContractIns<OpenMinterV2State> = {
                 catTx: revealCatTx,
                 contract: openMinterV2,
                 state: openMinterState,
@@ -161,7 +161,7 @@ describe('Test SmartContract `OpenMinterV2`', () => {
                 const mintInfo = CAT20Proto.create(limit, keyInfo.xAddress)
                 const nextOpenMinterIns = premineCallInfo.nexts[
                     index
-                ] as ContractIns<OpenMinterState>
+                ] as ContractIns<OpenMinterV2State>
                 await openMinterCall(
                     keyInfo,
                     nextOpenMinterIns,
@@ -179,7 +179,7 @@ describe('Test SmartContract `OpenMinterV2`', () => {
         let genesisUtxo: UTXO
         let genesisOutpoint: string
         let openMinter: OpenMinterV2
-        let openMinterIns: ContractIns<OpenMinterState>
+        let openMinterIns: ContractIns<OpenMinterV2State>
         let max: bigint
         let maxCount: bigint
         let premine: bigint
@@ -248,7 +248,7 @@ describe('Test SmartContract `OpenMinterV2`', () => {
                 const mintInfo = CAT20Proto.create(limit, keyInfo.xAddress)
                 const nextOpenMinterIns = premineCallInfo.nexts[
                     index
-                ] as ContractIns<OpenMinterState>
+                ] as ContractIns<OpenMinterV2State>
                 await openMinterCall(
                     keyInfo,
                     nextOpenMinterIns,
@@ -309,7 +309,7 @@ describe('Test SmartContract `OpenMinterV2`', () => {
                 const mintInfo = CAT20Proto.create(limit + 1n, keyInfo.xAddress)
                 const nextOpenMinterIns = premineCallInfo.nexts[
                     index
-                ] as ContractIns<OpenMinterState>
+                ] as ContractIns<OpenMinterV2State>
                 await expect(
                     openMinterCall(
                         keyInfo,
@@ -332,7 +332,7 @@ describe('Test SmartContract `OpenMinterV2`', () => {
                 const mintInfo = CAT20Proto.create(limit - 1n, keyInfo.xAddress)
                 const nextOpenMinterIns = premineCallInfo.nexts[
                     index
-                ] as ContractIns<OpenMinterState>
+                ] as ContractIns<OpenMinterV2State>
                 await expect(
                     openMinterCall(
                         keyInfo,
@@ -355,7 +355,7 @@ describe('Test SmartContract `OpenMinterV2`', () => {
                 const mintInfo = CAT20Proto.create(limit + 1n, keyInfo.xAddress)
                 const nextOpenMinterIns = premineCallInfo.nexts[
                     index
-                ] as ContractIns<OpenMinterState>
+                ] as ContractIns<OpenMinterV2State>
                 await expect(
                     openMinterCall(
                         keyInfo,
@@ -381,7 +381,7 @@ describe('Test SmartContract `OpenMinterV2`', () => {
                 const mintInfo = CAT20Proto.create(limit + 1n, keyInfo.xAddress)
                 const nextOpenMinterIns = premineCallInfo.nexts[
                     index
-                ] as ContractIns<OpenMinterState>
+                ] as ContractIns<OpenMinterV2State>
                 await expect(
                     openMinterCall(
                         keyInfo,

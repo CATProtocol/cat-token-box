@@ -25,7 +25,7 @@ import {
     TxoStateHashes,
 } from '../utils/stateUtils'
 import { CAT20State, CAT20Proto } from './cat20Proto'
-import { OpenMinterProto, OpenMinterState } from './openMinterProto'
+import { OpenMinterV2Proto, OpenMinterV2State } from './openMinterV2Proto'
 
 const MAX_NEXT_MINTERS = 2
 
@@ -83,7 +83,7 @@ export class OpenMinterV2 extends SmartContract {
         // satoshis locked in token utxo
         tokenSatoshis: ByteString,
         // unlock utxo state info
-        preState: OpenMinterState,
+        preState: OpenMinterV2State,
         preTxStatesInfo: PreTxStatesInfo,
         // backtrace info, use b2g
         backtraceInfo: BacktraceInfo,
@@ -116,7 +116,7 @@ export class OpenMinterV2 extends SmartContract {
         // verify state
         StateUtils.verifyPreStateHash(
             preTxStatesInfo,
-            OpenMinterProto.stateHash(preState),
+            OpenMinterV2Proto.stateHash(preState),
             backtraceInfo.preTx.outputScriptList[STATE_OUTPUT_INDEX],
             prevoutsCtx.outputIndexVal
         )
@@ -145,10 +145,10 @@ export class OpenMinterV2 extends SmartContract {
                     minterSatoshis
                 )
                 curStateHashes += hash160(
-                    OpenMinterProto.stateHash({
+                    OpenMinterV2Proto.stateHash({
                         tokenScript: preState.tokenScript,
                         isPremined: true,
-                        remainingSupply: count,
+                        remainingSupplyCount: count,
                     })
                 )
             }
@@ -172,15 +172,16 @@ export class OpenMinterV2 extends SmartContract {
             )
             assert(this.checkSig(preminerSig, preminerPubKey))
             // first unlock mint
-            assert(mintCount == preState.remainingSupply)
+            assert(mintCount == preState.remainingSupplyCount)
             assert(
-                this.maxCount == preState.remainingSupply + this.premineCount
+                this.maxCount ==
+                    preState.remainingSupplyCount + this.premineCount
             )
             assert(tokenMint.amount == this.premine)
         } else {
             // not first unlock mint
             mintCount += 1n
-            assert(mintCount == preState.remainingSupply)
+            assert(mintCount == preState.remainingSupplyCount)
             assert(tokenMint.amount == this.limit)
         }
         const stateOutput = StateUtils.getCurrentStateOutput(

@@ -42,6 +42,8 @@ import {
 } from '@cat-protocol/cat-smartcontracts';
 import { ConfigService, SpendService, WalletService } from 'src/providers';
 import { scaleConfig } from 'src/token';
+import { OpenMinterV2Proto } from '@cat-protocol/cat-smartcontracts';
+import { OpenMinterV2State } from '@cat-protocol/cat-smartcontracts';
 
 const getPremineAddress = async (
   config: ConfigService,
@@ -79,7 +81,7 @@ const calcVsize = async (
   tokenMint: CAT20State,
   splitAmountList: Array<bigint>,
   preTxState: PreTxStatesInfo,
-  preState: OpenMinterState,
+  preState: OpenMinterState | OpenMinterV2State,
   minterTapScript: string,
   inputIndex: number,
   revealTx: btc.Transaction,
@@ -158,7 +160,7 @@ export function createOpenMinterState(
   );
 
   if (openMinterVersin == 2) {
-    splitAmountList = OpenMinterProto.getSplitAmountListForV2(
+    splitAmountList = OpenMinterV2Proto.getSplitAmountList(
       remainingSupply,
       isPriemined,
       scaledInfo.premine,
@@ -176,6 +178,16 @@ export function createOpenMinterState(
   }
 
   return { splitAmountList, minterStates };
+}
+
+export function pickOpenMinterStateFeild<T>(
+  state: OpenMinterState | OpenMinterV2State,
+  key: string,
+): T | undefined {
+  if (Object.prototype.hasOwnProperty.call(state, key)) {
+    return (state as any)[key];
+  }
+  return undefined;
 }
 
 export async function openMint(
@@ -211,7 +223,8 @@ export async function openMint(
   const { splitAmountList, minterStates } = createOpenMinterState(
     mintAmount,
     preState.isPremined,
-    preState.remainingSupply,
+    pickOpenMinterStateFeild<bigint>(preState, 'remainingSupply') ||
+      pickOpenMinterStateFeild<bigint>(preState, 'remainingSupplyCount'),
     metadata,
     newMinter,
     openMinterVersin,
