@@ -56,6 +56,8 @@ You can install and run the above two components on your own or follow the instr
 
 ## How to Run the Project
 
+> ⚠️ **Warning:** Please only use Taproot address (starting with `bc1p`) for all CAT protocol transactions, including fee inputs, change outputs, and token owner address. Failing to do so may result in loss of funds.
+
 ### 1. Build the project
 
 Run this command under the project's root directory to build the whole project:
