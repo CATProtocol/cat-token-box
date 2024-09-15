@@ -57,6 +57,12 @@ const getPremineAddress = async (
     const tx = new btc.Transaction(txhex);
     const witnesses: Buffer[] = tx.inputs[0].getWitnesses();
     const lockingScript = witnesses[witnesses.length - 2];
+    try {
+      const minter = OpenMinterV2.fromLockingScript(
+        lockingScript.toString('hex'),
+      ) as OpenMinterV2;
+      return minter.premineAddr;
+    } catch (e) {}
     const minter = OpenMinter.fromLockingScript(
       lockingScript.toString('hex'),
     ) as OpenMinter;
