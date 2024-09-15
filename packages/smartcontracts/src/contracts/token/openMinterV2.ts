@@ -59,6 +59,10 @@ export class OpenMinterV2 extends SmartContract {
         super(...arguments)
         this.genesisOutpoint = genesisOutpoint
         this.maxCount = maxCount
+        /*
+        Note: this assumes this.premineCount *  this.limit  == this.premine,
+        which can be trivially validated by anyone after the token is deployed
+        */
         this.premine = premine
         this.premineCount = premineCount
         this.limit = limit
