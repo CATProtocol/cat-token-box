@@ -84,7 +84,6 @@ const buildRevealTx = (
 
   const { protocolState: txState } = getMinterInitialTxState(tokenP2TR, info);
 
-  console.log('txState:', txState);
   const revealTx = new btc.Transaction()
     .from([
       {
