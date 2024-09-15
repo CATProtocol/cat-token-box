@@ -355,7 +355,7 @@
                     "type": "CAT20State"
                 },
                 {
-                    "name": "nextMinterAmounts",
+                    "name": "nextMinterCounts",
                     "type": "int[2]"
                 },
                 {

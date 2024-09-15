@@ -13,6 +13,7 @@ import {
   btc,
   TokenMetadata,
   getOpenMinterVersion,
+  MinterType,
 } from 'src/common';
 import { openMint } from './ft.open-minter';
 import { ConfigService, SpendService, WalletService } from 'src/providers';
@@ -126,7 +127,10 @@ export class MintCommand extends BoardcastCommand {
 
             const limit = scaledInfo.limit;
 
-            if (minter.state.data.remainingSupply < limit) {
+            if (
+              minter.state.data.remainingSupply < limit &&
+              token.info.minterMd5 === MinterType.OPEN_MINTER_V1
+            ) {
               console.warn(
                 `small limit of ${unScaleByDecimals(limit, token.info.decimals)} in the minter UTXO!`,
               );
@@ -150,6 +154,10 @@ export class MintCommand extends BoardcastCommand {
                 amount > minter.state.data.remainingSupply
                   ? minter.state.data.remainingSupply
                   : amount;
+            }
+
+            if (token.info.minterMd5 === MinterType.OPEN_MINTER_V2) {
+              amount = limit;
             }
 
             const mintTxIdOrErr = await openMint(

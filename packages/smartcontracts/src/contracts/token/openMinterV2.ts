@@ -71,7 +71,7 @@ export class OpenMinterV2 extends SmartContract {
         curTxoStateHashes: TxoStateHashes,
         // contract logic args
         tokenMint: CAT20State,
-        nextMinterAmounts: FixedArray<int32, typeof MAX_NEXT_MINTERS>,
+        nextMinterCounts: FixedArray<int32, typeof MAX_NEXT_MINTERS>,
 
         // premine related args
         preminerPubKeyPrefix: ByteString,
@@ -136,9 +136,9 @@ export class OpenMinterV2 extends SmartContract {
         let curStateCnt = 1n
         let mintCount = 0n
         for (let i = 0; i < MAX_NEXT_MINTERS; i++) {
-            const amount = nextMinterAmounts[i]
-            if (amount > 0n) {
-                mintCount += amount
+            const count = nextMinterCounts[i]
+            if (count > 0n) {
+                mintCount += count
                 curStateCnt += 1n
                 openMinterOutputs += TxUtil.buildOutput(
                     preScript,
@@ -148,7 +148,7 @@ export class OpenMinterV2 extends SmartContract {
                     OpenMinterProto.stateHash({
                         tokenScript: preState.tokenScript,
                         isPremined: true,
-                        remainingSupply: amount,
+                        remainingSupply: count,
                     })
                 )
             }
