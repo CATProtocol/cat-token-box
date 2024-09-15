@@ -169,7 +169,16 @@ export function getOpenMinterContract(
   if (version === 1) {
     return new OpenMinter(genesisId, max, premine, limit, premineAddress);
   }
-  return new OpenMinterV2(genesisId, max, premine, limit, premineAddress);
+  const maxCount = max / limit;
+  const premineCount = premine / limit;
+  return new OpenMinterV2(
+    genesisId,
+    maxCount,
+    premine,
+    premineCount,
+    limit,
+    premineAddress,
+  );
 }
 
 export function getOpenMinterContractP2TR(

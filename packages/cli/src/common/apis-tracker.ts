@@ -19,6 +19,7 @@ import { logerror } from './log';
 import { ConfigService, SpendService, WalletService } from 'src/providers';
 import { btc } from './btc';
 import fetch from 'node-fetch-cjs';
+import { MinterType } from './minter';
 
 export type ContractJSON = {
   utxo: {
@@ -113,6 +114,14 @@ const fetchOpenMinterState = async function (
   const info = metadata.info as OpenMinterTokenInfo;
   const scaledInfo = scaleConfig(info);
   if (txId === metadata.revealTxid) {
+    if (metadata.info.minterMd5 == MinterType.OPEN_MINTER_V2) {
+      return {
+        isPremined: false,
+        remainingSupply:
+          (scaledInfo.max - scaledInfo.premine) / scaledInfo.limit,
+        tokenScript: tokenP2TR,
+      };
+    }
     return {
       isPremined: false,
       remainingSupply: scaledInfo.max - scaledInfo.premine,
@@ -140,10 +149,7 @@ const fetchOpenMinterState = async function (
         const preState: OpenMinterState = {
           tokenScript:
             witnesses[REMAININGSUPPLY_WITNESS_INDEX - 2].toString('hex'),
-          isPremined:
-            witnesses[REMAININGSUPPLY_WITNESS_INDEX - 1].toString('hex') == '01'
-              ? true
-              : false,
+          isPremined: true,
           remainingSupply: byteString2Int(witnesses[6 + vout].toString('hex')),
         };
 

@@ -14,7 +14,7 @@ import {
 } from '../src/contracts/token/openMinterProto'
 import { CAT20Proto, CAT20State } from '../src/contracts/token/cat20Proto'
 import { KeyInfo, getKeyInfoFromWif, getPrivKey } from './utils/privateKey'
-import { openMinterCall, openMinterDeploy } from './openMinterV2'
+import { openMinterCall, openMinterV2Deploy } from './openMinterV2'
 import {
     CatTx,
     ContractIns,
@@ -45,8 +45,10 @@ export interface OpenMinterTokenInfo extends TokenInfo {
 describe('Test SmartContract `OpenMinterV2`', () => {
     let keyInfo: KeyInfo
     let max: bigint
+    let maxCount: bigint
     let limit: bigint
     let premine: bigint
+    let premineCount: bigint
 
     before(async () => {
         await OpenMinterV2.loadArtifact()
@@ -58,7 +60,7 @@ describe('Test SmartContract `OpenMinterV2`', () => {
     })
 
     describe('When deploying a new token', () => {
-        it('should deploy an OpenMinter contract', async () => {
+        it('should deploy an OpenMinterV2 contract', async () => {
             // create genesisTx
             const info: OpenMinterTokenInfo = {
                 name: 'CAT',
@@ -96,38 +98,43 @@ describe('Test SmartContract `OpenMinterV2`', () => {
             const revealCatTx = CatTx.create()
             revealCatTx.tx.from(genesisUtxo)
             const genesisOutpoint = getOutpointString(genesisTx, 0)
-            max = info.max * 10n ** BigInt(info.decimals)
-            premine = info.premine * 10n ** BigInt(info.decimals)
             limit = info.limit * 10n ** BigInt(info.decimals)
-            const openMinter = new OpenMinterV2(
+            // calc count
+            max = info.max * 10n ** BigInt(info.decimals)
+            maxCount = max / limit
+            premine = info.premine * 10n ** BigInt(info.decimals)
+            premineCount = premine / limit
+            const openMinterV2 = new OpenMinterV2(
                 genesisOutpoint,
-                max,
+                maxCount,
                 premine,
+                premineCount,
                 limit,
                 keyInfo.xAddress
             )
-            const openMinterTaproot = TaprootSmartContract.create(openMinter)
+            const openMinterV2Taproot =
+                TaprootSmartContract.create(openMinterV2)
             const guardInfo = getGuardContractInfo()
             const token = new CAT20(
-                openMinterTaproot.lockingScriptHex,
+                openMinterV2Taproot.lockingScriptHex,
                 guardInfo.lockingScriptHex
             )
             const tokenTaproot = TaprootSmartContract.create(token)
             const openMinterState = OpenMinterProto.create(
                 tokenTaproot.lockingScriptHex,
                 false,
-                max - premine
+                maxCount - premineCount
             )
             const atIndex = revealCatTx.addStateContractOutput(
-                openMinterTaproot.lockingScript,
+                openMinterV2Taproot.lockingScript,
                 OpenMinterProto.toByteString(openMinterState)
             )
             const openMinterIns: ContractIns<OpenMinterState> = {
                 catTx: revealCatTx,
-                contract: openMinter,
+                contract: openMinterV2,
                 state: openMinterState,
                 preCatTx: preCatTx,
-                contractTaproot: openMinterTaproot,
+                contractTaproot: openMinterV2Taproot,
                 atOutputIndex: atIndex,
             }
             // mint tx (premine)
@@ -174,7 +181,9 @@ describe('Test SmartContract `OpenMinterV2`', () => {
         let openMinter: OpenMinterV2
         let openMinterIns: ContractIns<OpenMinterState>
         let max: bigint
+        let maxCount: bigint
         let premine: bigint
+        let premineCount: bigint
         let limit: bigint
         let premineInfo: CAT20State
         let premineCallInfo
@@ -188,27 +197,29 @@ describe('Test SmartContract `OpenMinterV2`', () => {
             genesisUtxo = dummyGenesis.genesisUtxo
             genesisOutpoint = getOutpointString(genesisTx, 0)
             max = 10000n
+            limit = 100n
+            maxCount = max / limit
             // 5% premine
             premine = (max * 5n) / 100n
-            limit = 100n
+            premineCount = premine / limit
             openMinter = new OpenMinterV2(
                 genesisOutpoint,
-                max,
+                maxCount,
                 premine,
+                premineCount,
                 limit,
                 keyInfo.xAddress
             )
             const getTokenScript = async () => tokenScript
-            openMinterIns = await openMinterDeploy(
+            openMinterIns = await openMinterV2Deploy(
                 keyInfo.seckey,
                 keyInfo.xAddress,
                 genesisTx,
                 genesisUtxo,
                 openMinter,
                 getTokenScript,
-                max,
-                premine,
-                limit
+                maxCount,
+                premineCount
             )
             premineInfo = {
                 // first mint amount equal premine
@@ -250,21 +261,22 @@ describe('Test SmartContract `OpenMinterV2`', () => {
         })
 
         it('should fail when premine add remindingSupply not equal max', async () => {
+            const limit = 100n
             const max = 10000n
+            const maxCount = max / limit
             // 5% premine
             const premine = (max * 5n) / 100n
-            const limit = 100n
+            const premineCount = premine / limit
             const getTokenScript = async () => tokenScript
-            const openMinterIns = await openMinterDeploy(
+            const openMinterIns = await openMinterV2Deploy(
                 keyInfo.seckey,
                 keyInfo.xAddress,
                 genesisTx,
                 genesisUtxo,
                 openMinter,
                 getTokenScript,
-                max,
-                premine,
-                limit,
+                maxCount,
+                premineCount,
                 { wrongRemainingSupply: true }
             )
             const premineInfo = {
@@ -295,6 +307,29 @@ describe('Test SmartContract `OpenMinterV2`', () => {
                 index++
             ) {
                 const mintInfo = CAT20Proto.create(limit + 1n, keyInfo.xAddress)
+                const nextOpenMinterIns = premineCallInfo.nexts[
+                    index
+                ] as ContractIns<OpenMinterState>
+                await expect(
+                    openMinterCall(
+                        keyInfo,
+                        nextOpenMinterIns,
+                        mintInfo,
+                        max,
+                        premine,
+                        limit
+                    )
+                ).to.be.rejected
+            }
+        })
+
+        it('should fail when the minting amount loses the limit', async () => {
+            for (
+                let index = 0;
+                index < premineCallInfo.nexts.length - 1;
+                index++
+            ) {
+                const mintInfo = CAT20Proto.create(limit - 1n, keyInfo.xAddress)
                 const nextOpenMinterIns = premineCallInfo.nexts[
                     index
                 ] as ContractIns<OpenMinterState>
@@ -375,52 +410,6 @@ describe('Test SmartContract `OpenMinterV2`', () => {
                     limit
                 )
             ).to.be.rejected
-        })
-
-        it('should fail when remainingSupply < limit', async () => {
-            const getTokenScript = async () => tokenScript
-            const openMinterIns = await openMinterDeploy(
-                keyInfo.seckey,
-                keyInfo.xAddress,
-                genesisTx,
-                genesisUtxo,
-                openMinter,
-                getTokenScript,
-                max,
-                premine,
-                limit
-            )
-
-            const firstMintCall = await 
-                openMinterCall(
-                    keyInfo,
-                    openMinterIns,
-                    premineInfo,
-                    max,
-                    premine,
-                    limit
-                );
-            
-            const openMinterState: OpenMinterState = firstMintCall.nexts[0].state as OpenMinterState;
-
-            const remainingSupply = openMinterState.remainingSupply;
-
-            await expect(
-                openMinterCall(
-                    keyInfo,
-                    premineCallInfo.nexts[0],
-                    {
-                        amount: limit,
-                        ownerAddr: hash160(keyInfo.pubkeyX),
-                    },
-                    max,
-                    premine,
-                    limit,
-                    {
-                        splitAmountList: [1n, remainingSupply - 1n]
-                    }
-                )
-            ).to.be.rejected;
         })
     })
 })

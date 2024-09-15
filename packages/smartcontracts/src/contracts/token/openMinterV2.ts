@@ -26,17 +26,21 @@ import {
 } from '../utils/stateUtils'
 import { CAT20State, CAT20Proto } from './cat20Proto'
 import { OpenMinterProto, OpenMinterState } from './openMinterProto'
-import { MAX_NEXT_MINTERS } from './openMinter'
+
+const MAX_NEXT_MINTERS = 2
 
 export class OpenMinterV2 extends SmartContract {
     @prop()
     genesisOutpoint: ByteString
 
     @prop()
-    max: int32
+    maxCount: int32
 
     @prop()
     premine: int32
+
+    @prop()
+    premineCount: int32
 
     @prop()
     limit: int32
@@ -46,15 +50,17 @@ export class OpenMinterV2 extends SmartContract {
 
     constructor(
         genesisOutpoint: ByteString,
-        max: int32,
+        maxCount: int32,
         premine: int32,
+        premineCount: int32,
         limit: int32,
         premineAddr: ByteString
     ) {
         super(...arguments)
         this.genesisOutpoint = genesisOutpoint
-        this.max = max
+        this.maxCount = maxCount
         this.premine = premine
+        this.premineCount = premineCount
         this.limit = limit
         this.premineAddr = premineAddr
     }
@@ -127,13 +133,12 @@ export class OpenMinterV2 extends SmartContract {
         // split to multiple minters
         let openMinterOutputs = toByteString('')
         let curStateHashes = toByteString('')
-        let curStateCnt = 0n
-        let totalAmount = 0n
+        let curStateCnt = 1n
+        let mintCount = 0n
         for (let i = 0; i < MAX_NEXT_MINTERS; i++) {
-            const amount = nextMinterAmounts[i];
+            const amount = nextMinterAmounts[i]
             if (amount > 0n) {
-                assert(amount >= this.limit, "remainingSupply should >= limit");
-                totalAmount += amount
+                mintCount += amount
                 curStateCnt += 1n
                 openMinterOutputs += TxUtil.buildOutput(
                     preScript,
@@ -149,21 +154,16 @@ export class OpenMinterV2 extends SmartContract {
             }
         }
         // mint token
-        let tokenOutput = toByteString('')
-        if (tokenMint.amount > 0n) {
-            totalAmount += tokenMint.amount
-            curStateCnt += 1n
-            curStateHashes += hash160(
-                CAT20Proto.stateHash({
-                    amount: tokenMint.amount,
-                    ownerAddr: tokenMint.ownerAddr,
-                })
-            )
-            tokenOutput = TxUtil.buildOutput(
-                preState.tokenScript,
-                tokenSatoshis
-            )
-        }
+        curStateHashes += hash160(
+            CAT20Proto.stateHash({
+                amount: tokenMint.amount,
+                ownerAddr: tokenMint.ownerAddr,
+            })
+        )
+        const tokenOutput = TxUtil.buildOutput(
+            preState.tokenScript,
+            tokenSatoshis
+        )
         if (!preState.isPremined && this.premine > 0n) {
             // premine need checksig
             assert(
@@ -172,13 +172,16 @@ export class OpenMinterV2 extends SmartContract {
             )
             assert(this.checkSig(preminerSig, preminerPubKey))
             // first unlock mint
-            assert(totalAmount == preState.remainingSupply + this.premine)
-            assert(this.max == preState.remainingSupply + this.premine)
+            assert(mintCount == preState.remainingSupply)
+            assert(
+                this.maxCount == preState.remainingSupply + this.premineCount
+            )
             assert(tokenMint.amount == this.premine)
         } else {
             // not first unlock mint
-            assert(totalAmount == preState.remainingSupply)
-            assert(tokenMint.amount <= this.limit)
+            mintCount += 1n
+            assert(mintCount == preState.remainingSupply)
+            assert(tokenMint.amount == this.limit)
         }
         const stateOutput = StateUtils.getCurrentStateOutput(
             curStateHashes,

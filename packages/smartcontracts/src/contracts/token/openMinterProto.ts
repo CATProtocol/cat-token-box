@@ -74,4 +74,18 @@ export class OpenMinterProto extends SmartContractLib {
         }
         return splitAmount
     }
+
+    static getSplitAmountListForV2(
+        preRemainingSupply: int32,
+        isPremined: boolean,
+        premineAmount: bigint
+    ) {
+        let nextSupply = preRemainingSupply - 1n
+        if (!isPremined && premineAmount > 0n) {
+            nextSupply = preRemainingSupply
+        }
+        const splitAmount = fill(nextSupply / 2n, 2)
+        splitAmount[0] += nextSupply - splitAmount[0] * 2n
+        return splitAmount
+    }
 }

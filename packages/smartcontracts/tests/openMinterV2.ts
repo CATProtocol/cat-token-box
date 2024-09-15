@@ -1,4 +1,3 @@
-import { OpenMinterV2 } from '../src/contracts/token/openMinterV2'
 import {
     CatTx,
     ContractCallResult,
@@ -18,20 +17,19 @@ import { KeyInfo } from './utils/privateKey'
 import { MethodCallOptions, toByteString } from 'scrypt-ts'
 import { unlockTaprootContractInput } from './utils/contractUtils'
 import { btc } from '../src/lib/btc'
-import { MAX_NEXT_MINTERS } from '../src/contracts/token/openMinter'
+import { OpenMinterV2 } from '../src/contracts/token/openMinterV2'
 
 export type GetTokenScript = (minterScript: string) => Promise<string>
 
-export async function openMinterDeploy(
+export async function openMinterV2Deploy(
     seckey,
     address,
     genesisTx,
     genesisUtxo,
     openMinter: OpenMinterV2,
     getTokenScript: GetTokenScript,
-    max: int32,
-    premine: int32,
-    limit: int32,
+    maxCount: int32,
+    premineCount: int32,
     options: {
         wrongRemainingSupply?: boolean
     } = {}
@@ -41,7 +39,7 @@ export async function openMinterDeploy(
     // tx deploy
     const catTx = CatTx.create()
     catTx.tx.from([genesisUtxo])
-    let remainingSupply = max - premine
+    let remainingSupply = maxCount - premineCount
     if (options.wrongRemainingSupply) {
         remainingSupply -= 1n
     }
@@ -78,39 +76,17 @@ export async function openMinterCall(
         moreThanOneToken?: boolean
         minterExceeedLimit?: boolean
         wrongRemainingSupply?: boolean
-        splitAmountList?: Array<bigint>
     } = {}
 ): Promise<ContractCallResult<OpenMinterState | CAT20State>> {
-    let NEXT_MINTERS = MAX_NEXT_MINTERS
-    if (options.minterExceeedLimit) {
-        NEXT_MINTERS += 1
-    }
     if (options.wrongRemainingSupply) {
         max -= 1n
     }
-    
-    let splitAmountList: Array<bigint>;
-    if(Array.isArray(options.splitAmountList)) {
-        splitAmountList = options.splitAmountList;
-    } else {
-        splitAmountList = OpenMinterProto.getSplitAmountList(
-            max,
-            premine,
-            limit,
-            // number of new openMinter utxo
-            NEXT_MINTERS
-        )
-        if (contractIns.state.isPremined) {
-            splitAmountList = OpenMinterProto.getSplitAmountList(
-                contractIns.state.remainingSupply,
-                tokenState.amount,
-                limit,
-                // number of new openMinter utxo
-                NEXT_MINTERS
-            )
-        }
-    }
-    
+    // if
+    const splitAmountList = OpenMinterProto.getSplitAmountListForV2(
+        contractIns.state.remainingSupply,
+        contractIns.state.isPremined,
+        premine
+    )
     const catTx = CatTx.create()
     const atInputIndex = catTx.fromCatTx(
         contractIns.catTx,
