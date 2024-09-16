@@ -76,8 +76,7 @@ export async function openMinterCall(
         moreThanOneToken?: boolean
         minterExceeedLimit?: boolean
         wrongRemainingSupply?: boolean
-        verify?: boolean
-        errorSupply?: boolean
+        remainingSupplyCountZero?: boolean
     } = {}
 ): Promise<ContractCallResult<OpenMinterV2State | CAT20State>> {
     if (options.wrongRemainingSupply) {
@@ -89,6 +88,10 @@ export async function openMinterCall(
         contractIns.state.isPremined,
         premine
     )
+    if (options.remainingSupplyCountZero) {
+        splitAmountList[0] = splitAmountList[0] + splitAmountList[1]
+        splitAmountList[1] = 0n
+    }
     const catTx = CatTx.create()
     const atInputIndex = catTx.fromCatTx(
         contractIns.catTx,
@@ -97,11 +100,8 @@ export async function openMinterCall(
     const nexts: ContractIns<OpenMinterV2State | CAT20State>[] = []
     const openMinterState = contractIns.state
     for (let i = 0; i < splitAmountList.length; i++) {
-        let amount = splitAmountList[i]
-        if (amount > 0n) {
-            if (options.errorSupply) {
-                amount = 0n
-            }
+        const amount = splitAmountList[i]
+        if (amount > 0n || options.remainingSupplyCountZero) {
             const splitMinterState = OpenMinterV2Proto.create(
                 openMinterState.tokenScript,
                 true,
@@ -186,19 +186,13 @@ export async function openMinterCall(
             exec: false,
         } as MethodCallOptions<OpenMinterV2>
     )
-    let verify: boolean
-    if (options.verify == undefined) {
-        verify = true
-    } else {
-        verify = options.verify
-    }
     unlockTaprootContractInput(
         openMinterFuncCall,
         contractIns.contractTaproot,
         catTx.tx,
         contractIns.catTx.tx,
         0,
-        verify,
+        true,
         true
     )
     return {

@@ -350,28 +350,17 @@ describe('Test SmartContract `OpenMinterV2`', () => {
             const mintInfo = CAT20Proto.create(limit, keyInfo.xAddress)
             const nextOpenMinterIns = premineCallInfo
                 .nexts[0] as ContractIns<OpenMinterV2State>
-            const premineCallInfoErrorSupply = await openMinterCall(
-                keyInfo,
-                nextOpenMinterIns,
-                mintInfo,
-                max,
-                premine,
-                limit,
-                {
-                    errorSupply: true,
-                    verify: false,
-                }
-            )
-            const nextErrorSupplyOpenMinterIns = premineCallInfoErrorSupply
-                .nexts[0] as ContractIns<OpenMinterV2State>
             await expect(
                 openMinterCall(
                     keyInfo,
-                    nextErrorSupplyOpenMinterIns,
+                    nextOpenMinterIns,
                     mintInfo,
                     max,
                     premine,
-                    limit
+                    limit,
+                    {
+                        remainingSupplyCountZero: true,
+                    }
                 )
             ).to.be.rejected
         })
