@@ -7,6 +7,7 @@ import {
   int32,
   CAT20,
   OpenMinter,
+  OpenMinterV2,
 } from '@cat-protocol/cat-smartcontracts';
 
 import { btc } from './btc';
@@ -28,6 +29,7 @@ import { randomBytes } from 'crypto';
 import { SupportedNetwork } from './cli-config';
 import Decimal from 'decimal.js';
 import { MAX_TOTAL_SUPPLY } from './metadata';
+import { MinterType } from './minter';
 
 const ISSUE_PUBKEY =
   '0250929b74c1a04954b78b4b6035e97a5e078a5a0f28ec96d547bfee9ace803ac0';
@@ -163,8 +165,21 @@ export function getOpenMinterContract(
   premine: int32,
   limit: int32,
   premineAddress: ByteString,
+  minterMd5: string = MinterType.OPEN_MINTER_V2,
 ) {
-  return new OpenMinter(genesisId, max, premine, limit, premineAddress);
+  if (minterMd5 === MinterType.OPEN_MINTER_V1) {
+    return new OpenMinter(genesisId, max, premine, limit, premineAddress);
+  }
+  const maxCount = max / limit;
+  const premineCount = premine / limit;
+  return new OpenMinterV2(
+    genesisId,
+    maxCount,
+    premine,
+    premineCount,
+    limit,
+    premineAddress,
+  );
 }
 
 export function getOpenMinterContractP2TR(
@@ -173,9 +188,17 @@ export function getOpenMinterContractP2TR(
   premine: int32,
   limit: int32,
   premineAddress: ByteString,
+  minterMd5: string,
 ) {
   return contract2P2TR(
-    getOpenMinterContract(genesisId, max, premine, limit, premineAddress),
+    getOpenMinterContract(
+      genesisId,
+      max,
+      premine,
+      limit,
+      premineAddress,
+      minterMd5,
+    ),
   );
 }
 

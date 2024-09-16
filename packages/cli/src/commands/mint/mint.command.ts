@@ -12,8 +12,9 @@ import {
   getTokens,
   btc,
   TokenMetadata,
+  MinterType,
 } from 'src/common';
-import { openMint } from './ft.open-minter';
+import { getRemainSupply, openMint } from './ft.open-minter';
 import { ConfigService, SpendService, WalletService } from 'src/providers';
 import { Inject } from '@nestjs/common';
 import { log } from 'console';
@@ -125,14 +126,6 @@ export class MintCommand extends BoardcastCommand {
 
             const limit = scaledInfo.limit;
 
-            if (minter.state.data.remainingSupply < limit) {
-              console.warn(
-                `small limit of ${unScaleByDecimals(limit, token.info.decimals)} in the minter UTXO!`,
-              );
-              log(`retry to mint token [${token.info.symbol}] ...`);
-              continue;
-            }
-
             if (!minter.state.data.isPremined && scaledInfo.premine > 0n) {
               if (typeof amount === 'bigint') {
                 if (amount !== scaledInfo.premine) {
@@ -145,10 +138,31 @@ export class MintCommand extends BoardcastCommand {
               }
             } else {
               amount = amount || limit;
-              amount =
-                amount > minter.state.data.remainingSupply
-                  ? minter.state.data.remainingSupply
-                  : amount;
+              if (token.info.minterMd5 === MinterType.OPEN_MINTER_V1) {
+                if (
+                  getRemainSupply(minter.state.data, token.info.minterMd5) <
+                  limit
+                ) {
+                  console.warn(
+                    `small limit of ${unScaleByDecimals(limit, token.info.decimals)} in the minter UTXO!`,
+                  );
+                  log(`retry to mint token [${token.info.symbol}] ...`);
+                  continue;
+                }
+                amount =
+                  amount >
+                  getRemainSupply(minter.state.data, token.info.minterMd5)
+                    ? getRemainSupply(minter.state.data, token.info.minterMd5)
+                    : amount;
+              } else if (
+                token.info.minterMd5 == MinterType.OPEN_MINTER_V2 &&
+                amount != limit
+              ) {
+                console.warn(
+                  `can only mint at the exactly amount of ${limit} at once`,
+                );
+                amount = limit;
+              }
             }
 
             const mintTxIdOrErr = await openMint(
