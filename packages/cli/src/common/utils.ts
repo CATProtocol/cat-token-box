@@ -29,6 +29,7 @@ import { randomBytes } from 'crypto';
 import { SupportedNetwork } from './cli-config';
 import Decimal from 'decimal.js';
 import { MAX_TOTAL_SUPPLY } from './metadata';
+import { MinterType } from './minter';
 
 const ISSUE_PUBKEY =
   '0250929b74c1a04954b78b4b6035e97a5e078a5a0f28ec96d547bfee9ace803ac0';
@@ -164,9 +165,9 @@ export function getOpenMinterContract(
   premine: int32,
   limit: int32,
   premineAddress: ByteString,
-  version: number = 2,
+  minterMd5: string,
 ) {
-  if (version === 1) {
+  if (minterMd5 === MinterType.OPEN_MINTER_V1) {
     return new OpenMinter(genesisId, max, premine, limit, premineAddress);
   }
   const maxCount = max / limit;
@@ -187,7 +188,7 @@ export function getOpenMinterContractP2TR(
   premine: int32,
   limit: int32,
   premineAddress: ByteString,
-  version: number = 2,
+  minterMd5: string,
 ) {
   return contract2P2TR(
     getOpenMinterContract(
@@ -196,7 +197,7 @@ export function getOpenMinterContractP2TR(
       premine,
       limit,
       premineAddress,
-      version,
+      minterMd5,
     ),
   );
 }

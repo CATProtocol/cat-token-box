@@ -17,16 +17,14 @@ import {
 } from 'src/common';
 
 import {
-  OpenMinterProto,
   ProtocolState,
   getSHPreimage,
   getCatCommitScript,
-  OpenMinterState,
+  OpenMinterV2State,
+  OpenMinterV2Proto,
 } from '@cat-protocol/cat-smartcontracts';
 import { ConfigService, WalletService } from 'src/providers';
 import { scaleConfig } from 'src/token';
-import { OpenMinterV2State } from '@cat-protocol/cat-smartcontracts';
-import { OpenMinterV2Proto } from '@cat-protocol/cat-smartcontracts';
 
 function getMinter(
   wallet: WalletService,
@@ -42,6 +40,7 @@ function getMinter(
     scaledTokenInfo.premine,
     scaledTokenInfo.limit,
     premineAddress,
+    tokenInfo.minterMd5,
   );
 }
 

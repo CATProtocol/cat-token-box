@@ -4,7 +4,6 @@ import {
   UTXO,
   MethodCallOptions,
   int2ByteString,
-  hash160,
 } from 'scrypt-ts';
 import {
   getRawTransaction,
@@ -40,11 +39,11 @@ import {
   ChangeInfo,
   int32,
   OpenMinterV2,
+  OpenMinterV2Proto,
+  OpenMinterV2State,
 } from '@cat-protocol/cat-smartcontracts';
 import { ConfigService, SpendService, WalletService } from 'src/providers';
 import { scaleConfig } from 'src/token';
-import { OpenMinterV2Proto } from '@cat-protocol/cat-smartcontracts';
-import { OpenMinterV2State } from '@cat-protocol/cat-smartcontracts';
 
 const getPremineAddress = async (
   config: ConfigService,
@@ -144,7 +143,6 @@ export function createOpenMinterState(
   remainingSupply: int32,
   metadata: TokenMetadata,
   newMinter: number,
-  openMinterVersin: number,
 ): {
   splitAmountList: bigint[];
   minterStates: OpenMinterState[];
@@ -160,7 +158,7 @@ export function createOpenMinterState(
     newMinter,
   );
 
-  if (openMinterVersin == 2) {
+  if (metadata.info.minterMd5 == MinterType.OPEN_MINTER_V2) {
     splitAmountList = OpenMinterV2Proto.getSplitAmountList(
       remainingSupply,
       isPriemined,
@@ -212,7 +210,6 @@ export async function openMint(
   newMinter: number /* number of new minter utxo */,
   minterContract: OpenMinterContract,
   mintAmount: bigint,
-  openMinterVersin: number = 2,
 ): Promise<string | Error> {
   const {
     utxo: minterUtxo,
@@ -238,7 +235,6 @@ export async function openMint(
     getRemainSupply(preState, tokenInfo.minterMd5),
     metadata,
     newMinter,
-    openMinterVersin,
   );
 
   for (let i = 0; i < minterStates.length; i++) {
@@ -285,7 +281,7 @@ export async function openMint(
     scaledInfo.premine,
     scaledInfo.limit,
     premineAddress,
-    openMinterVersin,
+    tokenInfo.minterMd5,
   );
 
   const changeScript = btc.Script.fromAddress(address);

@@ -12,7 +12,6 @@ import {
   getTokens,
   btc,
   TokenMetadata,
-  getOpenMinterVersion,
   MinterType,
 } from 'src/common';
 import { getRemainSupply, openMint } from './ft.open-minter';
@@ -176,7 +175,6 @@ export class MintCommand extends BoardcastCommand {
               2,
               minter,
               amount,
-              getOpenMinterVersion(token.info.minterMd5),
             );
 
             if (mintTxIdOrErr instanceof Error) {
