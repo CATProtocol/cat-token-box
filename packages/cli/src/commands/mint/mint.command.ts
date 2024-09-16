@@ -160,11 +160,9 @@ export class MintCommand extends BoardcastCommand {
                 amount != limit
               ) {
                 console.warn(
-                  'should fail when the minting amount loses the limit -> should fail when the minting amount does not reach the limit',
+                  `can only mint at the exactly amount of ${limit} at once`,
                 );
-                if (token.info.minterMd5 === MinterType.OPEN_MINTER_V2) {
-                  amount = limit;
-                }
+                amount = limit;
               }
             }
 
