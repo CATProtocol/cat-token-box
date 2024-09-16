@@ -165,7 +165,7 @@ export function getOpenMinterContract(
   premine: int32,
   limit: int32,
   premineAddress: ByteString,
-  minterMd5: string,
+  minterMd5: string = MinterType.OPEN_MINTER_V2,
 ) {
   if (minterMd5 === MinterType.OPEN_MINTER_V1) {
     return new OpenMinter(genesisId, max, premine, limit, premineAddress);
