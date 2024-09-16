@@ -3,7 +3,6 @@ import {
   MinterType,
   getUtxos,
   OpenMinterTokenInfo,
-  getMinterMd5,
   logerror,
   logwarn,
   toP2tr,
@@ -25,6 +24,7 @@ import {
   BoardcastCommand,
   BoardcastCommandOptions,
 } from '../boardcast.command';
+import { OpenMinterV2 } from '@cat-protocol/cat-smartcontracts';
 
 interface DeployCommandOptions extends BoardcastCommandOptions {
   config?: string;
@@ -109,7 +109,7 @@ export class DeployCommand extends BoardcastCommand {
       }
 
       Object.assign(info, {
-        minterMd5: getMinterMd5(MinterType.OPEN_MINTER),
+        minterMd5: OpenMinterV2.getArtifact().md5,
       });
 
       const result: {
@@ -122,7 +122,7 @@ export class DeployCommand extends BoardcastCommand {
         info as OpenMinterTokenInfo,
         feeRate,
         utxos,
-        MinterType.OPEN_MINTER,
+        MinterType.OPEN_MINTER_V2,
         this.walletService,
         this.configService,
       );
