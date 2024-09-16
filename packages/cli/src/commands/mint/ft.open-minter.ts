@@ -24,6 +24,7 @@ import {
   logerror,
   btc,
   verifyContract,
+  MinterType,
 } from 'src/common';
 
 import {
@@ -190,6 +191,17 @@ export function pickOpenMinterStateFeild<T>(
   return undefined;
 }
 
+export function getRemainSupply(
+  state: OpenMinterState | OpenMinterV2State,
+  minterMd5: string,
+) {
+  if (minterMd5 === MinterType.OPEN_MINTER_V1) {
+    return pickOpenMinterStateFeild<bigint>(state, 'remainingSupply');
+  } else if (minterMd5 === MinterType.OPEN_MINTER_V2) {
+    return pickOpenMinterStateFeild<bigint>(state, 'remainingSupplyCount');
+  }
+}
+
 export async function openMint(
   config: ConfigService,
   wallet: WalletService,
@@ -223,8 +235,7 @@ export async function openMint(
   const { splitAmountList, minterStates } = createOpenMinterState(
     mintAmount,
     preState.isPremined,
-    pickOpenMinterStateFeild<bigint>(preState, 'remainingSupply') ||
-      pickOpenMinterStateFeild<bigint>(preState, 'remainingSupplyCount'),
+    getRemainSupply(preState, tokenInfo.minterMd5),
     metadata,
     newMinter,
     openMinterVersin,
