@@ -323,7 +323,7 @@ describe('Test SmartContract `OpenMinterV2`', () => {
             }
         })
 
-        it('should fail when the minting amount loses the limit', async () => {
+        it('should fail when the minting amount does not reach the limit', async () => {
             for (
                 let index = 0;
                 index < premineCallInfo.nexts.length - 1;
@@ -344,6 +344,36 @@ describe('Test SmartContract `OpenMinterV2`', () => {
                     )
                 ).to.be.rejected
             }
+        })
+
+        it('should fail when remainingSupplyCount of new minters equals 0', async () => {
+            const mintInfo = CAT20Proto.create(limit, keyInfo.xAddress)
+            const nextOpenMinterIns = premineCallInfo
+                .nexts[0] as ContractIns<OpenMinterV2State>
+            const premineCallInfoErrorSupply = await openMinterCall(
+                keyInfo,
+                nextOpenMinterIns,
+                mintInfo,
+                max,
+                premine,
+                limit,
+                {
+                    errorSupply: true,
+                    verify: false,
+                }
+            )
+            const nextErrorSupplyOpenMinterIns = premineCallInfoErrorSupply
+                .nexts[0] as ContractIns<OpenMinterV2State>
+            await expect(
+                openMinterCall(
+                    keyInfo,
+                    nextErrorSupplyOpenMinterIns,
+                    mintInfo,
+                    max,
+                    premine,
+                    limit
+                )
+            ).to.be.rejected
         })
 
         it('should fail when minting more than one token output', async () => {
