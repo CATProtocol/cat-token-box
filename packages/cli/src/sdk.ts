@@ -217,7 +217,7 @@ const createRawTxSendCAT20 = async ({
         );
 
 
-        let commitPsbt = Psbt.fromHex(result.commitTx.uncheckedSerialize());
+        let commitPsbt = Psbt.fromHex(result.commitTx.uncheckedSerialize(), { network: networks.bitcoin });
         let commitIndicesToSign: number[] = [];
         for (let i = 0; i < commitPsbt.txInputs.length; i++) {
             commitIndicesToSign.push(i);
@@ -230,7 +230,7 @@ const createRawTxSendCAT20 = async ({
         })
 
 
-        let revealPsbt = Psbt.fromHex(result.revealTx.uncheckedSerialize());
+        let revealPsbt = Psbt.fromHex(result.revealTx.uncheckedSerialize(), { network: networks.bitcoin });
         let revealIndicesToSign: number[] = [];
         for (let i = 0; i < revealPsbt.txInputs.length; i++) {
             revealIndicesToSign.push(i);
