@@ -241,6 +241,7 @@ app.post("/create-tx-send-cat20", async (req: any, res: any) => {
     // Get Body
     const {
       senderAddress,
+      senderPubKey,
       receiverAddress,
       amount,
       tokenId,
@@ -248,6 +249,7 @@ app.post("/create-tx-send-cat20", async (req: any, res: any) => {
       feeRate,
     } = req.body as {
       senderAddress: string;
+      senderPubKey: Buffer;   // internal pub key 33 bytes
       receiverAddress: string;
       amount: string;
       tokenId: string;
@@ -272,7 +274,7 @@ app.post("/create-tx-send-cat20", async (req: any, res: any) => {
     const spendService = new SpendService(configService);
     const walletService = new WalletService(configService);
 
-    walletService.overwriteWalletByAddress(senderAddress);
+    walletService.overwriteWalletByAddress(senderAddress, senderPubKey);
     // console.log(" -- overwriteWallet ");
     // console.log("New wallet address: ", walletService.getAddress());
 

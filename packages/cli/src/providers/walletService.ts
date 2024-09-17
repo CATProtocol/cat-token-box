@@ -141,23 +141,26 @@ export class WalletService {
       mnemonic: bip39.generateMnemonic(),
       privateKey: privateKey,
       address: "",
+      pubKey: null,
     };
 
     this.createWallet(wallet);
   }
 
 
-  overwriteWalletByAddress(address: string) {
+  overwriteWalletByAddress(address: string, pubKey: Buffer) {
     // use fake mnem & priv key
     const mnem = bip39.generateMnemonic();
     const accPath = "m/86'/0'/0'/0/0";
     const privKey = derivePrivateKey(mnem, accPath, BitcoinNetwork); // hard code mainnet
     const wallet: Wallet = {
+      addressType: AddressType.P2TR,
       accountPath: accPath,
       name: null,
       mnemonic: mnem,
       privateKey: privKey,
       address: address,
+      pubKey: pubKey,
     };
 
     this.createWallet(wallet);
@@ -206,6 +209,10 @@ export class WalletService {
   }
 
   getPublicKey(): btc.PublicKey {
+    if (this.wallet.pubKey !== null) {
+      return this.wallet.pubKey;
+    }
+
     const addressType = this.getAddressType();
 
     if (addressType === AddressType.P2TR) {

@@ -8,11 +8,16 @@ import {
     getTokens,
     getUtxos,
     logerror,
+    toBitcoinNetwork,
     TokenMetadata,
     unScaleByDecimals,
 } from "./common";
 import { ConfigService, SpendService } from "./providers";
 import { WalletService } from "./providers/walletService";
+
+import { Psbt } from 'bitcoinjs-lib';
+import { networks } from "bitcoinjs-lib";
+
 
 export async function send(
     token: TokenMetadata,
@@ -117,8 +122,8 @@ const createRawTxSendCAT20 = async ({
     spendService: SpendService,
     feeUtxos: UTXO[],
     feeRate?: number,
-}) => {
-    // }): Promise<CreateTxResult> => {
+    // }) => {
+}): Promise<CreateTxResult> => {
 
     if (feeUtxos.length === 0) {
         console.warn("Insufficient satoshis balance!");
@@ -140,6 +145,7 @@ const createRawTxSendCAT20 = async ({
         return;
     }
 
+    // TODO: 2525 NOTE: not updated yet
     const cachedTxs: Map<string, btc.Transaction> = new Map();
     if (tokenContracts.length > 4) {
         console.info(`Merging your [${token.info.symbol}] tokens ...`);
@@ -210,30 +216,73 @@ const createRawTxSendCAT20 = async ({
         console.log(
             `Sending ${unScaleByDecimals(amount, token.info.decimals)} ${token.info.symbol} tokens to ${receiverAddress} \nin txid: ${result.revealTx.id}`,
         );
+
+
+        let commitPsbt = Psbt.fromHex(result.commitTx.uncheckedSerialize());
+        let commitIndicesToSign: number[] = [];
+        for (let i = 0; i < commitPsbt.txInputs.length; i++) {
+            commitIndicesToSign.push(i);
+        }
+
+        let commitTx = preparePayloadSignTx({
+            base64Psbt: commitPsbt.toBase64(),
+            indicesToSign: commitIndicesToSign,
+            address: senderAddress,
+        })
+
+
+        let revealPsbt = Psbt.fromHex(result.revealTx.uncheckedSerialize());
+        let revealIndicesToSign: number[] = [];
+        for (let i = 0; i < revealPsbt.txInputs.length; i++) {
+            revealIndicesToSign.push(i);
+        }
+
+        let revealTx = preparePayloadSignTx({
+            base64Psbt: revealPsbt.toBase64(),
+            indicesToSign: revealIndicesToSign,
+            address: senderAddress,
+        })
+
+        const networkFee = result.commitTx.getFee() + result.revealTx.getFee();
+
+        const finalRes: CreateTxResult = {
+            commitTx,
+            revealTx,
+            networkFee,
+        }
+
+        return finalRes;
     }
-
-    return result;
-
-
-
-
-
-
-    // return {
-    //     network: {
-    //         type: "Mainnet",
-    //         address: "", // TODO:
-    //     },
-    //     message: "Sign Transaction",
-    //     psbtBase64: base64Psbt,
-    //     broadcast: false,
-    //     inputsToSign: [{
-    //         address: address,
-    //         signingIndexes: indicesToSign,
-    //         sigHash: sigHashType,
-    //     }],
-    // };
     return null;
+};
+
+
+const preparePayloadSignTx = ({
+    base64Psbt,
+    indicesToSign,
+    address,
+    sigHashType = btc.Signature.SIGHASH_DEFAULT
+}: {
+    base64Psbt: string,
+    indicesToSign: number[],
+    address: string,
+    sigHashType?: number,
+}): SignTransactionPayload => {
+
+    return {
+        // network: {
+        //     type: "Mainnet",
+        //     address: "", // TODO:
+        // },
+        message: "Sign Transaction",
+        psbtBase64: base64Psbt,
+        broadcast: false,
+        inputsToSign: [{
+            address: address,
+            signingIndexes: indicesToSign,
+            sigHash: sigHashType,
+        }],
+    };
 };
 
 
