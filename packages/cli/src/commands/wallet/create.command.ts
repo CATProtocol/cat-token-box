@@ -45,6 +45,7 @@ export class CreateCommand extends BaseCommand {
         name: name,
         mnemonic: bip39.generateMnemonic(),
         privateKey: privateKey,
+        address: "",
       };
 
       this.walletService.createWallet(wallet);
