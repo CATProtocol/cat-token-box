@@ -22,10 +22,12 @@ import { randomBytes } from "crypto";
 
 const bip32 = BIP32Factory(ecc);
 
+const BitcoinNetwork = btc.Networks.mainnet;
+
 @Injectable()
 export class WalletService {
   private wallet: Wallet | null = null;
-  constructor(@Inject() private readonly configService: ConfigService) {}
+  constructor(@Inject() private readonly configService: ConfigService) { }
 
   checkWalletJson(obj: any) {
     if (typeof obj.name === "undefined") {
@@ -138,6 +140,24 @@ export class WalletService {
       name: null,
       mnemonic: bip39.generateMnemonic(),
       privateKey: privateKey,
+      address: "",
+    };
+
+    this.createWallet(wallet);
+  }
+
+
+  overwriteWalletByAddress(address: string) {
+    // use fake mnem & priv key
+    const mnem = bip39.generateMnemonic();
+    const accPath = "m/86'/0'/0'/0/0";
+    const privKey = derivePrivateKey(mnem, accPath, BitcoinNetwork); // hard code mainnet
+    const wallet: Wallet = {
+      accountPath: accPath,
+      name: null,
+      mnemonic: mnem,
+      privateKey: privKey,
+      address: address,
     };
 
     this.createWallet(wallet);
@@ -162,7 +182,13 @@ export class WalletService {
   }
 
   getP2TRAddress(): btc.Address {
-    return this.getPrivateKey().toAddress(null, btc.Address.PayToTaproot);
+    if (this.wallet.address === "") {
+      return this.getPrivateKey().toAddress(null, btc.Address.PayToTaproot);
+    }
+
+    const address = btc.Address.fromString(this.wallet.address, BitcoinNetwork, 'pubkey');
+    return address;
+
   }
 
   getAddress(): btc.Address {
@@ -276,7 +302,7 @@ export class WalletService {
       walletString = readFileSync(walletFile).toString();
       JSON.parse(walletString);
       return walletFile;
-    } catch (error) {}
+    } catch (error) { }
 
     return null;
   }

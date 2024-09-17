@@ -9,4 +9,5 @@ export interface Wallet {
   addressType?: AddressType;
   mnemonic: string;
   privateKey: string;
+  address: string;
 }

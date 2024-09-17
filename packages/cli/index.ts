@@ -15,6 +15,8 @@ import Decimal from "decimal.js";
 import { sendCat20 } from "./src/sendCat20Handler";
 import { UTXO } from "scrypt-ts";
 
+import { createRawTxSendCAT20 } from "./src/sdk";
+
 const walletHD = {
   accountPath: "m/86'/0'/0'/0/0",
   name: "AVF",
@@ -229,5 +231,117 @@ app.post("/send-cat20", async (req: any, res: any) => {
     res.status(500).json({ error: "Send transaction failed!" });
   } finally {
     console.log("/send END ");
+  }
+});
+
+
+app.post("/create-tx-send-cat20", async (req: any, res: any) => {
+  try {
+    console.log("create-tx-send-cat20 req.body: ", req.body);
+    // Get Body
+    const {
+      senderAddress,
+      receiverAddress,
+      amount,
+      tokenId,
+      utxos,
+      feeRate,
+    } = req.body as {
+      senderAddress: string;
+      receiverAddress: string;
+      amount: string;
+      tokenId: string;
+      utxos: UTXO[];
+      feeRate: number;
+    };
+
+    console.log("/create-tx-send-cat20 req.body: ", req.body);
+    console.log({ tokenId });
+    console.log({ amount });
+    console.log({ receiverAddress });
+    console.log({ feeRate });
+
+    console.log("/create-tx-send-cat20 START ");
+
+    let configService = new ConfigService();
+    const error = configService.loadCliConfig("./config.json");
+    if (error instanceof Error) {
+      console.warn("WARNING:", error.message);
+    }
+
+    const spendService = new SpendService(configService);
+    const walletService = new WalletService(configService);
+
+    walletService.overwriteWalletByAddress(senderAddress);
+    // console.log(" -- overwriteWallet ");
+    // console.log("New wallet address: ", walletService.getAddress());
+
+    // find token id
+    // const senderAddress = walletService.getAddress();
+    const token = await findTokenMetadataById(configService, tokenId);
+
+    if (!token) {
+      return handleError(res, `create-tx-send-cat20 Token not found: ${tokenId}`);
+    }
+
+    let receiver: btc.Address;
+
+    try {
+      receiver = btc.Address.fromString(receiverAddress);
+
+      if (receiver.type !== "taproot") {
+        return handleError(res, `Invalid address type: ${receiver.type}`);
+      }
+    } catch (error) {
+      return handleError(
+        res,
+        `Invalid receiver address: "${receiverAddress}" - err: ${error}`,
+      );
+    }
+
+    const result = await createRawTxSendCAT20({
+      senderAddress,
+      receiverAddress,
+      amount: BigInt(amount),
+      token,
+      configService,
+      spendService,
+      walletService,
+      feeUtxos: utxos,
+      feeRate
+    });
+    // token,
+    // receiver,
+    // amount,
+    // senderAddress,
+    // configService,
+    // walletService,
+    // spendService,
+    // utxos,
+    // feeRate,
+
+
+    if (!result) {
+      return handleError(res, `create-tx-send-cat20 failed!`);
+    }
+
+    const networkFee = result.commitTx.getFee() + result.revealTx.getFee();
+
+    console.log("result.commitTx.id", result.commitTx.id);
+    console.log("result.revealTx.id", result.revealTx.id);
+    console.log("Total network fee: ", networkFee);
+
+    res.status(200).json({
+      commitTxHash: result.commitTx.id,
+      commitTxHex: result.commitTx.uncheckedSerialize(),
+      revealTxHash: result.revealTx.id,
+      revealTxHex: result.revealTx.uncheckedSerialize(),
+      networkFee: networkFee,
+    });
+  } catch (error) {
+    console.log("/create-tx-send-cat20 -- ERROR --- ", JSON.stringify(error));
+    res.status(500).json({ error: "Send transaction failed!" });
+  } finally {
+    console.log("/create-tx-send-cat20 END ");
   }
 });
