@@ -15,8 +15,9 @@ import {
 import { ConfigService, SpendService } from "./providers";
 import { WalletService } from "./providers/walletService";
 
-import { Psbt } from 'bitcoinjs-lib';
+import { Psbt, Transaction, address } from 'bitcoinjs-lib';
 import { networks } from "bitcoinjs-lib";
+import { Sequence } from "@cmdcode/tapscript";
 
 
 export async function send(
@@ -96,6 +97,36 @@ export interface SignTransactionOptions {
 export interface SignTransactionResponse {
     psbtBase64: string;
     txId?: string;
+}
+
+const parsePsbtFromTxHex = (txHex: string, inputs: UTXO[], internalPubKeyXOnly: Buffer): Psbt => {
+    let psbt = new Psbt({ network: networks.bitcoin });
+
+    let msgTx = Transaction.fromHex(txHex);
+
+    for (let i = 0; i < msgTx.ins.length; i++) {
+        let txIn = msgTx.ins[i];
+
+        const inputData: any = {
+            hash: txIn.hash,
+            index: txIn.index,
+            witnessUtxo: { value: inputs[i].satoshis, script: Buffer.from(inputs[i].script, "hex") as Buffer },
+            sequence: txIn.sequence,
+            tapInternalKey: internalPubKeyXOnly,
+        };
+        psbt.addInput(inputData);
+    }
+
+    for (let i = 0; i < msgTx.outs.length; i++) {
+        let txOut = msgTx.outs[i];
+
+        const outputData = {
+            address: address.fromOutputScript(txOut.script),
+            value: txOut.value,
+        }
+        psbt.addOutput(outputData);
+    }
+    return psbt;
 }
 
 
@@ -217,28 +248,13 @@ const createRawTxSendCAT20 = async ({
         );
 
 
-        function unpadHex(hex) {
-            const index = hex.indexOf('70736274')
-            if (index !== -1) {
-                return hex.substr(index);
-            }
-            return hex;
-        }
-
         let commitTxHex = result.commitTx.uncheckedSerialize();
-        let unpadCommitTxHex = unpadHex(commitTxHex);
-
         let revealTxHex = result.revealTx.uncheckedSerialize();
-        let unpadRevealTxHex = unpadHex(revealTxHex);
 
         console.log({ commitTxHex });
-        console.log({ unpadCommitTxHex });
         console.log({ revealTxHex });
-        console.log({ unpadRevealTxHex });
 
-
-
-        let commitPsbt = Psbt.fromHex(unpadCommitTxHex, { network: networks.bitcoin });
+        let commitPsbt = parsePsbtFromTxHex(commitTxHex, [feeUtxo], Buffer.from(walletService.getXOnlyPublicKey(), "hex"));
         let commitIndicesToSign: number[] = [];
         for (let i = 0; i < commitPsbt.txInputs.length; i++) {
             commitIndicesToSign.push(i);
@@ -251,7 +267,8 @@ const createRawTxSendCAT20 = async ({
         })
 
 
-        let revealPsbt = Psbt.fromHex(unpadRevealTxHex, { network: networks.bitcoin });
+        let revealPsbt = parsePsbtFromTxHex(revealTxHex, [feeUtxo], Buffer.from(walletService.getXOnlyPublicKey(), "hex"));
+        // let revealPsbt = Psbt.fromHex(unpadRevealTxHex, { network: networks.bitcoin });
         let revealIndicesToSign: number[] = [];
         for (let i = 0; i < revealPsbt.txInputs.length; i++) {
             revealIndicesToSign.push(i);
