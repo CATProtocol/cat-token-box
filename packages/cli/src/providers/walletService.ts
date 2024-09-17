@@ -308,6 +308,9 @@ export class WalletService {
   }
 
   signTx(tx: btc.Transaction) {
+    if (this.wallet.address !== "") {
+      return
+    }
     // unlock fee inputs
 
     const privateKey = this.getPrivateKey();

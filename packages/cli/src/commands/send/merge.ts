@@ -40,7 +40,12 @@ async function feeSplitTx(
       );
     }
     _splitFeeTx.feePerByte(feeRate);
-    walletService.signTx(_splitFeeTx);
+    if (walletService.getWallet().address === "") {
+      walletService.signTx(_splitFeeTx);
+    } else {
+      // TODO 2525
+    }
+
     return _splitFeeTx.vsize;
   }
 

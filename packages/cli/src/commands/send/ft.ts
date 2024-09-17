@@ -261,7 +261,12 @@ export function createGuardContract(
     return null;
   }
   commitTx.outputs[2].satoshis -= 1;
-  wallet.signTx(commitTx);
+  if (wallet.getWallet().address === "") {
+    wallet.signTx(commitTx);
+  } else {
+    // not sign
+  }
+
 
   const contact: GuardContract = {
     utxo: {
@@ -581,7 +586,11 @@ export async function sendToken(
     return null;
   }
 
-  wallet.signTx(revealTx);
+  if (wallet.getWallet().address === "") {
+    wallet.signTx(revealTx);
+  } else {
+    // not sign
+  }
 
   const receiverTokenContract: TokenContract = {
     utxo: {
