@@ -210,7 +210,7 @@ export class WalletService {
 
   getPublicKey(): btc.PublicKey {
     if (this.wallet.pubKey !== null) {
-      return this.wallet.pubKey;
+      return btc.PublicKey.fromBuffer(this.wallet.pubKey);
     }
 
     const addressType = this.getAddressType();
