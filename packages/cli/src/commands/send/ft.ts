@@ -372,6 +372,9 @@ export async function sendToken(
     throw new Error("to much input");
   }
 
+  console.log("sendToken before reveal");
+
+
   const revealTx = new btc.Transaction()
     .from(inputUtxos)
     .addOutput(
@@ -388,6 +391,10 @@ export async function sendToken(
     )
     .feePerByte(feeRate);
 
+
+  console.log("sendToken reveal 1: ", { revealTx });
+
+
   if (changeTokenState) {
     revealTx.addOutput(
       new btc.Transaction.Output({
@@ -398,6 +405,8 @@ export async function sendToken(
   }
 
 
+  console.log("sendToken reveal 2: ", { revealTx });
+
 
   const satoshiChangeScript = btc.Script.fromAddress(changeAddress);
   revealTx.addOutput(
@@ -407,7 +416,8 @@ export async function sendToken(
     }),
   );
 
-  console.log("sendToken ", { revealTx });
+
+  console.log("sendToken reveal 3: ", { revealTx });
 
   const tokenTxs = await Promise.all(
     tokens.map(async ({ utxo: tokenUtxo }) => {

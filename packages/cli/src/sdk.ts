@@ -131,7 +131,6 @@ const createRawTxSendCAT20 = async ({
     }
 
     const res = await getTokens(configService, spendService, token, senderAddress);
-
     if (res === null) {
         return;
     }
