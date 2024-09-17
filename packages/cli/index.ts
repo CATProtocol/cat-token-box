@@ -139,6 +139,7 @@ app.post("/send-cat20", async (req: any, res: any) => {
       tokenId,
       utxos,
       feeRate,
+      isBroadcast,
     } = req.body as {
       privateKey: string;
       receiver: string;
@@ -146,6 +147,7 @@ app.post("/send-cat20", async (req: any, res: any) => {
       tokenId: string;
       utxos: UTXO[];
       feeRate: number;
+      isBroadcast: boolean;
     };
 
     console.log("/send req.body: ", req.body);
@@ -204,6 +206,7 @@ app.post("/send-cat20", async (req: any, res: any) => {
       walletService,
       spendService,
       utxos,
+      isBroadcast,
       feeRate,
     );
 
