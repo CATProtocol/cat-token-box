@@ -73,6 +73,7 @@ async function unlockToken(
     sighash.hash,
   );
   const pubkeyX = wallet.getXOnlyPublicKey();
+  console.log("unlockToken ", { pubkeyX });
   const pubKeyPrefix = wallet.getPubKeyPrefix();
   const tokenUnlockArgs: TokenUnlockArgs = {
     isUserSpend: true,
@@ -318,6 +319,9 @@ export async function sendToken(
     changeAddress,
   );
 
+
+  console.log("sendToken ", { commitResult });
+
   if (commitResult === null) {
     return null;
   }
@@ -393,6 +397,8 @@ export async function sendToken(
     );
   }
 
+
+
   const satoshiChangeScript = btc.Script.fromAddress(changeAddress);
   revealTx.addOutput(
     new btc.Transaction.Output({
@@ -400,6 +406,8 @@ export async function sendToken(
       script: satoshiChangeScript,
     }),
   );
+
+  console.log("sendToken ", { revealTx });
 
   const tokenTxs = await Promise.all(
     tokens.map(async ({ utxo: tokenUtxo }) => {

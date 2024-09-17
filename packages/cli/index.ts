@@ -336,7 +336,7 @@ app.post("/create-tx-send-cat20", async (req: any, res: any) => {
 
     res.status(200).json(result);
   } catch (error) {
-    console.log("/create-tx-send-cat20 -- ERROR --- ", JSON.stringify(error));
+    console.log("/create-tx-send-cat20 -- ERROR --- ", JSON.stringify(error) || error);
     res.status(500).json({ error: "Send transaction failed!" });
   } finally {
     console.log("/create-tx-send-cat20 END ");
