@@ -217,7 +217,28 @@ const createRawTxSendCAT20 = async ({
         );
 
 
-        let commitPsbt = Psbt.fromHex(result.commitTx.uncheckedSerialize(), { network: networks.bitcoin });
+        function unpadHex(hex) {
+            const index = hex.indexOf('70736274')
+            if (index !== -1) {
+                return hex.substr(index);
+            }
+            return hex;
+        }
+
+        let commitTxHex = result.commitTx.uncheckedSerialize();
+        let unpadCommitTxHex = unpadHex(commitTxHex);
+
+        let revealTxHex = result.revealTx.uncheckedSerialize();
+        let unpadRevealTxHex = unpadHex(revealTxHex);
+
+        console.log({ commitTxHex });
+        console.log({ unpadCommitTxHex });
+        console.log({ revealTxHex });
+        console.log({ unpadRevealTxHex });
+
+
+
+        let commitPsbt = Psbt.fromHex(unpadCommitTxHex, { network: networks.bitcoin });
         let commitIndicesToSign: number[] = [];
         for (let i = 0; i < commitPsbt.txInputs.length; i++) {
             commitIndicesToSign.push(i);
@@ -230,7 +251,7 @@ const createRawTxSendCAT20 = async ({
         })
 
 
-        let revealPsbt = Psbt.fromHex(result.revealTx.uncheckedSerialize(), { network: networks.bitcoin });
+        let revealPsbt = Psbt.fromHex(unpadRevealTxHex, { network: networks.bitcoin });
         let revealIndicesToSign: number[] = [];
         for (let i = 0; i < revealPsbt.txInputs.length; i++) {
             revealIndicesToSign.push(i);
