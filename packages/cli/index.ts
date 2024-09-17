@@ -327,19 +327,13 @@ app.post("/create-tx-send-cat20", async (req: any, res: any) => {
       return handleError(res, `create-tx-send-cat20 failed!`);
     }
 
-    const networkFee = result.commitTx.getFee() + result.revealTx.getFee();
+    // const networkFee = result.commitTx.getFee() + result.revealTx.getFee();
 
-    console.log("result.commitTx.id", result.commitTx.id);
-    console.log("result.revealTx.id", result.revealTx.id);
-    console.log("Total network fee: ", networkFee);
+    console.log("result.commitTx.id", result.commitTx.psbtBase64);
+    console.log("result.revealTx.id", result.revealTx.psbtBase64);
+    // console.log("Total network fee: ", networkFee);
 
-    res.status(200).json({
-      commitTxHash: result.commitTx.id,
-      commitTxHex: result.commitTx.uncheckedSerialize(),
-      revealTxHash: result.revealTx.id,
-      revealTxHex: result.revealTx.uncheckedSerialize(),
-      networkFee: networkFee,
-    });
+    res.status(200).json(result);
   } catch (error) {
     console.log("/create-tx-send-cat20 -- ERROR --- ", JSON.stringify(error));
     res.status(500).json({ error: "Send transaction failed!" });
