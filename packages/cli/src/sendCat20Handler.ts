@@ -56,6 +56,8 @@ export async function send(
 
   let tokenContracts = pick(contracts, amount);
 
+  console.log("Picked tokenContracts: ", tokenContracts.length);
+
   if (tokenContracts.length === 0) {
     console.log("Insufficient token balance!");
     return;
