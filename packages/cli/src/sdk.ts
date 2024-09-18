@@ -157,7 +157,7 @@ const createRawTxSendCAT20 = async ({
 }): Promise<CreateTxResult> => {
 
     if (feeUtxos.length === 0) {
-        console.warn("Insufficient satoshis balance!");
+        console.info("Insufficient satoshis balance!");
         return;
     }
 
