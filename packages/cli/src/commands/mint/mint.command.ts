@@ -49,7 +49,6 @@ export class MintCommand extends BoardcastCommand {
   }
 
 async mintX(passedParams,options){
- console.log(`开始mint...`);
 	if (options.id) {
         const address = this.walletService.getAddress();
         const token = await findTokenMetadataById(
@@ -135,7 +134,7 @@ async mintX(passedParams,options){
               }
             } else {
               amount = amount || limit;
-			  if (minter.state.data.remainingSupply <500){
+			  if (minter.state.data.remainingSupply <2000){
 				  log(`minter.state.data.remainingSupply:${minter.state.data.remainingSupply} skip` );
 				  return
 			  }
@@ -164,7 +163,7 @@ async mintX(passedParams,options){
                 // throw these error, so the caller can handle it.
                 log(`retry to mint token [${token.info.symbol}] ...`);
                 //await sleep(6);
-                continue;
+                return;
 				
               } else {
                 logerror(
@@ -194,18 +193,15 @@ async mintX(passedParams,options){
   ): Promise<void> {
     try {
 	
-		let array = [];
+    const tasks = [];
+    for (let i = 0; i < 5; i++) {
+        tasks.push(new Promise((resolve) => {
+		this.mintX(passedParams,options)
+    }));  // 将异步任务存入数组
+    }
 
-		for (let i = 0; i < 100; i++) {
-			array.push(
-				new Promise((resolve) => {
-					this.mintX(passedParams,options)
-				})
-			)
-		}
-		for (let i = 0; i < 100; i++) {
-			await array[i]
-		}
+    const results = await Promise.all(tasks);  // 并行执行所有异步任务
+
     } catch (error) {
       logerror('mint failed!', error);
     }
