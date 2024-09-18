@@ -12,7 +12,7 @@ import {
 import { ConfigService, SpendService, WalletService } from "./src/providers";
 import { findTokenMetadataById, scaleConfig } from "./src/token";
 import Decimal from "decimal.js";
-import { sendCat20 } from "./src/sendCat20Handler";
+import { estFeeSendCat20, sendCat20 } from "./src/sendCat20Handler";
 import { UTXO } from "scrypt-ts";
 
 import { createRawTxSendCAT20 } from "./src/sdk";
@@ -152,7 +152,6 @@ app.post("/send-cat20", async (req: any, res: any) => {
       isBroadcast?: boolean;
     };
 
-    console.log("/send req.body: ", req.body);
     console.log({ tokenId });
     console.log({ amount });
     console.log({ receiverAddress });
@@ -196,9 +195,6 @@ app.post("/send-cat20", async (req: any, res: any) => {
       );
     }
 
-    const scaledInfo = scaleConfig(token.info as OpenMinterTokenInfo); //TODO: kelvin consider to remove
-    // console.log("scaledInfo: ", scaledInfo);
-
     const result = await sendCat20(
       token,
       receiver,
@@ -234,6 +230,68 @@ app.post("/send-cat20", async (req: any, res: any) => {
     res.status(500).json({ error: error, message: "Send transaction failed!" });
   } finally {
     console.log("/send END ");
+  }
+});
+
+
+app.post("/est-fee-send-cat20", async (req: any, res: any) => {
+  try {
+    // Get Body
+    const {
+      privateKey,
+      amount,
+      tokenId,
+    } = req.body as {
+      privateKey: string;
+      amount: string;
+      tokenId: string;
+    };
+
+    console.log({ tokenId });
+    console.log({ amount });
+
+    console.log("/est-fee-send-cat20 START ");
+
+    let configService = new ConfigService();
+    const error = configService.loadCliConfig("./config.json");
+    if (error instanceof Error) {
+      console.warn("WARNING:", error.message);
+    }
+
+    const spendService = new SpendService(configService);
+    const walletService = new WalletService(configService);
+
+    walletService.overwriteWallet(privateKey);
+    console.log(" -- overwriteWallet ");
+    console.log("New wallet address: ", walletService.getAddress());
+
+    // find token id
+    const senderAddress = walletService.getAddress();
+    const token = await findTokenMetadataById(configService, tokenId);
+
+    if (!token) {
+      return handleError(res, `Token not found: ${tokenId}`);
+    }
+
+    const result = await estFeeSendCat20(
+      token,
+      amount,
+      senderAddress,
+      configService,
+      spendService,
+    );
+
+    console.log("estFeeSendCat20 result ", result);
+
+    res.status(200).json({
+      pickedUTXOs: result,
+    });
+
+  } catch (error) {
+    console.log("/est-fee-send-cat20 -- ERROR --- ", error);
+    res.status(500).json({ error: error });
+  } finally {
+    console.log("/est-fee-send-cat20 END ");
   }
 });
 

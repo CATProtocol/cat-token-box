@@ -56,7 +56,7 @@ export async function send(
 
   let tokenContracts = pick(contracts, amount);
 
-  console.log("Picked tokenContracts: ", tokenContracts.length);
+  console.log("Picked tokenContracts: ", tokenContracts.length, contracts.length);
 
   if (tokenContracts.length === 0) {
     console.log("Insufficient token balance!");
@@ -169,4 +169,64 @@ export async function sendCat20(
     console.log("sendCat20 -- ERROR ---", error);
     throw error;
   }
+}
+
+
+export async function estFeeSendCat20(
+  token: any,
+  amount: string,
+  senderAddress: btc.Address,
+  configService: ConfigService,
+  spendService: SpendService,
+) {
+  try {
+    return await estCAT20UTXOs(
+      token,
+      BigInt(amount),
+      senderAddress,
+      configService,
+      spendService,
+    );
+  } catch (error) {
+    console.log("estFeeSendCat20 -- ERROR ---", error);
+    throw error;
+  }
+}
+
+
+export async function estCAT20UTXOs(
+  token: TokenMetadata,
+  amount: bigint,
+  address: btc.Address,
+  configService: ConfigService,
+  spendService: SpendService,
+) {
+  // const feeRate = await this.getFeeRate();
+
+  // let feeUtxos = await getUtxos(configService, walletService, address);
+
+  // console.log("========feeUtxos ori+++++++");
+  // for (const utxo of feeUtxos) {
+  //   console.log("utxo: ", utxo);
+  // }
+
+  // feeUtxos = feeUtxos.filter((utxo) => {
+  //   return spendService.isUnspent(utxo);
+  // });
+
+  // if (feeUtxos.length === 0) {
+  //   console.log("Insufficient satoshis balance!");
+  //   return;
+  // }
+
+  const res = await getTokens(configService, spendService, token, address);
+  if (res === null) {
+    throw new Error("List token contract is empty");
+  }
+
+  const { contracts } = res;
+  let tokenContracts = pick(contracts, amount);
+  console.log("estCAT20UTXOs Picked tokenContracts: ", tokenContracts.length, contracts.length);
+
+  return tokenContracts.length;
 }
