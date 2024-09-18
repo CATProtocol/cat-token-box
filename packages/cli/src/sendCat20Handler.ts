@@ -42,7 +42,7 @@ export async function send(
   // });
 
   if (feeUtxos.length === 0) {
-    console.warn("Insufficient satoshis balance!");
+    console.log("Insufficient satoshis balance!");
     return;
   }
 
@@ -57,7 +57,7 @@ export async function send(
   let tokenContracts = pick(contracts, amount);
 
   if (tokenContracts.length === 0) {
-    console.warn("Insufficient token balance!");
+    console.log("Insufficient token balance!");
     return;
   }
 
@@ -164,7 +164,7 @@ export async function sendCat20(
       feeRate,
     );
   } catch (error) {
-    console.error("sendTransaction -- ERROR ---", JSON.stringify(error));
-    throw new Error("Transaction failed");
+    console.log("sendCat20 -- ERROR ---", error);
+    throw error;
   }
 }
