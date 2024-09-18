@@ -77,7 +77,7 @@ export async function send(
     );
 
     if (e instanceof Error) {
-      logerror("merge token failed!", e);
+      console.info("merge token failed!", e);
       return;
     }
 
