@@ -24,7 +24,9 @@ export async function send(
   walletService: WalletService,
   spendService: SpendService,
   feeUtxos: UTXO[],
+  isBroadcast: boolean,
   feeRate?: number,
+
 ) {
   // const feeRate = await this.getFeeRate();
 
@@ -102,29 +104,31 @@ export async function send(
   console.log("sendToken");
 
   if (result) {
-    const commitTxId = await broadcast(
-      configService,
-      walletService,
-      result.commitTx.uncheckedSerialize(),
-    );
+    if (isBroadcast) {
+      const commitTxId = await broadcast(
+        configService,
+        walletService,
+        result.commitTx.uncheckedSerialize(),
+      );
 
-    if (commitTxId instanceof Error) {
-      throw commitTxId;
+      if (commitTxId instanceof Error) {
+        throw commitTxId;
+      }
+
+      spendService.updateSpends(result.commitTx);
+
+      const revealTxId = await broadcast(
+        configService,
+        walletService,
+        result.revealTx.uncheckedSerialize(),
+      );
+
+      if (revealTxId instanceof Error) {
+        throw revealTxId;
+      }
+
+      spendService.updateSpends(result.revealTx);
     }
-
-    spendService.updateSpends(result.commitTx);
-
-    const revealTxId = await broadcast(
-      configService,
-      walletService,
-      result.revealTx.uncheckedSerialize(),
-    );
-
-    if (revealTxId instanceof Error) {
-      throw revealTxId;
-    }
-
-    spendService.updateSpends(result.revealTx);
 
     console.log(
       `Sending ${unScaleByDecimals(amount, token.info.decimals)} ${token.info.symbol} tokens to ${receiver} \nin txid: ${result.revealTx.id}`,
@@ -143,6 +147,7 @@ export async function sendCat20(
   walletService: WalletService,
   spendService: SpendService,
   utxos: UTXO[],
+  isBroadcast: boolean,
   feeRate: number,
 ) {
   try {
@@ -155,6 +160,7 @@ export async function sendCat20(
       walletService,
       spendService,
       utxos,
+      isBroadcast,
       feeRate,
     );
   } catch (error) {
