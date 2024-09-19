@@ -14,12 +14,13 @@ import {
   toP2tr,
 } from './utils';
 import { byteString2Int } from 'scrypt-ts';
-import { createOpenMinterState } from 'src/commands/mint/ft.open-minter';
 import { findTokenMetadataById, scaleConfig } from 'src/token';
 import { logerror } from './log';
 import { ConfigService, SpendService, WalletService } from 'src/providers';
 import { btc } from './btc';
 import fetch from 'node-fetch-cjs';
+import { MinterType } from './minter';
+import { OpenMinterV2State } from '@cat-protocol/cat-smartcontracts';
 
 export type ContractJSON = {
   utxo: {
@@ -108,12 +109,20 @@ const fetchOpenMinterState = async function (
   metadata: TokenMetadata,
   txId: string,
   vout: number,
-): Promise<OpenMinterState | null> {
+): Promise<OpenMinterState | OpenMinterV2State | null> {
   const minterP2TR = toP2tr(metadata.minterAddr);
   const tokenP2TR = toP2tr(metadata.tokenAddr);
   const info = metadata.info as OpenMinterTokenInfo;
   const scaledInfo = scaleConfig(info);
   if (txId === metadata.revealTxid) {
+    if (metadata.info.minterMd5 == MinterType.OPEN_MINTER_V2) {
+      return {
+        isPremined: false,
+        remainingSupplyCount:
+          (scaledInfo.max - scaledInfo.premine) / scaledInfo.limit,
+        tokenScript: tokenP2TR,
+      };
+    }
     return {
       isPremined: false,
       remainingSupply: scaledInfo.max - scaledInfo.premine,
@@ -130,16 +139,7 @@ const fetchOpenMinterState = async function (
   const tx = new btc.Transaction(txhex);
 
   const REMAININGSUPPLY_WITNESS_INDEX = 16;
-  const MINTAMOUNT_WITNESS_INDEX = 6;
 
-  let newMinter = 0;
-
-  for (let i = 0; i < tx.outputs.length; i++) {
-    const output = tx.outputs[i];
-    if (output.script.toHex() === minterP2TR) {
-      newMinter++;
-    }
-  }
   for (let i = 0; i < tx.inputs.length; i++) {
     const witnesses = tx.inputs[i].getWitnesses();
 
@@ -147,31 +147,26 @@ const fetchOpenMinterState = async function (
       const lockingScriptBuffer = witnesses[witnesses.length - 2];
       const { p2tr } = script2P2TR(lockingScriptBuffer);
       if (p2tr === minterP2TR) {
-        const mintAmount = byteString2Int(
-          witnesses[MINTAMOUNT_WITNESS_INDEX].toString('hex'),
-        );
+        if (metadata.info.minterMd5 == MinterType.OPEN_MINTER_V2) {
+          const preState: OpenMinterV2State = {
+            tokenScript:
+              witnesses[REMAININGSUPPLY_WITNESS_INDEX - 2].toString('hex'),
+            isPremined: true,
+            remainingSupplyCount: byteString2Int(
+              witnesses[6 + vout].toString('hex'),
+            ),
+          };
 
+          return preState;
+        }
         const preState: OpenMinterState = {
           tokenScript:
             witnesses[REMAININGSUPPLY_WITNESS_INDEX - 2].toString('hex'),
-          isPremined:
-            witnesses[REMAININGSUPPLY_WITNESS_INDEX - 1].toString('hex') == '01'
-              ? true
-              : false,
-          remainingSupply: byteString2Int(
-            witnesses[REMAININGSUPPLY_WITNESS_INDEX].toString('hex'),
-          ),
+          isPremined: true,
+          remainingSupply: byteString2Int(witnesses[6 + vout].toString('hex')),
         };
 
-        const { minterStates } = createOpenMinterState(
-          mintAmount,
-          preState.isPremined,
-          preState.remainingSupply,
-          metadata,
-          newMinter,
-        );
-
-        return minterStates[vout - 1] || null;
+        return preState;
       }
     }
   }

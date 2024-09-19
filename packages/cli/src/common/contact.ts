@@ -1,3 +1,4 @@
+import { OpenMinterV2State } from '@cat-protocol/cat-smartcontracts';
 import {
   ProtocolState,
   OpenMinterState,
@@ -17,7 +18,7 @@ export interface Contract<T> {
   state: ContractState<T>;
 }
 
-export type OpenMinterContract = Contract<OpenMinterState>;
+export type OpenMinterContract = Contract<OpenMinterState | OpenMinterV2State>;
 
 export type TokenContract = Contract<CAT20State>;
 
