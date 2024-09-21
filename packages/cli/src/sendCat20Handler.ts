@@ -43,7 +43,7 @@ export async function send(
 
   if (feeUtxos.length === 0) {
     console.log("Insufficient satoshis balance!");
-    return;
+    throw new Error("Insufficient satoshis balance!");
   }
 
   const res = await getTokens(configService, spendService, token, address);
@@ -60,7 +60,7 @@ export async function send(
 
   if (tokenContracts.length === 0) {
     console.log("Insufficient token balance!");
-    return;
+    throw new Error("Insufficient token balance!");
   }
 
   const cachedTxs: Map<string, btc.Transaction> = new Map();
@@ -80,7 +80,7 @@ export async function send(
 
     if (e instanceof Error) {
       console.info("merge token failed!", e);
-      return;
+      throw new Error("merge token failed! " + e);
     }
 
     tokenContracts = mergedTokens;

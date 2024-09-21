@@ -227,7 +227,7 @@ app.post("/send-cat20", async (req: any, res: any) => {
     });
   } catch (error) {
     console.log("/send -- ERROR --- ", error);
-    res.status(500).json({ error: error, message: "Send transaction failed!" });
+    res.status(500).json({ error: error });
   } finally {
     console.log("/send END ");
   }
