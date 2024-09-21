@@ -45,3 +45,4 @@ typings/
 **/dist
 
 /bitcoin/signet
+*.sh
