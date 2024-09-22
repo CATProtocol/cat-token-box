@@ -1,4 +1,3 @@
-import { join } from 'path'
 import { BurnGuard } from './contracts/token/burnGuard'
 import { ClosedMinter } from './contracts/token/closedMinter'
 import { OpenMinter } from './contracts/token/openMinter'
