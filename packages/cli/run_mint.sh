@@ -24,7 +24,7 @@ while true; do
   echo "$RUN_COUNT" > "$COUNT_FILE"
 
   # Run the yarn command with dynamic fee-rate
-  yarn cli mint -i cc1b4c7e844c8a7163e0fccb79a9ade20b0793a2e86647825b7c05e8002b9f6a_0 20 --fee-rate "$FEE_RATE"
+  yarn cli mint -i c468e99ac3b533e503eac5ccf4f0e3362772f80cead8b7f71d802305d02f73d0_0 3 --fee-rate "$FEE_RATE"
 
   # Output the number of times the script has been run
   echo "This script has been run $RUN_COUNT times."
