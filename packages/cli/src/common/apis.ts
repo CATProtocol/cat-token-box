@@ -154,7 +154,7 @@ export const getRawTransaction = async function (
   txid: string,
 ): Promise<string | Error> {
   if (config.useRpc()) {
-    return rpc_getrawtransaction(config, wallet.getWalletName(), txid);
+    return rpc_getrawtransaction(config, txid);
   }
   const url = `${config.getMempoolApiHost()}/api/tx/${txid}/hex`;
   return (
