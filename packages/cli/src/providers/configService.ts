@@ -173,7 +173,7 @@ export class ConfigService {
 
   withProxy(options?: object) {
     if (this.getProxy()) {
-      Object.assign(options, {
+      Object.assign({}, options || {}, {
         agent: new HttpsProxyAgent(this.getProxy()),
       });
     }

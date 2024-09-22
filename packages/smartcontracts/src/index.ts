@@ -6,24 +6,27 @@ import { CAT20 } from './contracts/token/cat20'
 import { TransferGuard } from './contracts/token/transferGuard'
 import { OpenMinterV2 } from './contracts/token/openMinterV2'
 (() => {
-    ClosedMinter.loadArtifact(
-        join(__dirname, '..', 'artifacts/contracts/token/closedMinter.json')
-    )
-    OpenMinter.loadArtifact(
-        join(__dirname, '..', 'artifacts/contracts/token/openMinter.json')
-    )
-    OpenMinterV2.loadArtifact(
-        join(__dirname, '..', 'artifacts/contracts/token/openMinterV2.json')
-    )
-    CAT20.loadArtifact(
-        join(__dirname, '..', 'artifacts/contracts/token/cat20.json')
-    )
-    BurnGuard.loadArtifact(
-        join(__dirname, '..', 'artifacts/contracts/token/burnGuard.json')
-    )
-    TransferGuard.loadArtifact(
-        join(__dirname, '..', 'artifacts/contracts/token/transferGuard.json')
-    )
+    try {
+        ClosedMinter.loadArtifact(
+            join(__dirname, '..', 'artifacts/contracts/token/closedMinter.json')
+        )
+        OpenMinter.loadArtifact(
+            join(__dirname, '..', 'artifacts/contracts/token/openMinter.json')
+        )
+        OpenMinterV2.loadArtifact(
+            join(__dirname, '..', 'artifacts/contracts/token/openMinterV2.json')
+        )
+        CAT20.loadArtifact(
+            join(__dirname, '..', 'artifacts/contracts/token/cat20.json')
+        )
+        BurnGuard.loadArtifact(
+            join(__dirname, '..', 'artifacts/contracts/token/burnGuard.json')
+        )
+        TransferGuard.loadArtifact(
+            join(__dirname, '..', 'artifacts/contracts/token/transferGuard.json')
+        )
+    } catch (error) { /* empty */ }
+
 })()
 export * from './contracts/token/closedMinter'
 export * from './contracts/token/cat20'
