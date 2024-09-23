@@ -139,7 +139,8 @@ export class SendCommand extends BoardcastCommand {
 
     if (feeUtxos.length === 0) {
       console.info("Insufficient satoshis balance!");
-      return;
+      throw new Error("Insufficient satoshis balance!");
+      // return;
     }
 
     const res = await getTokens(

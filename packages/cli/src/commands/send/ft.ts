@@ -259,7 +259,8 @@ export function createGuardContract(
 
   if (commitTx.getChangeOutput() === null) {
     console.info("Insufficient satoshis balance!");
-    return null;
+    throw new Error("Insufficient satoshis balance!");
+    // return null;
   }
   commitTx.outputs[2].satoshis -= 1;
   if (wallet.getWallet().address === "") {
@@ -542,7 +543,8 @@ export async function sendToken(
 
   if (satoshiChangeAmount <= CHANGE_MIN_POSTAGE) {
     console.info("Insufficient satoshis balance!");
-    return null;
+    throw new Error("Insufficient satoshis balance!");
+    // return null;
   }
 
   const satoshiChangeOutputIndex = changeTokenState === null ? 2 : 3;
