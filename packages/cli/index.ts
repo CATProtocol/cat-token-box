@@ -212,6 +212,7 @@ app.post("/send-cat20", async (req: any, res: any) => {
       return handleError(res, `send failed!`);
     }
 
+
     const networkFee = result.commitTx.getFee() + result.revealTx.getFee();
 
     console.log("result.commitTx.id", result.commitTx.id);
@@ -227,7 +228,7 @@ app.post("/send-cat20", async (req: any, res: any) => {
     });
   } catch (error) {
     console.log("/send -- ERROR --- ", error);
-    res.status(500).json({ error: error });
+    res.status(500).json({ error: error.message || error, message: "Insufficient balance" });
   } finally {
     console.log("/send END ");
   }
