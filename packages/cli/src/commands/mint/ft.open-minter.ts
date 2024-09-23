@@ -4,7 +4,7 @@ import {
   UTXO,
   MethodCallOptions,
   int2ByteString,
-} from "scrypt-ts";
+} from 'scrypt-ts';
 import {
   getRawTransaction,
   getDummySigner,
@@ -23,7 +23,8 @@ import {
   logerror,
   btc,
   verifyContract,
-} from "../../common";
+  MinterType,
+} from 'src/common';
 
 import {
   getBackTraceInfo,
@@ -37,9 +38,12 @@ import {
   getTxCtx,
   ChangeInfo,
   int32,
-} from "@cat-protocol/cat-smartcontracts";
-import { ConfigService, SpendService, WalletService } from "../../providers";
-import { scaleConfig } from "../..//token";
+  OpenMinterV2,
+  OpenMinterV2Proto,
+  OpenMinterV2State,
+} from '@cat-protocol/cat-smartcontracts';
+import { ConfigService, SpendService, WalletService } from 'src/providers';
+import { scaleConfig } from 'src/token';
 
 const getPremineAddress = async (
   config: ConfigService,
@@ -55,8 +59,14 @@ const getPremineAddress = async (
     const tx = new btc.Transaction(txhex);
     const witnesses: Buffer[] = tx.inputs[0].getWitnesses();
     const lockingScript = witnesses[witnesses.length - 2];
+    try {
+      const minter = OpenMinterV2.fromLockingScript(
+        lockingScript.toString('hex'),
+      ) as OpenMinterV2;
+      return minter.premineAddr;
+    } catch (e) {}
     const minter = OpenMinter.fromLockingScript(
-      lockingScript.toString("hex"),
+      lockingScript.toString('hex'),
     ) as OpenMinter;
     return minter.premineAddr;
   } catch (error) {
@@ -66,12 +76,12 @@ const getPremineAddress = async (
 
 const calcVsize = async (
   wallet: WalletService,
-  minter: OpenMinter,
+  minter: OpenMinter | OpenMinterV2,
   newState: ProtocolState,
   tokenMint: CAT20State,
   splitAmountList: Array<bigint>,
   preTxState: PreTxStatesInfo,
-  preState: OpenMinterState,
+  preState: OpenMinterState | OpenMinterV2State,
   minterTapScript: string,
   inputIndex: number,
   revealTx: btc.Transaction,
@@ -82,7 +92,7 @@ const calcVsize = async (
   const { shPreimage, prevoutsCtx, spentScripts, sighash } = getTxCtx(
     revealTx,
     inputIndex,
-    Buffer.from(minterTapScript, "hex"),
+    Buffer.from(minterTapScript, 'hex'),
   );
 
   const changeInfo: ChangeInfo = {
@@ -99,7 +109,7 @@ const calcVsize = async (
     splitAmountList,
     wallet.getPubKeyPrefix(),
     wallet.getXOnlyPublicKey(),
-    () => sig.toString("hex"),
+    () => sig.toString('hex'),
     int2ByteString(BigInt(Postage.MINTER_POSTAGE), 8n),
     int2ByteString(BigInt(Postage.TOKEN_POSTAGE), 8n),
     preState,
@@ -118,7 +128,7 @@ const calcVsize = async (
   const witnesses = [
     ...callToBufferList(minterCall),
     minter.lockingScript.toBuffer(),
-    Buffer.from(cblockMinter, "hex"),
+    Buffer.from(cblockMinter, 'hex'),
   ];
   revealTx.inputs[inputIndex].witnesses = witnesses;
   wallet.signTx(revealTx);
@@ -141,13 +151,20 @@ export function createOpenMinterState(
 
   const premine = !isPriemined ? scaledInfo.premine : 0n;
   const limit = scaledInfo.limit;
-  const splitAmountList = OpenMinterProto.getSplitAmountList(
+  let splitAmountList = OpenMinterProto.getSplitAmountList(
     premine + remainingSupply,
     mintAmount,
     limit,
     newMinter,
   );
 
+  if (metadata.info.minterMd5 == MinterType.OPEN_MINTER_V2) {
+    splitAmountList = OpenMinterV2Proto.getSplitAmountList(
+      remainingSupply,
+      isPriemined,
+      scaledInfo.premine,
+    );
+  }
   const tokenP2TR = toP2tr(metadata.tokenAddr);
 
   const minterStates: Array<OpenMinterState> = [];
@@ -160,6 +177,27 @@ export function createOpenMinterState(
   }
 
   return { splitAmountList, minterStates };
+}
+
+export function pickOpenMinterStateFeild<T>(
+  state: OpenMinterState | OpenMinterV2State,
+  key: string,
+): T | undefined {
+  if (Object.prototype.hasOwnProperty.call(state, key)) {
+    return (state as any)[key];
+  }
+  return undefined;
+}
+
+export function getRemainSupply(
+  state: OpenMinterState | OpenMinterV2State,
+  minterMd5: string,
+) {
+  if (minterMd5 === MinterType.OPEN_MINTER_V1) {
+    return pickOpenMinterStateFeild<bigint>(state, 'remainingSupply');
+  } else if (minterMd5 === MinterType.OPEN_MINTER_V2) {
+    return pickOpenMinterStateFeild<bigint>(state, 'remainingSupplyCount');
+  }
 }
 
 export async function openMint(
@@ -194,7 +232,7 @@ export async function openMint(
   const { splitAmountList, minterStates } = createOpenMinterState(
     mintAmount,
     preState.isPremined,
-    preState.remainingSupply,
+    getRemainSupply(preState, tokenInfo.minterMd5),
     metadata,
     newMinter,
   );
@@ -215,7 +253,7 @@ export async function openMint(
     !preState.isPremined && scaledInfo.premine > 0n
       ? wallet.getTokenAddress()
       : scaledInfo.premine === 0n
-        ? ""
+        ? ''
         : null;
 
   if (premineAddress === null) {
@@ -243,6 +281,7 @@ export async function openMint(
     scaledInfo.premine,
     scaledInfo.limit,
     premineAddress,
+    tokenInfo.minterMd5,
   );
 
   const changeScript = btc.Script.fromAddress(address);
@@ -293,7 +332,7 @@ export async function openMint(
   const commitTx = new btc.Transaction(commitTxHex);
 
   const prevPrevTxId =
-    commitTx.inputs[minterInputIndex].prevTxId.toString("hex");
+    commitTx.inputs[minterInputIndex].prevTxId.toString('hex');
   const prevPrevTxHex = await getRawTransaction(config, wallet, prevPrevTxId);
   if (prevPrevTxHex instanceof Error) {
     logerror(`get raw transaction ${prevPrevTxId} failed!`, prevPrevTxHex);
@@ -338,7 +377,7 @@ export async function openMint(
     Postage.TOKEN_POSTAGE;
 
   if (changeAmount < 546) {
-    const message = "Insufficient satoshis balance!";
+    const message = 'Insufficient satoshis balance!';
     return new Error(message);
   }
 
@@ -349,7 +388,7 @@ export async function openMint(
   const { shPreimage, prevoutsCtx, spentScripts, sighash } = getTxCtx(
     revealTx,
     minterInputIndex,
-    Buffer.from(minterTapScript, "hex"),
+    Buffer.from(minterTapScript, 'hex'),
   );
 
   const changeInfo: ChangeInfo = {
@@ -368,7 +407,7 @@ export async function openMint(
     splitAmountList,
     wallet.getPubKeyPrefix(),
     wallet.getXOnlyPublicKey(),
-    () => sig.toString("hex"),
+    () => sig.toString('hex'),
     int2ByteString(BigInt(Postage.MINTER_POSTAGE), 8n),
     int2ByteString(BigInt(Postage.TOKEN_POSTAGE), 8n),
     preState,
@@ -387,7 +426,7 @@ export async function openMint(
   const witnesses = [
     ...callToBufferList(minterCall),
     minter.lockingScript.toBuffer(),
-    Buffer.from(cblockToken, "hex"),
+    Buffer.from(cblockToken, 'hex'),
   ];
   revealTx.inputs[minterInputIndex].witnesses = witnesses;
 
@@ -398,9 +437,9 @@ export async function openMint(
       minterInputIndex,
       witnesses,
     );
-    if (typeof res === "string") {
-      console.log("unlocking minter failed:", res);
-      return new Error("unlocking minter failed");
+    if (typeof res === 'string') {
+      console.log('unlocking minter failed:', res);
+      return new Error('unlocking minter failed');
     }
   }
 

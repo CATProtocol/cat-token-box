@@ -4,12 +4,16 @@ import { ClosedMinter } from './contracts/token/closedMinter'
 import { OpenMinter } from './contracts/token/openMinter'
 import { CAT20 } from './contracts/token/cat20'
 import { TransferGuard } from './contracts/token/transferGuard'
+import { OpenMinterV2 } from './contracts/token/openMinterV2'
 (() => {
     ClosedMinter.loadArtifact(
         join(__dirname, '..', 'artifacts/contracts/token/closedMinter.json')
     )
     OpenMinter.loadArtifact(
         join(__dirname, '..', 'artifacts/contracts/token/openMinter.json')
+    )
+    OpenMinterV2.loadArtifact(
+        join(__dirname, '..', 'artifacts/contracts/token/openMinterV2.json')
     )
     CAT20.loadArtifact(
         join(__dirname, '..', 'artifacts/contracts/token/cat20.json')
@@ -29,7 +33,9 @@ export * from './contracts/token/cat20Proto'
 export * from './contracts/token/closedMinterProto'
 export * from './contracts/token/guardProto'
 export * from './contracts/token/openMinter'
+export * from './contracts/token/openMinterV2'
 export * from './contracts/token/openMinterProto'
+export * from './contracts/token/openMinterV2Proto'
 export * from './contracts/utils/txUtil'
 export * from './contracts/utils/txProof'
 export * from './contracts/utils/stateUtils'

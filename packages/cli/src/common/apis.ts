@@ -24,7 +24,7 @@ export const getFeeRate = async function (
     return feeRate;
   }
 
-  const url = `${config.getApiHost()}/api/v1/fees/recommended`;
+  const url = `${config.getMempoolApiHost()}/api/v1/fees/recommended`;
   const feeRate: any = await fetch(url, config.withProxy())
     .then((res) => {
       if (res.status === 200) {
@@ -50,7 +50,7 @@ export const getFractalUtxos = async function (
 ): Promise<UTXO[]> {
   const script = new btc.Script(address).toHex();
 
-  const url = `https://open-api-fractal-testnet.unisat.io/v1/indexer/address/${address}/utxo-data?cursor=0&size=16`;
+  const url = `${config.getOpenApiHost()}/v1/indexer/address/${address}/utxo-data?cursor=0&size=16`;
   const utxos: Array<any> = await fetch(
     url,
     config.withProxy({
@@ -124,7 +124,7 @@ export const getUtxos = async function (
 
   const script = new btc.Script(address).toHex();
 
-  const url = `${config.getApiHost()}/api/address/${address}/utxo`;
+  const url = `${config.getMempoolApiHost()}/api/address/${address}/utxo`;
   const utxos: Array<any> = await fetch(url, config.withProxy())
     .then(async (res) => {
       const contentType = res.headers.get("content-type");
@@ -162,7 +162,7 @@ export const getRawTransaction = async function (
   if (config.useRpc()) {
     return rpc_getrawtransaction(config, wallet.getWalletName(), txid);
   }
-  const url = `${config.getApiHost()}/api/tx/${txid}/hex`;
+  const url = `${config.getMempoolApiHost()}/api/tx/${txid}/hex`;
   return (
     fetch(url, config.withProxy())
       .then((res) => {
@@ -212,7 +212,7 @@ export async function broadcast(
     return rpc_broadcast(config, wallet.getWalletName(), txHex);
   }
 
-  const url = `${config.getApiHost()}/api/tx`;
+  const url = `${config.getMempoolApiHost()}/api/tx`;
   return fetch(
     url,
     config.withProxy({

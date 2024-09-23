@@ -14,17 +14,17 @@ import {
   Postage,
   btc,
   logerror,
-} from "../../common";
+} from 'src/common';
 
 import {
-  OpenMinterProto,
   ProtocolState,
   getSHPreimage,
   getCatCommitScript,
-  OpenMinterState,
-} from "@cat-protocol/cat-smartcontracts";
-import { ConfigService, WalletService } from "../../providers";
-import { scaleConfig } from "../../token";
+  OpenMinterV2State,
+  OpenMinterV2Proto,
+} from '@cat-protocol/cat-smartcontracts';
+import { ConfigService, WalletService } from 'src/providers';
+import { scaleConfig } from 'src/token';
 
 function getMinter(
   wallet: WalletService,
@@ -33,13 +33,14 @@ function getMinter(
 ) {
   const scaledTokenInfo = scaleConfig(tokenInfo as OpenMinterTokenInfo);
   const premineAddress =
-    scaledTokenInfo.premine > 0n ? wallet.getTokenAddress() : toByteString("");
+    scaledTokenInfo.premine > 0n ? wallet.getTokenAddress() : toByteString('');
   return getOpenMinterContractP2TR(
     genesisId,
     scaledTokenInfo.max,
     scaledTokenInfo.premine,
     scaledTokenInfo.limit,
     premineAddress,
+    tokenInfo.minterMd5,
   );
 }
 
@@ -48,17 +49,19 @@ export function getMinterInitialTxState(
   tokenInfo: TokenInfo,
 ): {
   protocolState: ProtocolState;
-  data: OpenMinterState;
+  data: OpenMinterV2State;
 } {
   const protocolState = ProtocolState.getEmptyState();
   const scaledTokenInfo = scaleConfig(tokenInfo as OpenMinterTokenInfo);
-
-  const minterState = OpenMinterProto.create(
+  const maxCount = scaledTokenInfo.max / scaledTokenInfo.limit;
+  const premineCount = scaledTokenInfo.premine / scaledTokenInfo.limit;
+  const remainingSupply = maxCount - premineCount;
+  const minterState = OpenMinterV2Proto.create(
     tokenP2TR,
     false,
-    scaledTokenInfo.max - scaledTokenInfo.premine,
+    remainingSupply,
   );
-  const outputState = OpenMinterProto.toByteString(minterState);
+  const outputState = OpenMinterV2Proto.toByteString(minterState);
   protocolState.updateDataList(0, outputState);
   return {
     protocolState,
@@ -117,7 +120,7 @@ const buildRevealTx = (
 
   const witnesses: Buffer[] = [];
 
-  const { sighash } = getSHPreimage(revealTx, 0, Buffer.from(tapScript, "hex"));
+  const { sighash } = getSHPreimage(revealTx, 0, Buffer.from(tapScript, 'hex'));
 
   const sig = btc.crypto.Schnorr.sign(
     wallet.getTaprootPrivateKey(),
@@ -126,11 +129,11 @@ const buildRevealTx = (
 
   for (let i = 0; i < txState.stateHashList.length; i++) {
     const txoStateHash = txState.stateHashList[i];
-    witnesses.push(Buffer.from(txoStateHash, "hex"));
+    witnesses.push(Buffer.from(txoStateHash, 'hex'));
   }
   witnesses.push(sig);
   witnesses.push(lockingScript);
-  witnesses.push(Buffer.from(cblock, "hex"));
+  witnesses.push(Buffer.from(cblock, 'hex'));
 
   const interpreter = new btc.Script.Interpreter();
   const flags =
@@ -138,7 +141,7 @@ const buildRevealTx = (
     btc.Script.Interpreter.SCRIPT_VERIFY_TAPROOT;
 
   const res = interpreter.verify(
-    new btc.Script(""),
+    new btc.Script(''),
     commitTx.outputs[0].script,
     revealTx,
     0,
@@ -148,7 +151,7 @@ const buildRevealTx = (
   );
 
   if (!res) {
-    console.error("reveal faild!", interpreter.errstr);
+    console.error('reveal faild!', interpreter.errstr);
     return;
   }
 
@@ -180,7 +183,7 @@ export async function deploy(
   const pubkeyX = wallet.getXOnlyPublicKey();
   const commitScript = getCatCommitScript(pubkeyX, info);
 
-  const lockingScript = Buffer.from(commitScript, "hex");
+  const lockingScript = Buffer.from(commitScript, 'hex');
   const { p2tr: p2tr } = script2P2TR(lockingScript);
 
   const changeScript = btc.Script.fromAddress(changeAddress);
@@ -204,10 +207,10 @@ export async function deploy(
     .change(changeAddress);
 
   if (commitTx.getChangeOutput() === null) {
-    throw new Error("Insufficient satoshi balance!");
+    throw new Error('Insufficient satoshi balance!');
   }
 
-  const dummyGenesisId = `${"0000000000000000000000000000000000000000000000000000000000000000"}_0`;
+  const dummyGenesisId = `${'0000000000000000000000000000000000000000000000000000000000000000'}_0`;
 
   const revealTxDummy = buildRevealTx(
     wallet,
@@ -224,8 +227,9 @@ export async function deploy(
   commitTx.outputs[1].satoshis = revealTxFee;
 
   commitTx.change(changeAddress);
-
-  commitTx.outputs[2].satoshis -= 1;
+  if (commitTx.outputs[2] && commitTx.outputs[2].satoshi > 1) {
+    commitTx.outputs[2].satoshis -= 1;
+  }
 
   wallet.signTx(commitTx);
 
