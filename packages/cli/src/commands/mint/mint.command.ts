@@ -241,6 +241,12 @@ export class MintCommand extends BoardcastCommand {
         console.info(`Start merging your [${metadata.info.symbol}] tokens ...`);
 
         const feeUtxos = await this.getFeeUTXOs(address);
+
+        if (feeUtxos.length === 0) {
+          console.warn('Insufficient satoshis balance!');
+          return;
+        }
+
         const feeRate = await this.getFeeRate();
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
         const [newTokens, newFeeUtxos, e] = await mergeTokens(
@@ -321,10 +327,6 @@ export class MintCommand extends BoardcastCommand {
       return this.spendService.isUnspent(utxo);
     });
 
-    if (feeUtxos.length === 0) {
-      console.warn('Insufficient satoshis balance!');
-      return [];
-    }
     return feeUtxos;
   }
 }
