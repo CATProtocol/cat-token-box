@@ -64,7 +64,7 @@ function App() {
 
   const { data: metadata, isLoading, error } = useFetchTokenMetadata();
 
-  function useFetchBalance(metadata: TokenMetadata | undefined) {
+  function useFetchBalance(metadata: TokenMetadata | undefined, address: any) {
     return useSWR<
       {
         tokenId: string;
@@ -74,7 +74,7 @@ function App() {
       Error
     >("/fetchbalance", async () => {
       console.log("getBalance", metadata);
-      if (metadata) {
+      if (metadata && address) {
         const balance = await getBalance(
           configService.current,
           metadata,
@@ -90,7 +90,7 @@ function App() {
     });
   }
 
-  const { data: balance } = useFetchBalance(metadata);
+  const { data: balance } = useFetchBalance(metadata, address);
 
   const onSubmit = async (data: any) => {
     console.log("onSubmit:", data);

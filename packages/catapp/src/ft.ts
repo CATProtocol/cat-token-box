@@ -69,7 +69,7 @@ async function unlockToken(
   const { shPreimage, prevoutsCtx, spentScripts, sighash } = txCtx;
 
   const pubkeyX = await wallet.getXOnlyPublicKey();
-  const pubKeyPrefix = wallet.getPubKeyPrefix();
+  const pubKeyPrefix = await wallet.getPubKeyPrefix();
   const tokenUnlockArgs: TokenUnlockArgs = {
     isUserSpend: true,
     userPubKeyPrefix: pubKeyPrefix,
@@ -77,7 +77,6 @@ async function unlockToken(
     userSig: Sig(sig),
     contractInputIndex: 0n,
   };
-
   const backtraceInfo = getBackTraceInfo(
     prevTokenTx,
     prevPrevTokenTx,
@@ -149,7 +148,6 @@ async function unlockGuard(
   verify: boolean,
 ) {
   // amount check run verify
-
   const { shPreimage, prevoutsCtx, spentScripts } = txCtx;
   const outputArray = emptyTokenArray();
   const tokenAmountArray = emptyTokenAmountArray();
@@ -554,7 +552,6 @@ export async function sendToken(
   console.log('config verify:', verify);
 
   const sigs = await wallet.signToken(revealTx, metadata);
-  const key = btc.PrivateKey.fromString('64060da0d40f8cbb4630d59424ab8ccb46a12edf6ccd1f66a62b584af6d6d7d9');
 
   for (let i = 0; i < tokens.length; i++) {
     // ignore changeInfo when transfer token
@@ -563,16 +560,6 @@ export async function sendToken(
     if(tokenTx === null) {
       throw new Error('tokenTx null');
     }
-
-    const { sighash } = txCtxs[i];
-
-
-    const sigss = btc.crypto.Schnorr.sign(
-      key,
-      sighash.hash,
-    );
-  
-    console.log('sig by real tweeted key', sigss.toString('hex'))
   
   
     const res = await unlockToken(
@@ -718,9 +705,7 @@ const calcVsize = async (
     txCtxs[guardInputIndex],
     false,
   );
-  const xpubkey = await wallet.getXOnlyPublicKey();
-
-  wallet.dummySignFeeInput(revealTx, xpubkey);
+  await wallet.dummySignFeeInput(revealTx);
   const vsize = revealTx.vsize;
   resetTx(revealTx);
   return vsize;
