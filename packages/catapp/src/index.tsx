@@ -8,11 +8,8 @@ import cat20 from '../../smartcontracts/artifacts/contracts/token/cat20.json';
 import burnGuard from '../../smartcontracts/artifacts/contracts/token//burnGuard.json';
 import transferGuard from '../../smartcontracts/artifacts/contracts/token/transferGuard.json';
 
-
-console.log('Buffer', Buffer)
 function loadArtifacts() {
   try {
-    console.log('cat20', cat20)
     CAT20.loadArtifact(cat20)
     BurnGuard.loadArtifact(burnGuard)
     TransferGuard.loadArtifact(transferGuard)
