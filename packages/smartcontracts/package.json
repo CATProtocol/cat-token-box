@@ -38,12 +38,12 @@
     "ecurve": "^1.0.6",
     "bitcore-lib-inquisition": "^10.0.30",
     "js-sha256": "^0.9.0",
-    "bigi": "^1.4.2"
-  },
-  "devDependencies": {
+    "bigi": "^1.4.2",
     "@cmdcode/buff": "^2.2.4",
     "@cmdcode/crypto-tools": "^2.7.4",
-    "@cmdcode/tapscript": "^1.4.4",
+    "@cmdcode/tapscript": "^1.4.4"
+  },
+  "devDependencies": {
     "@types/chai": "^4.3.4",
     "@types/chai-as-promised": "^7.1.5",
     "@types/ecurve": "^1.0.3",
