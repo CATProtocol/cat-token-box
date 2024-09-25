@@ -6,10 +6,9 @@
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "scripts": {
-    "prebuild": "npm run clean",
+    "prebuild": "npm run clean && npm run compile",
     "prepublishOnly": "npm run build",
     "build": "tsc",
-    "postbuild": "npm run compile",
     "deploy": "npx ts-node ./deploy.ts",
     "clean": "rimraf scrypt.index.json && rimraf dist && rimraf artifacts",
     "compile": "npx scrypt-cli compile",
