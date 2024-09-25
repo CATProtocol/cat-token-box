@@ -22,7 +22,7 @@
   },
   "dependencies": {
     "@bitcoin-js/tiny-secp256k1-asmjs": "^2.2.3",
-    "@cat-protocol/cat-smartcontracts": "^0.1.0",
+    "@cat-protocol/cat-smartcontracts": "0.1.2",
     "@nestjs/common": "^10.0.0",
     "@nestjs/config": "^3.2.3",
     "@nestjs/core": "^10.0.0",
