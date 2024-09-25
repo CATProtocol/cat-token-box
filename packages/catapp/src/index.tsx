@@ -3,20 +3,6 @@ import ReactDOM from 'react-dom/client';
 import './index.css';
 import App from './App';
 import reportWebVitals from './reportWebVitals';
-import { BurnGuard, CAT20, TransferGuard } from '@cat-protocol/cat-smartcontracts';
-import cat20 from '../../smartcontracts/artifacts/contracts/token/cat20.json';
-import burnGuard from '../../smartcontracts/artifacts/contracts/token//burnGuard.json';
-import transferGuard from '../../smartcontracts/artifacts/contracts/token/transferGuard.json';
-
-function loadArtifacts() {
-  try {
-    CAT20.loadArtifact(cat20)
-    BurnGuard.loadArtifact(burnGuard)
-    TransferGuard.loadArtifact(transferGuard)
-} catch (error) { /* empty */ }
-}
-
-loadArtifacts();
 
 const root = ReactDOM.createRoot(
   document.getElementById('root') as HTMLElement

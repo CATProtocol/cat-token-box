@@ -103,6 +103,11 @@ function App() {
 
       const utxos = await walletService.current.getUTXOs();
 
+      if(utxos.length == 0) {
+        alert("Insufficient satoshis balance!");
+        return;
+      }
+
       const receiver = btc.Address.fromString(data.address);
       const d = new Decimal(data.amount).mul(
         Math.pow(10, metadata.info.decimals)
