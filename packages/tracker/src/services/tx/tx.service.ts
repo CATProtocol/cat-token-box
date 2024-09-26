@@ -24,6 +24,8 @@ import { TokenMintEntity } from '../../entities/tokenMint.entity';
 import { getGuardContractInfo } from '@cat-protocol/cat-smartcontracts';
 import { LRUCache } from 'lru-cache';
 import { CommonService } from '../common/common.service';
+import { TxOutArchiveEntity } from 'src/entities/txOutArchive.entity';
+import { Cron, CronExpression } from '@nestjs/schedule';
 
 @Injectable()
 export class TxService {
@@ -806,5 +808,40 @@ export class TxService {
       lockingScript: tx.outs[outputIndex].script.toString('hex'),
       xOnlyPubKey: payOuts[outputIndex].pubkey.toString('hex'),
     };
+  }
+
+  @Cron(CronExpression.EVERY_10_MINUTES)
+  private async archiveTxOuts() {
+    const lastProcessedHeight =
+      await this.commonService.getLastProcessedBlockHeight();
+    if (lastProcessedHeight === null) {
+      return;
+    }
+    const txOuts = await this.dataSource.manager
+      .createQueryBuilder('tx_out', 'txOut')
+      .innerJoin('tx', 'tx', 'txOut.spend_txid = tx.txid')
+      .where('txOut.spend_txid IS NOT NULL')
+      .andWhere('tx.block_height < :blockHeight', {
+        blockHeight: lastProcessedHeight - 3 * 2880, // blocks before three days ago
+      })
+      .orderBy('tx.block_height', 'ASC')
+      .addOrderBy('tx.tx_index', 'ASC')
+      .limit(1000) // archive no more than 1000 records once a time
+      .getMany();
+    if (txOuts.length === 0) {
+      return;
+    }
+    await this.dataSource.transaction(async (manager) => {
+      await Promise.all([
+        manager.save(TxOutArchiveEntity, txOuts),
+        manager.delete(
+          TxOutEntity,
+          txOuts.map((txOut) => {
+            return { txid: txOut.txid, outputIndex: txOut.outputIndex };
+          }),
+        ),
+      ]);
+    });
+    this.logger.log(`archived ${txOuts.length} tx outputs`);
   }
 }
