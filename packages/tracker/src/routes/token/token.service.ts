@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { TokenInfoEntity } from '../../entities/tokenInfo.entity';
-import { In, IsNull, LessThanOrEqual, Repository } from 'typeorm';
+import { IsNull, LessThanOrEqual, Repository } from 'typeorm';
 import {
   addressToXOnlyPubKey,
   ownerAddressToPubKeyHash,
@@ -228,69 +228,5 @@ export class TokenService {
         (balances[utxo.xOnlyPubKey] || 0n) + BigInt(utxo.tokenAmount);
     }
     return balances;
-  }
-
-  async getTokenTxHistoryByOwnerAddress(
-    tokenIdOrTokenAddr: string,
-    ownerAddr: string,
-    offset: number,
-    limit: number,
-  ) {
-    const lastProcessedHeight =
-      await this.commonService.getLastProcessedBlockHeight();
-    const tokenInfo =
-      await this.getTokenInfoByTokenIdOrTokenAddress(tokenIdOrTokenAddr);
-    const ownerPubKeyHash = ownerAddressToPubKeyHash(ownerAddr);
-    if (
-      lastProcessedHeight === null ||
-      !tokenInfo ||
-      !tokenInfo.tokenPubKey ||
-      !ownerPubKeyHash
-    ) {
-      return { history: [], blockHeight: lastProcessedHeight };
-    }
-
-    const txids = [];
-    offset = offset || Constants.QUERY_PAGING_DEFAULT_OFFSET;
-    limit = Math.min(
-      limit || Constants.QUERY_PAGING_DEFAULT_LIMIT,
-      Constants.QUERY_PAGING_MAX_LIMIT,
-    );
-    for (const table of ['tx_out', 'tx_out_archive']) {
-      const sql = `select distinct tx.txid, tx.block_height, tx.tx_index
-      from ${table} out
-              left join tx on out.txid = tx.txid or out.spend_txid = tx.txid
-      where out.owner_pkh = $1
-        and out.xonly_pubkey = $2
-        and tx.block_height <= $3
-      order by tx.block_height desc, tx.tx_index desc
-      limit $4 offset $5;`;
-      const results = await this.txOutRepository.query(sql, [
-        ownerPubKeyHash,
-        tokenInfo.tokenPubKey,
-        lastProcessedHeight,
-        limit,
-        offset,
-      ]);
-      txids.push(...results.map((e) => e.txid));
-      if (txids.length > 0) {
-        offset = 0;
-      }
-    }
-
-    const history = await this.txRepository
-      .createQueryBuilder()
-      .select('distinct(txid)', 'txid')
-      .addSelect('block_height')
-      .addSelect('tx_index')
-      .where({ txid: In(txids) })
-      .orderBy('block_height', 'DESC')
-      .addOrderBy('tx_index', 'DESC')
-      .limit(limit)
-      .getRawMany();
-    return {
-      history: history.map((e) => e.txid),
-      trackerBlockHeight: lastProcessedHeight,
-    };
   }
 }
