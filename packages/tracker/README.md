@@ -30,13 +30,13 @@ docker compose up -d
 
 ## Migration
 
-Run the following command to initialize database tables for the first-time run, or migrate data when upgrading from a previous version.
+Run the following command to initialize database when run for the first time, or migrate data when upgrading from a previous version.
 
 ```bash
 yarn migration:run
 ```
 
-**Note: If upgrading the tracker from a previous version, migrating the table data may take a few hours. Make a [database backup](https://www.postgresql.org/docs/current/app-pgdump.html) before this.**
+**Note: When upgrading tracker from a previous version, migrating the database may take a few hours. Make a [database backup](https://www.postgresql.org/docs/current/app-pgdump.html) before migration.**
 
 ## Run
 
