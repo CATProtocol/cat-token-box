@@ -27,6 +27,7 @@ import {
 import { broadcastMergeTokenTxs, mergeTokens } from '../send/merge';
 import { calcTotalAmount, sendToken } from '../send/ft';
 import { pickLargeFeeUtxo } from '../send/pick';
+import { MAX_INPUT } from '@cat-protocol/cat-smartcontracts';
 interface MintCommandOptions extends BoardcastCommandOptions {
   id: string;
   new?: number;
@@ -87,12 +88,13 @@ export class MintCommand extends BoardcastCommand {
         for (let index = 0; index < MAX_RETRY_COUNT; index++) {
           await this.merge(token, address);
           const feeRate = await this.getFeeRate();
-          const feeUtxos = await this.getFeeUTXOs(address);
+          let feeUtxos = await this.getFeeUTXOs(address);
           if (feeUtxos.length === 0) {
             console.warn('Insufficient satoshis balance!');
             return;
           }
 
+          feeUtxos = this.selectUtxos(feeUtxos);
           const count = await getTokenMinterCount(
             this.configService,
             token.tokenId,
@@ -284,6 +286,12 @@ export class MintCommand extends BoardcastCommand {
   })
   parseId(val: string): string {
     return val;
+  }
+
+  selectUtxos(feeUtxos: any[]) {
+    const filteredUtxos = feeUtxos.filter(utxo => utxo.satoshis !== 546);
+    filteredUtxos.sort((a, b) => b.satoshis - a.satoshis);
+    return filteredUtxos.slice(0, MAX_INPUT);
   }
 
   async getFeeUTXOs(address: btc.Address) {
