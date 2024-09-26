@@ -25,7 +25,7 @@ import { getGuardContractInfo } from '@cat-protocol/cat-smartcontracts';
 import { LRUCache } from 'lru-cache';
 import { CommonService } from '../common/common.service';
 import { TxOutArchiveEntity } from 'src/entities/txOutArchive.entity';
-import { Cron, CronExpression } from '@nestjs/schedule';
+import { Cron } from '@nestjs/schedule';
 
 @Injectable()
 export class TxService {
@@ -810,7 +810,7 @@ export class TxService {
     };
   }
 
-  @Cron(CronExpression.EVERY_10_MINUTES)
+  @Cron('* * * * *')
   private async archiveTxOuts() {
     const lastProcessedHeight =
       await this.commonService.getLastProcessedBlockHeight();
