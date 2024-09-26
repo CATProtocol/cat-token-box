@@ -1,12 +1,29 @@
-import { Injectable } from '@nestjs/common';
-import { accessSync, constants, readFileSync } from 'fs';
-import { CliConfig } from 'src/common';
 import { isAbsolute, join } from 'path';
 import { HttpsProxyAgent } from 'https-proxy-agent';
 
-@Injectable()
+
+
+export type SupportedNetwork =
+  | 'btc-signet'
+  | 'fractal-mainnet'
+  | 'fractal-testnet';
+export interface CliConfig {
+  network: SupportedNetwork;
+  tracker: string;
+  dataDir: string;
+  maxFeeRate?: number;
+  feeRate?: number;
+  rpc: {
+    url: string;
+    username: string;
+    password: string;
+  } | null;
+  verify?: boolean;
+  proxy?: string;
+  apiKey?: string;
+}
+
 export class ConfigService {
-  constructor() {}
   cliConfig: CliConfig = {
     network: 'fractal-mainnet',
     tracker: 'http://127.0.0.1:3000',
@@ -35,20 +52,9 @@ export class ConfigService {
     }
   }
 
-  loadCliConfig(configPath: string): Error | null {
-    try {
-      accessSync(configPath, constants.R_OK | constants.W_OK);
-    } catch (error) {
-      return new Error(`can\'t access config file: \'${configPath}\'`);
-    }
-
-    try {
-      const config = JSON.parse(readFileSync(configPath, 'utf8'));
-      this.mergeCliConfig(config);
-      return null;
-    } catch (error) {
-      return error;
-    }
+  loadCliConfig(config: CliConfig): Error | null {
+    this.mergeCliConfig(config);
+    return null;
   }
 
   getCliConfig(): CliConfig {
@@ -79,9 +85,9 @@ export class ConfigService {
     }
   };
 
-  getProxy = () => {
+  getProxy = () : string => {
     const config = this.getCliConfig();
-    return config.proxy;
+    return config.proxy || '';
   };
 
   getTracker = () => {
@@ -173,7 +179,7 @@ export class ConfigService {
 
   withProxy(options?: object) {
     if (this.getProxy()) {
-      Object.assign({}, options || {}, {
+      Object.assign({}, options, {
         agent: new HttpsProxyAgent(this.getProxy()),
       });
     }

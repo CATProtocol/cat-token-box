@@ -202,7 +202,7 @@ export class WalletService {
     }
   }
 
-  getTaprootPrivateKey(): string {
+  getTaprootPrivateKey(): btc.PrivateKey {
     return this.getTweakedPrivateKey();
   }
 

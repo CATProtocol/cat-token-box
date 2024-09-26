@@ -19,19 +19,22 @@ export const rpc_broadcast = async function (
     `${config.getRpcUser()}:${config.getRpcPassword()}`,
   ).toString('base64')}`;
 
-  return fetch(config.getRpcUrl(walletName), {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization,
-    },
-    body: JSON.stringify({
-      jsonrpc: '2.0',
-      id: 'cat-cli',
-      method: 'sendrawtransaction',
-      params: [txHex],
+  return fetch(
+    config.getRpcUrl(walletName),
+    config.withProxy({
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization,
+      },
+      body: JSON.stringify({
+        jsonrpc: '2.0',
+        id: 'cat-cli',
+        method: 'sendrawtransaction',
+        params: [txHex],
+      }),
     }),
-  })
+  )
     .then((res) => {
       const contentType = res.headers.get('content-type');
       if (contentType.includes('json')) {
@@ -55,26 +58,28 @@ export const rpc_broadcast = async function (
 
 export const rpc_getrawtransaction = async function (
   config: ConfigService,
-  walletName: string,
   txid: string,
 ): Promise<string | Error> {
   const Authorization = `Basic ${Buffer.from(
     `${config.getRpcUser()}:${config.getRpcPassword()}`,
   ).toString('base64')}`;
 
-  return fetch(config.getRpcUrl(walletName), {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization,
-    },
-    body: JSON.stringify({
-      jsonrpc: '2.0',
-      id: 'cat-cli',
-      method: 'getrawtransaction',
-      params: [txid],
+  return fetch(
+    config.getRpcUrl(null),
+    config.withProxy({
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization,
+      },
+      body: JSON.stringify({
+        jsonrpc: '2.0',
+        id: 'cat-cli',
+        method: 'getrawtransaction',
+        params: [txid],
+      }),
     }),
-  })
+  )
     .then((res) => {
       const contentType = res.headers.get('content-type');
       if (contentType.includes('json')) {
@@ -111,19 +116,22 @@ export const rpc_getconfirmations = async function (
     `${config.getRpcUser()}:${config.getRpcPassword()}`,
   ).toString('base64')}`;
 
-  return fetch(config.getRpcUrl(null), {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization,
-    },
-    body: JSON.stringify({
-      jsonrpc: '2.0',
-      id: 'cat-cli',
-      method: 'getrawtransaction',
-      params: [txid, true],
+  return fetch(
+    config.getRpcUrl(null),
+    config.withProxy({
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization,
+      },
+      body: JSON.stringify({
+        jsonrpc: '2.0',
+        id: 'cat-cli',
+        method: 'getrawtransaction',
+        params: [txid, true],
+      }),
     }),
-  })
+  )
     .then((res) => {
       const contentType = res.headers.get('content-type');
       if (contentType.includes('json')) {
@@ -157,19 +165,22 @@ export const rpc_getfeeRate = async function (
     `${config.getRpcUser()}:${config.getRpcPassword()}`,
   ).toString('base64')}`;
 
-  return fetch(config.getRpcUrl(walletName), {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization,
-    },
-    body: JSON.stringify({
-      jsonrpc: '2.0',
-      id: 'cat-cli',
-      method: 'estimatesmartfee',
-      params: [1],
+  return fetch(
+    config.getRpcUrl(walletName),
+    config.withProxy({
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization,
+      },
+      body: JSON.stringify({
+        jsonrpc: '2.0',
+        id: 'cat-cli',
+        method: 'estimatesmartfee',
+        params: [1],
+      }),
     }),
-  })
+  )
     .then((res) => {
       const contentType = res.headers.get('content-type');
       if (contentType.includes('json')) {
@@ -207,24 +218,31 @@ export const rpc_listunspent = async function (
     `${config.getRpcUser()}:${config.getRpcPassword()}`,
   ).toString('base64')}`;
 
-  return fetch(config.getRpcUrl(walletName), {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization,
-    },
-    body: JSON.stringify({
-      jsonrpc: '2.0',
-      id: 'cat-cli',
-      method: 'listunspent',
-      params: [0, 9999999, [address]],
+  return fetch(
+    config.getRpcUrl(walletName),
+    config.withProxy({
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization,
+      },
+      body: JSON.stringify({
+        jsonrpc: '2.0',
+        id: 'cat-cli',
+        method: 'listunspent',
+        params: [0, 9999999, [address]],
+      }),
     }),
-  })
+  )
     .then((res) => {
-      if (res.status === 200) {
+      const contentType = res.headers.get('content-type');
+      if (contentType && contentType.includes('json')) {
         return res.json();
+      } else {
+        throw new Error(
+          `invalid http content type : ${contentType}, status: ${res.status}`,
+        );
       }
-      throw new Error(res.statusText);
     })
     .then((res: any) => {
       if (res.result === null) {
@@ -257,26 +275,29 @@ export const rpc_create_watchonly_wallet = async function (
     `${config.getRpcUser()}:${config.getRpcPassword()}`,
   ).toString('base64')}`;
 
-  return fetch(config.getRpcUrl(null), {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization,
-    },
-    body: JSON.stringify({
-      jsonrpc: '2.0',
-      id: 'cat-cli',
-      method: 'createwallet',
-      params: {
-        wallet_name: walletName,
-        disable_private_keys: true,
-        blank: true,
-        passphrase: '',
-        descriptors: true,
-        load_on_startup: true,
+  return fetch(
+    config.getRpcUrl(null),
+    config.withProxy({
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization,
       },
+      body: JSON.stringify({
+        jsonrpc: '2.0',
+        id: 'cat-cli',
+        method: 'createwallet',
+        params: {
+          wallet_name: walletName,
+          disable_private_keys: true,
+          blank: true,
+          passphrase: '',
+          descriptors: true,
+          load_on_startup: true,
+        },
+      }),
     }),
-  })
+  )
     .then((res) => {
       if (res.status === 200) {
         return res.json();
@@ -306,30 +327,33 @@ export const rpc_importdescriptors = async function (
   const checksum = descriptors.checksum(desc);
 
   const timestamp = Math.ceil(new Date().getTime() / 1000);
-  return fetch(config.getRpcUrl(walletName), {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization,
-    },
-    body: JSON.stringify({
-      jsonrpc: '2.0',
-      id: 'cat-cli',
-      method: 'importdescriptors',
-      params: [
-        [
-          {
-            desc: `${desc}#${checksum}`,
-            active: false,
-            index: 0,
-            internal: false,
-            timestamp,
-            label: '',
-          },
+  return fetch(
+    config.getRpcUrl(walletName),
+    config.withProxy({
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization,
+      },
+      body: JSON.stringify({
+        jsonrpc: '2.0',
+        id: 'cat-cli',
+        method: 'importdescriptors',
+        params: [
+          [
+            {
+              desc: `${desc}#${checksum}`,
+              active: false,
+              index: 0,
+              internal: false,
+              timestamp,
+              label: '',
+            },
+          ],
         ],
-      ],
+      }),
     }),
-  })
+  )
     .then((res) => {
       if (res.status === 200) {
         return res.json();
