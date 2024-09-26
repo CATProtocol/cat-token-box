@@ -1,18 +1,18 @@
 import { Injectable } from '@nestjs/common';
 import { TokenService } from '../token/token.service';
 import { xOnlyPubKeyToAddress } from '../../common/utils';
-import { BlockService } from '../../services/block/block.service';
+import { CommonService } from '../../services/common/common.service';
 
 @Injectable()
 export class AddressService {
   constructor(
-    private readonly blockService: BlockService,
+    private readonly commonService: CommonService,
     private readonly tokenService: TokenService,
   ) {}
 
   async getTokenBalances(ownerAddr: string) {
     const lastProcessedHeight =
-      await this.blockService.getLastProcessedBlockHeight();
+      await this.commonService.getLastProcessedBlockHeight();
     const utxos = await this.tokenService.queryTokenUtxosByOwnerAddress(
       lastProcessedHeight,
       ownerAddr,

@@ -8,10 +8,22 @@
   "scripts": {
     "build": "nest build",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
-    "start": "nest start",
-    "start:dev": "nest start --watch",
-    "start:debug": "nest start --debug --watch",
-    "start:prod": "node dist/main",
+
+    "start:worker": "nest start -c nest-cli-worker.json",
+    "start:worker:dev": "nest start --watch -c nest-cli-worker.json",
+    "start:worker:debug": "nest start --debug --watch -c nest-cli-worker.json",
+    "start:worker:prod": "yarn build && node dist/main-worker",
+
+    "start:api": "nest start -c nest-cli-api.json",
+    "start:api:dev": "nest start --watch -c nest-cli-api.json",
+    "start:api:debug": "nest start --debug --watch -c nest-cli-api.json",
+    "start:api:prod": "yarn build && node dist/main-api",
+
+    "typeorm": "npx typeorm-ts-node-commonjs -d src/config/db.config.ts",
+    "migration:generate": "npm run typeorm -- migration:generate",
+    "migration:run": "npm run typeorm -- migration:run",
+    "migration:revert": "npm run typeorm -- migration:revert",
+
     "lint": "eslint \"{src,apps,libs,test}/**/*.ts\" --fix",
     "test": "jest",
     "test:watch": "jest --watch",

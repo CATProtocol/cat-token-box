@@ -8,6 +8,8 @@ import {
 } from 'typeorm';
 
 @Entity('tx_out')
+@Index(['spendTxid', 'spendInputIndex'], { unique: true })
+@Index(['xOnlyPubKey', 'ownerPubKeyHash'])
 export class TxOutEntity {
   @PrimaryColumn({ length: 64 })
   txid: string;
@@ -26,7 +28,6 @@ export class TxOutEntity {
   lockingScript: string;
 
   @Column({ name: 'xonly_pubkey', nullable: true })
-  @Index()
   xOnlyPubKey: string;
 
   @Column({ name: 'owner_pkh', nullable: true })
@@ -36,11 +37,13 @@ export class TxOutEntity {
   @Column({ name: 'token_amount', type: 'bigint', nullable: true })
   tokenAmount: bigint;
 
+  /**
+   * @deprecated
+   */
   @Column({ name: 'state_hash', nullable: true })
   stateHash: string;
 
   @Column({ name: 'spend_txid', nullable: true })
-  @Index()
   spendTxid: string;
 
   @Column({ name: 'spend_input_index', nullable: true })

@@ -1,7 +1,7 @@
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 require('dotenv').config();
 
-export default () => ({
+export const appConfig = () => ({
   rpcHost: process.env.RPC_HOST,
   rpcPort: process.env.RPC_PORT,
   rpcUser: process.env.RPC_USER,

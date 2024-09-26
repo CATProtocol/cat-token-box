@@ -23,6 +23,7 @@ import { BlockHeader, TokenInfo } from '../../common/types';
 import { TokenMintEntity } from '../../entities/tokenMint.entity';
 import { getGuardContractInfo } from '@cat-protocol/cat-smartcontracts';
 import { LRUCache } from 'lru-cache';
+import { CommonService } from '../common/common.service';
 
 @Injectable()
 export class TxService {
@@ -35,12 +36,19 @@ export class TxService {
     string,
     { pubkey: Buffer; redeemScript: Buffer }
   >({
-    max: 10000,
-    ttlAutopurge: true,
+    max: Constants.CACHE_MAX_SIZE,
+  });
+
+  private static readonly tokenInfoCache = new LRUCache<
+    string,
+    TokenInfoEntity
+  >({
+    max: Constants.CACHE_MAX_SIZE,
   });
 
   constructor(
     private dataSource: DataSource,
+    private commonService: CommonService,
     @InjectRepository(TokenInfoEntity)
     private tokenInfoEntityRepository: Repository<TokenInfoEntity>,
     @InjectRepository(TxEntity)
@@ -64,32 +72,28 @@ export class TxService {
    * @returns processing time in milliseconds if successfully processing a CAT-related tx, otherwise undefined
    */
   async processTx(tx: Transaction, txIndex: number, blockHeader: BlockHeader) {
-    try {
-      if (tx.isCoinbase()) {
-        return;
-      }
-      // update spent status of txOut records no matter whether tx is CAT-related
-      await this.updateSpent(tx, txIndex, blockHeader);
-      // filter CAT tx
-      if (!this.isCatTx(tx)) {
-        return;
-      }
-    } catch (e) {
-      this.logger.error(`process tx ${tx.getId()} error, ${e.message}`);
+    if (tx.isCoinbase()) {
+      return;
     }
-    const before = Date.now();
+    // filter CAT tx
+    if (!this.isCatTx(tx)) {
+      return;
+    }
+    const payOuts = tx.outs.map((output) => this.parseTaprootOutput(output));
+    // filter tx with Guard outputs
+    if (this.searchGuardOutputs(payOuts)) {
+      this.logger.log(`[OK] guard builder ${tx.getId()}`);
+      return;
+    }
+    const payIns = tx.ins.map((input) => this.parseTaprootInput(input));
+
+    const startTs = Date.now();
     const queryRunner = this.dataSource.createQueryRunner();
     await queryRunner.connect();
     await queryRunner.startTransaction();
     try {
-      const payIns = tx.ins.map((input) => this.parseTaprootInput(input));
-      const payOuts = tx.outs.map((output) => this.parseTaprootOutput(output));
-      // filter tx with Guard outputs
-      if (this.searchGuardOutputs(payOuts)) {
-        this.logger.log(`[OK] guard builder ${tx.getId()}`);
-        return;
-      }
-      await this.saveTx(queryRunner.manager, tx, payOuts, txIndex, blockHeader);
+      const promises: Promise<any>[] = [];
+      this.updateSpent(queryRunner.manager, promises, tx);
       let stateHashes: Buffer[];
       // search Guard inputs
       const guardInputs = this.searchGuardInputs(payIns);
@@ -101,6 +105,7 @@ export class TxService {
           // no minter in inputs, this is a token reveal tx
           stateHashes = await this.processRevealTx(
             queryRunner.manager,
+            promises,
             tx,
             payIns,
             payOuts,
@@ -111,6 +116,7 @@ export class TxService {
           // found minter in inputs, this is a token mint tx
           stateHashes = await this.processMintTx(
             queryRunner.manager,
+            promises,
             tx,
             payOuts,
             minterInput,
@@ -124,21 +130,21 @@ export class TxService {
         for (const guardInput of guardInputs) {
           stateHashes = await this.processTransferTx(
             queryRunner.manager,
+            promises,
             tx,
             guardInput,
+            payOuts,
+            blockHeader,
           );
         }
         this.logger.log(`[OK] transfer tx ${tx.getId()}`);
       }
-      // update state hashes
-      const rootHash = this.parseStateRootHash(tx);
-      await this.updateStateHashes(
-        queryRunner.manager,
-        [rootHash, ...stateHashes],
-        tx.getId(),
-      );
+      await Promise.all([
+        ...promises,
+        this.saveTx(queryRunner.manager, tx, txIndex, blockHeader, stateHashes),
+      ]);
       await queryRunner.commitTransaction();
-      return Math.ceil(Date.now() - before);
+      return Math.ceil(Date.now() - startTs);
     } catch (e) {
       if (e instanceof CatTxError) {
         this.logger.log(`skip tx ${tx.getId()}, ${e.message}`);
@@ -152,46 +158,6 @@ export class TxService {
   }
 
   /**
-   * Update spent status of txOut records
-   * @param tx transaction to save
-   * @param txIndex index of this transaction in the block
-   * @param blockHeader header of the block that contains this transaction
-   */
-  private async updateSpent(
-    tx: Transaction,
-    txIndex: number,
-    blockHeader: BlockHeader,
-  ) {
-    await this.dataSource.manager.transaction(async (manager) => {
-      let affected = false;
-      for (let i = 0; i < tx.ins.length; i++) {
-        const prevTxid = Buffer.from(tx.ins[i].hash).reverse().toString('hex');
-        const prevOutputIndex = tx.ins[i].index;
-        const updateResult = await manager.update(
-          TxOutEntity,
-          {
-            txid: prevTxid,
-            outputIndex: prevOutputIndex,
-          },
-          {
-            spendTxid: tx.getId(),
-            spendInputIndex: i,
-          },
-        );
-        affected = affected || (updateResult.affected || 0) > 0;
-      }
-      if (affected) {
-        // save tx in case of reorg
-        await manager.save(TxEntity, {
-          txid: tx.getId(),
-          blockHeight: blockHeader.height,
-          txIndex,
-        });
-      }
-    });
-  }
-
-  /**
    * Check if this is a CAT tx
    */
   private isCatTx(tx: Transaction) {
@@ -202,36 +168,46 @@ export class TxService {
     return false;
   }
 
-  /**
-   * Save tx and related txOut records
-   * @param tx transaction to save
-   * @param txIndex index of this transaction in the block
-   * @param blockHeader header of the block that contains this transaction
-   */
+  private async updateSpent(
+    manager: EntityManager,
+    promises: Promise<any>[],
+    tx: Transaction,
+  ) {
+    tx.ins.forEach((input, i) => {
+      const prevTxid = Buffer.from(input.hash).reverse().toString('hex');
+      const prevOutputIndex = input.index;
+      promises.push(
+        manager.update(
+          TxOutEntity,
+          {
+            txid: prevTxid,
+            outputIndex: prevOutputIndex,
+          },
+          {
+            spendTxid: tx.getId(),
+            spendInputIndex: i,
+          },
+        ),
+      );
+    });
+  }
+
   private async saveTx(
     manager: EntityManager,
     tx: Transaction,
-    payOuts: TaprootPayment[],
     txIndex: number,
     blockHeader: BlockHeader,
+    stateHashes: Buffer[],
   ) {
-    // save tx
-    await manager.save(TxEntity, {
+    const rootHash = this.parseStateRootHash(tx);
+    return manager.save(TxEntity, {
       txid: tx.getId(),
       blockHeight: blockHeader.height,
       txIndex,
+      stateHashes: [rootHash, ...stateHashes]
+        .map((stateHash) => stateHash.toString('hex'))
+        .join(';'),
     });
-    // save tx outputs
-    for (let i = 0; i < tx.outs.length; i++) {
-      await manager.save(TxOutEntity, {
-        txid: tx.getId(),
-        outputIndex: i,
-        blockHeight: blockHeader.height,
-        satoshis: BigInt(tx.outs[i].value),
-        lockingScript: tx.outs[i].script.toString('hex'),
-        xOnlyPubKey: payOuts[i]?.pubkey?.toString('hex'),
-      });
-    }
   }
 
   /**
@@ -274,9 +250,7 @@ export class TxService {
     for (const payIn of payIns) {
       const xOnlyPubKey = payIn?.pubkey?.toString('hex');
       if (xOnlyPubKey) {
-        const tokenInfo = await this.tokenInfoEntityRepository.findOne({
-          where: { minterPubKey: xOnlyPubKey },
-        });
+        const tokenInfo = await this.getTokenInfo(xOnlyPubKey);
         if (tokenInfo) {
           if (minter.tokenInfo) {
             throw new CatTxError(
@@ -293,8 +267,30 @@ export class TxService {
     return minter;
   }
 
+  private async getTokenInfo(minterPubKey: string) {
+    let tokenInfo = TxService.tokenInfoCache.get(minterPubKey);
+    if (!tokenInfo) {
+      tokenInfo = await this.tokenInfoEntityRepository.findOne({
+        where: { minterPubKey },
+      });
+      if (tokenInfo && tokenInfo.tokenPubKey) {
+        const lastProcessedHeight =
+          await this.commonService.getLastProcessedBlockHeight();
+        if (
+          lastProcessedHeight !== null &&
+          lastProcessedHeight - tokenInfo.revealHeight >=
+            Constants.TOKEN_INFO_CACHE_BLOCKS_THRESHOLD
+        ) {
+          TxService.tokenInfoCache.set(minterPubKey, tokenInfo);
+        }
+      }
+    }
+    return tokenInfo;
+  }
+
   private async processRevealTx(
     manager: EntityManager,
+    promises: Promise<any>[],
     tx: Transaction,
     payIns: TaprootPayment[],
     payOuts: TaprootPayment[],
@@ -318,17 +314,32 @@ export class TxService {
     // minter output
     const minterPubKey = this.searchRevealTxMinterOutputs(payOuts);
     // save token info
-    await manager.save(TokenInfoEntity, {
-      tokenId,
-      revealTxid: tx.getId(),
-      revealHeight: blockHeader.height,
-      genesisTxid,
-      name: tokenInfo.name,
-      symbol: tokenInfo.symbol,
-      decimals: tokenInfo.decimals,
-      rawInfo: tokenInfo,
-      minterPubKey,
-    });
+    promises.push(
+      manager.save(TokenInfoEntity, {
+        tokenId,
+        revealTxid: tx.getId(),
+        revealHeight: blockHeader.height,
+        genesisTxid,
+        name: tokenInfo.name,
+        symbol: tokenInfo.symbol,
+        decimals: tokenInfo.decimals,
+        rawInfo: tokenInfo,
+        minterPubKey,
+      }),
+    );
+    // save tx outputs
+    promises.push(
+      manager.save(
+        TxOutEntity,
+        tx.outs
+          .map((_, i) =>
+            payOuts[i]?.pubkey
+              ? this.buildBaseTxOutEntity(tx, i, blockHeader, payOuts)
+              : null,
+          )
+          .filter((out) => out !== null),
+      ),
+    );
     return stateHashes;
   }
 
@@ -404,6 +415,7 @@ export class TxService {
 
   private async processMintTx(
     manager: EntityManager,
+    promises: Promise<any>[],
     tx: Transaction,
     payOuts: TaprootPayment[],
     minterInput: TaprootPayment,
@@ -455,34 +467,26 @@ export class TxService {
       throw new CatTxError('invalid mint tx, token amount should be positive');
     }
     // token output
-    const { tokenPubKey, outputIndex } = this.searchMintTxTokenOutput(
-      payOuts,
-      tokenInfo,
-    );
-    await Promise.all([
-      // update token owner and amount
-      manager.update(
-        TxOutEntity,
-        {
-          txid: tx.getId(),
-          outputIndex,
-        },
-        {
-          ownerPubKeyHash,
-          tokenAmount,
-        },
-      ),
-      // update token info
-      manager.update(
-        TokenInfoEntity,
-        {
-          tokenId: tokenInfo.tokenId,
-        },
-        {
-          tokenPubKey,
-        },
-      ),
-      // update token mint record
+    const { tokenPubKey, outputIndex: tokenOutputIndex } =
+      this.searchMintTxTokenOutput(payOuts, tokenInfo);
+
+    // update token info when first mint
+    if (tokenInfo.tokenPubKey === null) {
+      promises.push(
+        manager.update(
+          TokenInfoEntity,
+          {
+            tokenId: tokenInfo.tokenId,
+          },
+          {
+            tokenPubKey,
+            firstMintHeight: blockHeader.height,
+          },
+        ),
+      );
+    }
+    // save token mint
+    promises.push(
       manager.save(TokenMintEntity, {
         txid: tx.getId(),
         tokenPubKey,
@@ -490,7 +494,33 @@ export class TxService {
         tokenAmount,
         blockHeight: blockHeader.height,
       }),
-    ]);
+    );
+    // save tx outputs
+    promises.push(
+      manager.save(
+        TxOutEntity,
+        tx.outs
+          .map((_, i) => {
+            if (i <= tokenOutputIndex && payOuts[i]?.pubkey) {
+              const baseEntity = this.buildBaseTxOutEntity(
+                tx,
+                i,
+                blockHeader,
+                payOuts,
+              );
+              return i === tokenOutputIndex
+                ? {
+                    ...baseEntity,
+                    ownerPubKeyHash,
+                    tokenAmount,
+                  }
+                : baseEntity;
+            }
+            return null;
+          })
+          .filter((out) => out !== null),
+      ),
+    );
     return stateHashes;
   }
 
@@ -567,8 +597,11 @@ export class TxService {
 
   private async processTransferTx(
     manager: EntityManager,
+    promises: Promise<any>[],
     tx: Transaction,
     guardInput: TaprootPayment,
+    payOuts: TaprootPayment[],
+    blockHeader: BlockHeader,
   ) {
     if (guardInput.witness.length < Constants.GUARD_INPUT_WITNESS_MIN_SIZE) {
       throw new CatTxError('invalid transfer tx, invalid guard witness field');
@@ -585,22 +618,19 @@ export class TxService {
       .toString('hex');
     if (scriptHash === this.TRANSFER_GUARD_SCRIPT_HASH) {
       const tokenOutputs = this.parseTokenOutputs(guardInput);
-      // update token owner and amount
-      await Promise.all([
-        tokenOutputs.map((tokenOutput) => {
-          return manager.update(
-            TxOutEntity,
-            {
-              txid: tx.getId(),
-              outputIndex: tokenOutput.outputIndex,
-            },
-            {
-              ownerPubKeyHash: tokenOutput.ownerPubKeyHash,
-              tokenAmount: tokenOutput.tokenAmount,
-            },
-          );
-        }),
-      ]);
+      // save tx outputs
+      promises.push(
+        manager.save(
+          TxOutEntity,
+          [...tokenOutputs.keys()].map((i) => {
+            return {
+              ...this.buildBaseTxOutEntity(tx, i, blockHeader, payOuts),
+              ownerPubKeyHash: tokenOutputs.get(i).ownerPubKeyHash,
+              tokenAmount: tokenOutputs.get(i).tokenAmount,
+            };
+          }),
+        ),
+      );
     }
     return stateHashes;
   }
@@ -608,11 +638,7 @@ export class TxService {
   /**
    * Parse token outputs from guard input of a transfer tx
    */
-  private parseTokenOutputs(guardInput: TaprootPayment): {
-    ownerPubKeyHash: string;
-    tokenAmount: bigint;
-    outputIndex: number;
-  }[] {
+  private parseTokenOutputs(guardInput: TaprootPayment) {
     const ownerPubKeyHashes = guardInput.witness.slice(
       Constants.TRANSFER_GUARD_ADDR_OFFSET,
       Constants.TRANSFER_GUARD_ADDR_OFFSET +
@@ -628,17 +654,22 @@ export class TxService {
       Constants.TRANSFER_GUARD_MASK_OFFSET +
         Constants.CONTRACT_OUTPUT_MAX_COUNT,
     );
-    const tokenOutputs = [];
+    const tokenOutputs = new Map<
+      number,
+      {
+        ownerPubKeyHash: string;
+        tokenAmount: bigint;
+      }
+    >();
     for (let i = 0; i < Constants.CONTRACT_OUTPUT_MAX_COUNT; i++) {
       if (masks[i].toString('hex') !== '') {
         const ownerPubKeyHash = ownerPubKeyHashes[i].toString('hex');
         const tokenAmount = BigInt(
           tokenAmounts[i].readIntLE(0, tokenAmounts[i].length),
         );
-        tokenOutputs.push({
+        tokenOutputs.set(i + 1, {
           ownerPubKeyHash,
           tokenAmount,
-          outputIndex: i + 1,
         });
       }
     }
@@ -653,30 +684,6 @@ export class TxService {
       Constants.STATE_ROOT_HASH_OFFSET,
       Constants.STATE_ROOT_HASH_OFFSET + Constants.STATE_ROOT_HASH_BYTES,
     );
-  }
-
-  /**
-   * Update state hashes of tx outputs in database
-   */
-  private async updateStateHashes(
-    manager: EntityManager,
-    stateHashes: Buffer[],
-    txid: string,
-  ) {
-    await Promise.all([
-      stateHashes.map((stateHash, i) => {
-        return manager.update(
-          TxOutEntity,
-          {
-            txid: txid,
-            outputIndex: i,
-          },
-          {
-            stateHash: stateHash.toString('hex'),
-          },
-        );
-      }),
-    ]);
   }
 
   private validateStateHashes(stateHashes: Buffer[]) {
@@ -743,29 +750,61 @@ export class TxService {
    * Delete tx in blocks with height greater than or equal to the given height
    */
   public async deleteTx(manager: EntityManager, height: number) {
+    // txs to delete
     const txs = await this.txEntityRepository.find({
       select: ['txid'],
       where: { blockHeight: MoreThanOrEqual(height) },
     });
-    await Promise.all([
-      txs.map((tx) => {
-        return manager.delete(TokenInfoEntity, { genesisTxid: tx.txid });
+    const promises = [
+      manager.delete(TokenInfoEntity, {
+        revealHeight: MoreThanOrEqual(height),
       }),
-      txs.map((tx) => {
+      manager.update(
+        TokenInfoEntity,
+        { firstMintHeight: MoreThanOrEqual(height) },
+        { firstMintHeight: null, tokenPubKey: null },
+      ),
+      manager.delete(TokenMintEntity, {
+        blockHeight: MoreThanOrEqual(height),
+      }),
+      manager.delete(TxEntity, { blockHeight: MoreThanOrEqual(height) }),
+      manager.delete(TxOutEntity, { blockHeight: MoreThanOrEqual(height) }),
+      // reset spent status of tx outputs
+      ...txs.map((tx) => {
         return manager.update(
           TxOutEntity,
           { spendTxid: tx.txid },
           { spendTxid: null, spendInputIndex: null },
         );
       }),
-      manager.delete(TokenInfoEntity, {
-        revealHeight: MoreThanOrEqual(height),
-      }),
-      manager.delete(TokenMintEntity, {
-        blockHeight: MoreThanOrEqual(height),
-      }),
-      manager.delete(TxEntity, { blockHeight: MoreThanOrEqual(height) }),
-      manager.delete(TxOutEntity, { blockHeight: MoreThanOrEqual(height) }),
-    ]);
+    ];
+    if (txs.length > 0) {
+      // Empty criteria(s) are not allowed for the delete method
+      promises.push(
+        manager.delete(
+          TokenInfoEntity,
+          txs.map((tx) => {
+            return { genesisTxid: tx.txid };
+          }),
+        ),
+      );
+    }
+    return Promise.all(promises);
+  }
+
+  private buildBaseTxOutEntity(
+    tx: Transaction,
+    outputIndex: number,
+    blockHeader: BlockHeader,
+    payOuts: TaprootPayment[],
+  ) {
+    return {
+      txid: tx.getId(),
+      outputIndex,
+      blockHeight: blockHeader.height,
+      satoshis: BigInt(tx.outs[outputIndex].value),
+      lockingScript: tx.outs[outputIndex].script.toString('hex'),
+      xOnlyPubKey: payOuts[outputIndex].pubkey.toString('hex'),
+    };
   }
 }

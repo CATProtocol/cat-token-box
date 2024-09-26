@@ -7,15 +7,16 @@ import {
 } from 'typeorm';
 
 @Entity('token_mint')
+@Index(['tokenPubKey', 'ownerPubKeyHash'])
 export class TokenMintEntity {
   @PrimaryColumn({ length: 64 })
   txid: string;
 
   @Column({ name: 'token_pubkey', length: 64 })
-  @Index()
   tokenPubKey: string;
 
   @Column({ name: 'owner_pkh' })
+  @Index()
   ownerPubKeyHash: string;
 
   @Column({ name: 'token_amount', type: 'bigint' })

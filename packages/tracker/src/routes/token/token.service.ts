@@ -9,33 +9,63 @@ import {
 } from '../../common/utils';
 import { TxOutEntity } from '../../entities/txOut.entity';
 import { Constants } from '../../common/constants';
-import { BlockService } from '../../services/block/block.service';
+import { LRUCache } from 'lru-cache';
+import { TxEntity } from '../../entities/tx.entity';
+import { CommonService } from '../../services/common/common.service';
 
 @Injectable()
 export class TokenService {
+  private static readonly stateHashesCache = new LRUCache<string, string[]>({
+    max: Constants.CACHE_MAX_SIZE,
+  });
+
+  private static readonly tokenInfoCache = new LRUCache<
+    string,
+    TokenInfoEntity
+  >({
+    max: Constants.CACHE_MAX_SIZE,
+  });
+
   constructor(
-    private readonly blockService: BlockService,
+    private readonly commonService: CommonService,
     @InjectRepository(TokenInfoEntity)
     private readonly tokenInfoRepository: Repository<TokenInfoEntity>,
     @InjectRepository(TxOutEntity)
     private readonly txOutRepository: Repository<TxOutEntity>,
+    @InjectRepository(TxEntity)
+    private readonly txRepository: Repository<TxEntity>,
   ) {}
 
   async getTokenInfoByTokenIdOrTokenAddress(tokenIdOrTokenAddr: string) {
-    let where;
-    if (tokenIdOrTokenAddr.includes('_')) {
-      where = { tokenId: tokenIdOrTokenAddr };
-    } else {
-      const tokenPubKey = addressToXOnlyPubKey(tokenIdOrTokenAddr);
-      if (!tokenPubKey) {
-        return null;
+    let cached = TokenService.tokenInfoCache.get(tokenIdOrTokenAddr);
+    if (!cached) {
+      let where;
+      if (tokenIdOrTokenAddr.includes('_')) {
+        where = { tokenId: tokenIdOrTokenAddr };
+      } else {
+        const tokenPubKey = addressToXOnlyPubKey(tokenIdOrTokenAddr);
+        if (!tokenPubKey) {
+          return null;
+        }
+        where = { tokenPubKey };
       }
-      where = { tokenPubKey };
+      const tokenInfo = await this.tokenInfoRepository.findOne({
+        where,
+      });
+      if (tokenInfo && tokenInfo.tokenPubKey) {
+        const lastProcessedHeight =
+          await this.commonService.getLastProcessedBlockHeight();
+        if (
+          lastProcessedHeight !== null &&
+          lastProcessedHeight - tokenInfo.revealHeight >=
+            Constants.TOKEN_INFO_CACHE_BLOCKS_THRESHOLD
+        ) {
+          TokenService.tokenInfoCache.set(tokenIdOrTokenAddr, tokenInfo);
+        }
+      }
+      cached = tokenInfo;
     }
-    const tokenInfo = await this.tokenInfoRepository.findOne({
-      where,
-    });
-    return this.renderTokenInfo(tokenInfo);
+    return this.renderTokenInfo(cached);
   }
 
   renderTokenInfo(tokenInfo: TokenInfoEntity) {
@@ -62,7 +92,7 @@ export class TokenService {
     limit: number,
   ) {
     const lastProcessedHeight =
-      await this.blockService.getLastProcessedBlockHeight();
+      await this.commonService.getLastProcessedBlockHeight();
     const tokenInfo =
       await this.getTokenInfoByTokenIdOrTokenAddress(tokenIdOrTokenAddr);
     let utxos = [];
@@ -89,7 +119,7 @@ export class TokenService {
     ownerAddr: string,
   ) {
     const lastProcessedHeight =
-      await this.blockService.getLastProcessedBlockHeight();
+      await this.commonService.getLastProcessedBlockHeight();
     const tokenInfo =
       await this.getTokenInfoByTokenIdOrTokenAddress(tokenIdOrTokenAddr);
     let utxos = [];
@@ -144,26 +174,27 @@ export class TokenService {
   }
 
   async queryStateHashes(txid: string) {
-    const outputs = await this.txOutRepository.find({
-      select: ['stateHash'],
-      where: { txid },
-      order: { outputIndex: 'ASC' },
-    });
-    const stateHashes = outputs.map((output) => output.stateHash);
-    for (
-      let i = stateHashes.length;
-      i < Constants.CONTRACT_OUTPUT_MAX_COUNT + 1;
-      i++
-    ) {
-      stateHashes.push('');
+    let cached = TokenService.stateHashesCache.get(txid);
+    if (!cached) {
+      const tx = await this.txRepository.findOne({
+        select: ['stateHashes'],
+        where: { txid },
+      });
+      cached = tx.stateHashes.split(';').slice(1);
+      if (cached.length < Constants.CONTRACT_OUTPUT_MAX_COUNT) {
+        cached = cached.concat(
+          Array(Constants.CONTRACT_OUTPUT_MAX_COUNT - cached.length).fill(''),
+        );
+      }
+      TokenService.stateHashesCache.set(txid, cached);
     }
-    return stateHashes;
+    return cached;
   }
 
   async renderUtxos(utxos: TxOutEntity[]) {
     const renderedUtxos = [];
     for (const utxo of utxos) {
-      const stateHashes = await this.queryStateHashes(utxo.txid);
+      const txoStateHashes = await this.queryStateHashes(utxo.txid);
       const renderedUtxo = {
         utxo: {
           txId: utxo.txid,
@@ -171,7 +202,7 @@ export class TokenService {
           script: utxo.lockingScript,
           satoshis: utxo.satoshis,
         },
-        txoStateHashes: stateHashes.slice(1),
+        txoStateHashes,
       };
       if (utxo.ownerPubKeyHash !== null && utxo.tokenAmount !== null) {
         Object.assign(renderedUtxo, {
@@ -206,7 +237,7 @@ export class TokenService {
     limit: number,
   ) {
     const lastProcessedHeight =
-      await this.blockService.getLastProcessedBlockHeight();
+      await this.commonService.getLastProcessedBlockHeight();
     const tokenInfo =
       await this.getTokenInfoByTokenIdOrTokenAddress(tokenIdOrTokenAddr);
     const ownerPubKeyHash = ownerAddressToPubKeyHash(ownerAddr);
