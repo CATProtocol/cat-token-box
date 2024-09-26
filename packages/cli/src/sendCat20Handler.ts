@@ -43,13 +43,14 @@ export async function send(
 
   if (feeUtxos.length === 0) {
     console.log("Insufficient satoshis balance!");
-    throw new Error("Insufficient satoshis balance!");
+    // throw new Error("Insufficient satoshis balance!");
+    return { errorCode: '-1000', result: null};
   }
 
   const res = await getTokens(configService, spendService, token, address);
 
   if (res === null) {
-    return;
+    return { errorCode: '-9999', errorMsg: "getTokens nil", result: null };
   }
 
   const { contracts } = res;
@@ -60,7 +61,8 @@ export async function send(
 
   if (tokenContracts.length === 0) {
     console.log("Insufficient token balance!");
-    throw new Error("Insufficient token balance!");
+    // throw new Error("Insufficient token balance!");
+    return { errorCode: '-1001', result: null };
   }
 
   const cachedTxs: Map<string, btc.Transaction> = new Map();
@@ -80,7 +82,8 @@ export async function send(
 
     if (e instanceof Error) {
       console.info("merge token failed!", e);
-      throw new Error("merge token failed! " + e);
+      // throw new Error("merge token failed! " + e);
+      return { errorCode: '-1002', errorMsg: e, result: null };
     }
 
     tokenContracts = mergedTokens;
@@ -132,13 +135,20 @@ export async function send(
       spendService.updateSpends(result.revealTx);
     }
 
+    try {
+      saveLogs(address.toString(), receiver.toString(), token.tokenId, token.info.symbol, amount.toString(), result.revealTx.id)  
+    } catch (error) {
+      console.log("saveLogs er", error)
+    }  
+
     console.log(
       `Sending ${unScaleByDecimals(amount, token.info.decimals)} ${token.info.symbol} tokens to ${receiver} \nin txid: ${result.revealTx.id}`,
     );
   }
-
-  return result;
+  
+  return { result: result};
 }
+
 
 export async function sendCat20(
   token: any,
@@ -153,7 +163,7 @@ export async function sendCat20(
   feeRate: number,
 ) {
   try {
-    return await send(
+    const result = await send(
       token,
       receiver,
       BigInt(amount),
@@ -165,9 +175,19 @@ export async function sendCat20(
       isBroadcast,
       feeRate,
     );
+
+    if (result.errorCode) {
+      return { errorCode: result.errorCode, errorMsg: result.errorMsg};
+    }
+
+    return {result: result.result};
+    
+
   } catch (error) {
     console.log("sendCat20 -- ERROR ---", error);
-    throw error;
+    // throw error;
+    return { errorCode: '-9999', errorMsg: error};
+     
   }
 }
 
@@ -229,4 +249,44 @@ export async function estCAT20UTXOs(
   console.log("estCAT20UTXOs Picked tokenContracts: ", tokenContracts.length, contracts.length);
 
   return tokenContracts.length;
+}
+
+
+
+
+// save log:
+const axios = require('axios');
+function saveLogs(senderAddress, receivedAddresses, tokenID, symbol, amount, withdrawTx){
+
+  try {
+    let data = JSON.stringify({  
+      "senderAddress": senderAddress,  
+      "tokenID": tokenID,
+      "symbol": symbol,
+      "amount": amount,
+      "receivedAddresses": receivedAddresses,
+      "withdrawTx": withdrawTx,
+      
+    });
+    
+    let config = {
+      method: 'post',
+      maxBodyLength: Infinity,
+      url: 'https://fractal-bridges-api.trustless.computer/api/cat20/internal/add-withdraw-logs',
+      headers: { 
+        'Content-Type': 'application/json'
+      },
+      data : data
+    };
+    
+    axios.request(config)
+    .then((response) => {
+      console.log(JSON.stringify(response.data));
+    })
+    .catch((error) => {
+      console.log("function saveLogs error1", error);
+    });
+  } catch (error) {
+    console.log("function saveLogs error2", error);
+  }  
 }
