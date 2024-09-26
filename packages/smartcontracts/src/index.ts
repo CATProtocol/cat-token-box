@@ -5,25 +5,21 @@ import { OpenMinter } from './contracts/token/openMinter'
 import { CAT20 } from './contracts/token/cat20'
 import { TransferGuard } from './contracts/token/transferGuard'
 import { OpenMinterV2 } from './contracts/token/openMinterV2'
+
+import closedMinter from '../artifacts/contracts/token/closedMinter.json'
+import openMinter from '../artifacts/contracts/token/openMinter.json'
+import openMinterV2 from '../artifacts/contracts/token/openMinterV2.json'
+import cat20 from '../artifacts/contracts/token/cat20.json'
+import burnGuard from '../artifacts/contracts/token/burnGuard.json'
+import transferGuard from '../artifacts/contracts/token/transferGuard.json'
+
 (() => {
-    ClosedMinter.loadArtifact(
-        join(__dirname, '..', 'artifacts/contracts/token/closedMinter.json')
-    )
-    OpenMinter.loadArtifact(
-        join(__dirname, '..', 'artifacts/contracts/token/openMinter.json')
-    )
-    OpenMinterV2.loadArtifact(
-        join(__dirname, '..', 'artifacts/contracts/token/openMinterV2.json')
-    )
-    CAT20.loadArtifact(
-        join(__dirname, '..', 'artifacts/contracts/token/cat20.json')
-    )
-    BurnGuard.loadArtifact(
-        join(__dirname, '..', 'artifacts/contracts/token/burnGuard.json')
-    )
-    TransferGuard.loadArtifact(
-        join(__dirname, '..', 'artifacts/contracts/token/transferGuard.json')
-    )
+    ClosedMinter.loadArtifact(closedMinter)
+    OpenMinter.loadArtifact(openMinter)
+    OpenMinterV2.loadArtifact(openMinterV2)
+    CAT20.loadArtifact(cat20)
+    BurnGuard.loadArtifact(burnGuard)
+    TransferGuard.loadArtifact(transferGuard)
 })()
 export * from './contracts/token/closedMinter'
 export * from './contracts/token/cat20'
