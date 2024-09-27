@@ -14,6 +14,7 @@ export class ConfigService {
     feeRate: -1,
     maxFeeRate: -1,
     rpc: null,
+    walletIndex: "",
   };
 
   mergeCliConfig(one: CliConfig) {
@@ -134,6 +135,11 @@ export class ConfigService {
     }
 
     throw new Error(`No rpc config found`);
+  };
+
+  getWalletIndex = () => {
+    const config = this.getCliConfig();
+    return config.walletIndex;
   };
 
   getRpcUrl = (wallet: string | null) => {

@@ -12,6 +12,7 @@ export interface BaseCommandOptions {
   rpcurl?: string;
   rpcusername?: string;
   rpcpassword?: string;
+  walletIndex?: string;
 }
 
 export abstract class BaseCommand extends CommandRunner {
@@ -114,6 +115,12 @@ export abstract class BaseCommand extends CommandRunner {
       });
     }
 
+    if (options.walletIndex) {
+      Object.assign(cliConfig, {
+        walletIndex: options.walletIndex,
+      });
+    }
+
     return cliConfig as CliConfig;
   }
 
@@ -195,6 +202,14 @@ export abstract class BaseCommand extends CommandRunner {
     description: 'Special a rpc password',
   })
   parseRpcPassword(val: string): string {
+    return val;
+  }
+
+  @Option({
+    flags: '--wallet-index [walletIndex]',
+    description: 'Special a wallet[index].json by index',
+  })
+  parseWalletIndex(val: string): string {
     return val;
   }
 }
