@@ -18,6 +18,7 @@ export interface CliConfig {
   verify?: boolean;
   proxy?: string;
   apiKey?: string;
+  walletIndex?: string;
 }
 
 export const resolveConfigPath = (val: string) => {
