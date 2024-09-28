@@ -44,6 +44,10 @@ export class TokenInfoEntity {
   @Index()
   tokenPubKey: string;
 
+  @Column({ name: 'first_mint_height', nullable: true })
+  @Index()
+  firstMintHeight: number;
+
   @CreateDateColumn({ name: 'created_at' })
   createdAt: Date;
 

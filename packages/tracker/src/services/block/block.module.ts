@@ -5,6 +5,7 @@ import { BlockEntity } from '../../entities/block.entity';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ConfigModule } from '@nestjs/config';
 import { TxModule } from '../tx/tx.module';
+import { CommonModule } from '../common/common.module';
 
 @Module({
   imports: [
@@ -12,6 +13,7 @@ import { TxModule } from '../tx/tx.module';
     RpcModule,
     TxModule,
     ConfigModule,
+    CommonModule,
   ],
   providers: [BlockService],
   exports: [BlockService],

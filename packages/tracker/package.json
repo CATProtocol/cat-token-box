@@ -8,10 +8,22 @@
   "scripts": {
     "build": "nest build",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
-    "start": "nest start",
-    "start:dev": "nest start --watch",
-    "start:debug": "nest start --debug --watch",
-    "start:prod": "node dist/main",
+
+    "start:worker": "nest start -c nest-cli-worker.json",
+    "start:worker:dev": "nest start --watch -c nest-cli-worker.json",
+    "start:worker:debug": "nest start --debug --watch -c nest-cli-worker.json",
+    "start:worker:prod": "yarn build && node dist/main-worker",
+
+    "start:api": "nest start -c nest-cli-api.json",
+    "start:api:dev": "nest start --watch -c nest-cli-api.json",
+    "start:api:debug": "nest start --debug --watch -c nest-cli-api.json",
+    "start:api:prod": "yarn build && node dist/main-api",
+
+    "typeorm": "npx typeorm-ts-node-commonjs -d src/config/db.config.ts",
+    "migration:generate": "npm run typeorm -- migration:generate",
+    "migration:run": "npm run typeorm -- migration:run",
+    "migration:revert": "npm run typeorm -- migration:revert",
+
     "lint": "eslint \"{src,apps,libs,test}/**/*.ts\" --fix",
     "test": "jest",
     "test:watch": "jest --watch",
@@ -22,11 +34,12 @@
   },
   "dependencies": {
     "@bitcoin-js/tiny-secp256k1-asmjs": "^2.2.3",
-    "@cat-protocol/cat-smartcontracts": "^0.1.0",
+    "@cat-protocol/cat-smartcontracts": "0.1.2",
     "@nestjs/common": "^10.0.0",
     "@nestjs/config": "^3.2.3",
     "@nestjs/core": "^10.0.0",
     "@nestjs/platform-express": "^10.0.0",
+    "@nestjs/schedule": "^4.1.1",
     "@nestjs/swagger": "^7.4.0",
     "@nestjs/typeorm": "^10.0.2",
     "axios": "^1.7.3",

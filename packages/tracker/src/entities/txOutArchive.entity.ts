@@ -4,13 +4,12 @@ import {
   Entity,
   Index,
   PrimaryColumn,
-  UpdateDateColumn,
 } from 'typeorm';
 
-@Entity('tx_out')
+@Entity('tx_out_archive')
 @Index(['spendTxid', 'spendInputIndex'], { unique: true })
 @Index(['xOnlyPubKey', 'ownerPubKeyHash'])
-export class TxOutEntity {
+export class TxOutArchiveEntity {
   @PrimaryColumn({ length: 64 })
   txid: string;
 
@@ -37,12 +36,6 @@ export class TxOutEntity {
   @Column({ name: 'token_amount', type: 'bigint', nullable: true })
   tokenAmount: bigint;
 
-  /**
-   * @deprecated
-   */
-  @Column({ name: 'state_hash', nullable: true })
-  stateHash: string;
-
   @Column({ name: 'spend_txid', nullable: true })
   spendTxid: string;
 
@@ -51,7 +44,4 @@ export class TxOutEntity {
 
   @CreateDateColumn({ name: 'created_at' })
   createdAt: Date;
-
-  @UpdateDateColumn({ name: 'update_at' })
-  updatedAt: Date;
 }

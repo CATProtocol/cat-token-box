@@ -3,6 +3,10 @@ import { bitcoin, testnet, regtest, Network } from 'bitcoinjs-lib/src/networks';
 export class Constants {
   static readonly BLOCK_PROCESSING_INTERVAL = 10000;
 
+  static readonly CACHE_MAX_SIZE = 10000;
+
+  static readonly TOKEN_INFO_CACHE_BLOCKS_THRESHOLD = 120;
+
   static readonly TAPROOT_LOCKING_SCRIPT_LENGTH = 34;
 
   static readonly PUBKEY_HASH_BYTES = 20;

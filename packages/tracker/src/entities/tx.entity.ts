@@ -18,6 +18,9 @@ export class TxEntity {
   @Column({ name: 'tx_index' })
   txIndex: number; // tx index in block
 
+  @Column({ name: 'state_hashes', nullable: true })
+  stateHashes: string;
+
   @CreateDateColumn({ name: 'created_at' })
   createdAt: Date;
 }

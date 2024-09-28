@@ -6,6 +6,7 @@
     "rootDir": "./src",
     // Todo remove below
     "noImplicitAny": false,
+    "resolveJsonModule": true,
     "strict": false /* Enable all strict type-checking options. */,
   },
   "include": [
