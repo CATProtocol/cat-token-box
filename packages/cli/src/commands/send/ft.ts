@@ -20,7 +20,7 @@ import {
   logerror,
   btc,
   verifyContract,
-} from 'src/common';
+} from "../../common";
 import {
   int2ByteString,
   MethodCallOptions,
@@ -28,7 +28,7 @@ import {
   PubKey,
   UTXO,
   fill,
-} from 'scrypt-ts';
+} from "scrypt-ts";
 import {
   emptyTokenAmountArray,
   emptyTokenArray,
@@ -47,8 +47,8 @@ import {
   ChangeInfo,
   MAX_TOKEN_OUTPUT,
   MAX_INPUT,
-} from '@cat-protocol/cat-smartcontracts';
-import { ConfigService, WalletService } from 'src/providers';
+} from "@cat-protocol/cat-smartcontracts";
+import { ConfigService, WalletService } from "../../providers";
 
 async function unlockToken(
   wallet: WalletService,
@@ -73,12 +73,13 @@ async function unlockToken(
     sighash.hash,
   );
   const pubkeyX = wallet.getXOnlyPublicKey();
+  console.log("unlockToken ", { pubkeyX });
   const pubKeyPrefix = wallet.getPubKeyPrefix();
   const tokenUnlockArgs: TokenUnlockArgs = {
     isUserSpend: true,
     userPubKeyPrefix: pubKeyPrefix,
     userPubKey: PubKey(pubkeyX),
-    userSig: sig.toString('hex'),
+    userSig: sig.toString("hex"),
     contractInputIndex: 0n,
   };
 
@@ -117,7 +118,7 @@ async function unlockToken(
     ...callToBufferList(tokenCall),
     // taproot script + cblock
     token.lockingScript.toBuffer(),
-    Buffer.from(cblockToken, 'hex'),
+    Buffer.from(cblockToken, "hex"),
   ];
   revealTx.inputs[tokenInputIndex].witnesses = witnesses;
 
@@ -128,8 +129,8 @@ async function unlockToken(
       tokenInputIndex,
       witnesses,
     );
-    if (typeof res === 'string') {
-      console.error('unlocking token contract failed!', res);
+    if (typeof res === "string") {
+      console.error("unlocking token contract failed!", res);
       return false;
     }
     return true;
@@ -199,7 +200,7 @@ async function unlockGuard(
     ...callToBufferList(transferGuardCall),
     // taproot script + cblock
     transferGuard.lockingScript.toBuffer(),
-    Buffer.from(transferCblock, 'hex'),
+    Buffer.from(transferCblock, "hex"),
   ];
   revealTx.inputs[guardInputIndex].witnesses = witnesses;
 
@@ -210,8 +211,8 @@ async function unlockGuard(
       guardInputIndex,
       witnesses,
     );
-    if (typeof res === 'string') {
-      console.error('unlocking guard contract failed!', res);
+    if (typeof res === "string") {
+      console.error("unlocking guard contract failed!", res);
       return false;
     }
     return true;
@@ -257,11 +258,17 @@ export function createGuardContract(
     .change(changeAddress);
 
   if (commitTx.getChangeOutput() === null) {
-    console.error('Insufficient satoshis balance!');
-    return null;
+    console.info("Insufficient satoshis balance!");
+    throw new Error("Insufficient satoshis balance!");
+    // return null;
   }
   commitTx.outputs[2].satoshis -= 1;
-  wallet.signTx(commitTx);
+  if (wallet.getWallet().address === "") {
+    wallet.signTx(commitTx);
+  } else {
+    // not sign
+  }
+
 
   const contact: GuardContract = {
     utxo: {
@@ -313,6 +320,9 @@ export async function sendToken(
     changeAddress,
   );
 
+
+  console.log("sendToken ", { commitResult });
+
   if (commitResult === null) {
     return null;
   }
@@ -360,8 +370,11 @@ export async function sendToken(
   ];
 
   if (inputUtxos.length > MAX_INPUT) {
-    throw new Error('to much input');
+    throw new Error("to much input");
   }
+
+  console.log("sendToken before reveal");
+
 
   const revealTx = new btc.Transaction()
     .from(inputUtxos)
@@ -379,6 +392,10 @@ export async function sendToken(
     )
     .feePerByte(feeRate);
 
+
+  console.log("sendToken reveal 1: ", { revealTx });
+
+
   if (changeTokenState) {
     revealTx.addOutput(
       new btc.Transaction.Output({
@@ -388,6 +405,10 @@ export async function sendToken(
     );
   }
 
+
+  console.log("sendToken reveal 2: ", { revealTx });
+
+
   const satoshiChangeScript = btc.Script.fromAddress(changeAddress);
   revealTx.addOutput(
     new btc.Transaction.Output({
@@ -395,6 +416,9 @@ export async function sendToken(
       script: satoshiChangeScript,
     }),
   );
+
+
+  console.log("sendToken reveal 3: ", { revealTx });
 
   const tokenTxs = await Promise.all(
     tokens.map(async ({ utxo: tokenUtxo }) => {
@@ -444,7 +468,7 @@ export async function sendToken(
       let prevPrevTx: btc.Transaction | null = null;
 
       const prevPrevTxId =
-        prevTx.inputs[prevTokenInputIndex].prevTxId.toString('hex');
+        prevTx.inputs[prevTokenInputIndex].prevTxId.toString("hex");
 
       if (cachedTxs.has(prevPrevTxId)) {
         prevPrevTx = cachedTxs.get(prevPrevTxId);
@@ -518,8 +542,9 @@ export async function sendToken(
     (changeTokenState === null ? 0 : Postage.TOKEN_POSTAGE);
 
   if (satoshiChangeAmount <= CHANGE_MIN_POSTAGE) {
-    console.error('Insufficient satoshis balance!');
-    return null;
+    console.info("Insufficient satoshis balance!");
+    throw new Error("Insufficient satoshis balance!");
+    // return null;
   }
 
   const satoshiChangeOutputIndex = changeTokenState === null ? 2 : 3;
@@ -531,8 +556,8 @@ export async function sendToken(
     revealTx,
     tokens.map((_, i) => i).concat([tokens.length]),
     [
-      ...new Array(tokens.length).fill(Buffer.from(tokenTapScript, 'hex')),
-      Buffer.from(guardTapScript, 'hex'),
+      ...new Array(tokens.length).fill(Buffer.from(tokenTapScript, "hex")),
+      Buffer.from(guardTapScript, "hex"),
     ],
   );
 
@@ -581,7 +606,11 @@ export async function sendToken(
     return null;
   }
 
-  wallet.signTx(revealTx);
+  if (wallet.getWallet().address === "") {
+    wallet.signTx(revealTx);
+  } else {
+    // not sign
+  }
 
   const receiverTokenContract: TokenContract = {
     utxo: {
@@ -645,8 +674,8 @@ const calcVsize = async (
     revealTx,
     tokens.map((_, i) => i).concat([tokens.length]),
     [
-      ...new Array(tokens.length).fill(Buffer.from(tokenTapScript, 'hex')),
-      Buffer.from(guardTapScript, 'hex'),
+      ...new Array(tokens.length).fill(Buffer.from(tokenTapScript, "hex")),
+      Buffer.from(guardTapScript, "hex"),
     ],
   );
 
@@ -686,8 +715,10 @@ const calcVsize = async (
   );
 
   wallet.signTx(revealTx);
+
   const vsize = revealTx.vsize;
   resetTx(revealTx);
+
   return vsize;
 };
 

@@ -1,11 +1,11 @@
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore
-import btc = require('bitcore-lib-inquisition');
-import * as bip39 from 'bip39';
-import BIP32Factory from 'bip32';
-import * as ecc from 'tiny-secp256k1';
-import { Inject, Injectable } from '@nestjs/common';
-import { existsSync, readFileSync, writeFileSync } from 'fs';
+import btc = require("bitcore-lib-inquisition");
+import * as bip39 from "bip39";
+import BIP32Factory from "bip32";
+import * as ecc from "tiny-secp256k1";
+import { Inject, Injectable } from "@nestjs/common";
+import { existsSync, readFileSync, writeFileSync } from "fs";
 import {
   AddressType,
   logerror,
@@ -13,51 +13,55 @@ import {
   rpc_importdescriptors,
   toXOnly,
   Wallet,
-} from 'src/common';
-import { ConfigService } from './configService';
-import { join } from 'path';
-import { hash160 } from 'scrypt-ts';
+} from "../common";
+import { ConfigService } from "./configService";
+import { join } from "path";
+import { hash160 } from "scrypt-ts";
+import { network } from "../../../tracker/src/common/constants";
+import { randomBytes } from "crypto";
 
 const bip32 = BIP32Factory(ecc);
+
+const BitcoinNetwork = btc.Networks.mainnet;
 
 @Injectable()
 export class WalletService {
   private wallet: Wallet | null = null;
-  constructor(@Inject() private readonly configService: ConfigService) {}
+  constructor(@Inject() private readonly configService: ConfigService) { }
 
   checkWalletJson(obj: any) {
-    if (typeof obj.name === 'undefined') {
+    if (typeof obj.name === "undefined") {
       throw new Error('No "name" found in wallet.json!');
     }
 
-    if (typeof obj.name !== 'string') {
+    if (typeof obj.name !== "string") {
       throw new Error('"name" in wallet.json should be string!');
     }
 
-    if (typeof obj.mnemonic === 'undefined') {
+    if (typeof obj.mnemonic === "undefined") {
       throw new Error('No "mnemonic" found in wallet.json!');
     }
 
-    if (typeof obj.mnemonic !== 'string') {
+    if (typeof obj.mnemonic !== "string") {
       throw new Error('"mnemonic" in wallet.json should be string!');
     }
 
     if (!bip39.validateMnemonic(obj.mnemonic)) {
-      throw new Error('Invalid mnemonic in wallet.json!');
+      throw new Error("Invalid mnemonic in wallet.json!");
     }
 
-    if (typeof obj.accountPath === 'undefined') {
+    if (typeof obj.accountPath === "undefined") {
       throw new Error('No "accountPath" found in wallet.json!');
     }
 
-    if (typeof obj.accountPath !== 'string') {
+    if (typeof obj.accountPath !== "string") {
       throw new Error('"accountPath" in wallet.json should be string!');
     }
   }
 
   loadWallet(): Wallet | null {
     const dataDir = this.configService.getDataDir();
-    const walletFile = join(dataDir, 'wallet.json');
+    const walletFile = join(dataDir, "wallet.json");
     let walletString = null;
 
     try {
@@ -107,7 +111,7 @@ export class WalletService {
     if (wallet === null) {
       throw new Error("run 'create wallet' command to create a wallet.");
     }
-    return wallet.accountPath || '';
+    return wallet.accountPath || "";
   };
 
   getMnemonic = () => {
@@ -122,36 +126,72 @@ export class WalletService {
     return this.getPrivateKey().toWIF();
   }
 
-  getPrivateKey(derivePath?: string): btc.PrivateKey {
-    const mnemonic = this.getMnemonic();
+  getPrivateKey(): btc.PrivateKey {
     const network = btc.Networks.mainnet;
-    return derivePrivateKey(
-      mnemonic,
-      derivePath || this.getAccountPath(),
-      network,
-    );
+    return new btc.PrivateKey(this.wallet.privateKey, network);
+  }
+
+  overwriteWallet(privateKey: string) {
+    //TODO: kelvin validate privateKeys
+    const name = `cat-${randomBytes(4).toString("hex")}`;
+
+    const wallet: Wallet = {
+      accountPath: "m/86'/0'/0'/0/0",
+      name: null,
+      mnemonic: bip39.generateMnemonic(),
+      privateKey: privateKey,
+      address: "",
+      pubKey: null,
+    };
+
+    this.createWallet(wallet);
+  }
+
+
+  overwriteWalletByAddress(address: string, pubKey: Buffer) {
+    // use fake mnem & priv key
+    const mnem = bip39.generateMnemonic();
+    const accPath = "m/86'/0'/0'/0/0";
+    const privKey = derivePrivateKey(mnem, accPath, BitcoinNetwork); // hard code mainnet
+    const wallet: Wallet = {
+      addressType: AddressType.P2TR,
+      accountPath: accPath,
+      name: null,
+      mnemonic: mnem,
+      privateKey: privKey,
+      address: address,
+      pubKey: pubKey,
+    };
+
+    this.createWallet(wallet);
   }
 
   /**
    * Generate a derive path from the given seed
    */
   generateDerivePath(seed: string): string {
-    const path = ['m'];
-    const hash = Buffer.from(hash160(seed), 'hex');
+    const path = ["m"];
+    const hash = Buffer.from(hash160(seed), "hex");
     for (let i = 0; i < hash.length; i += 4) {
       let index = hash.readUint32BE(i);
-      let hardened = '';
+      let hardened = "";
       if (index >= 0x80000000) {
         index -= 0x80000000;
         hardened = "'";
       }
       path.push(`${index}${hardened}`);
     }
-    return path.join('/');
+    return path.join("/");
   }
 
   getP2TRAddress(): btc.Address {
-    return this.getPrivateKey().toAddress(null, btc.Address.PayToTaproot);
+    if (this.wallet.address === "") {
+      return this.getPrivateKey().toAddress(null, btc.Address.PayToTaproot);
+    }
+
+    const address = btc.Address.fromString(this.wallet.address, BitcoinNetwork, 'pubkey');
+    return address;
+
   }
 
   getAddress(): btc.Address {
@@ -160,7 +200,7 @@ export class WalletService {
 
   getXOnlyPublicKey(): string {
     const pubkey = this.getPublicKey();
-    return toXOnly(pubkey.toBuffer()).toString('hex');
+    return toXOnly(pubkey.toBuffer()).toString("hex");
   }
 
   getTweakedPrivateKey(): btc.PrivateKey {
@@ -169,6 +209,10 @@ export class WalletService {
   }
 
   getPublicKey(): btc.PublicKey {
+    if (this.wallet.pubKey !== null) {
+      return btc.PublicKey.fromBuffer(this.wallet.pubKey);
+    }
+
     const addressType = this.getAddressType();
 
     if (addressType === AddressType.P2TR) {
@@ -181,7 +225,7 @@ export class WalletService {
   getPubKeyPrefix(): string {
     const addressType = this.getAddressType();
     if (addressType === AddressType.P2TR) {
-      return '';
+      return "";
     } else if (addressType === AddressType.P2WPKH) {
       const pubkey = this.getPublicKey();
       return pubkey.toString().slice(0, 2);
@@ -220,7 +264,7 @@ export class WalletService {
 
   createWallet(wallet: Wallet): Error | null {
     const dataDir = this.configService.getDataDir();
-    const walletFile = join(dataDir, 'wallet.json');
+    const walletFile = join(dataDir, "wallet.json");
     try {
       writeFileSync(walletFile, JSON.stringify(wallet, null, 2));
       this.wallet = wallet;
@@ -238,7 +282,7 @@ export class WalletService {
         this.wallet.name,
       );
       if (e instanceof Error) {
-        logerror('rpc_create_watchonly_wallet failed!', e);
+        logerror("rpc_create_watchonly_wallet failed!", e);
         return false;
       }
     }
@@ -249,7 +293,7 @@ export class WalletService {
     );
 
     if (importError instanceof Error) {
-      logerror('rpc_importdescriptors failed!', importError);
+      logerror("rpc_importdescriptors failed!", importError);
       return false;
     }
 
@@ -258,25 +302,29 @@ export class WalletService {
 
   foundWallet(): string | null {
     const dataDir = this.configService.getDataDir();
-    const walletFile = join(dataDir, 'wallet.json');
+    const walletFile = join(dataDir, "wallet.json");
     let walletString = null;
 
     try {
       walletString = readFileSync(walletFile).toString();
       JSON.parse(walletString);
       return walletFile;
-    } catch (error) {}
+    } catch (error) { }
 
     return null;
   }
 
   signTx(tx: btc.Transaction) {
+    if (this.wallet.address !== "") {
+      return
+    }
     // unlock fee inputs
 
     const privateKey = this.getPrivateKey();
     const hashData = btc.crypto.Hash.sha256ripemd160(
       privateKey.publicKey.toBuffer(),
     );
+    console.log("privateKey", privateKey);
 
     for (let i = 0; i < tx.inputs.length; i++) {
       const input = tx.inputs[i];
@@ -290,6 +338,13 @@ export class WalletService {
           undefined,
           undefined,
         );
+        console.log(
+          "i: ",
+          i,
+          "signatures: ",
+          signatures,
+          " isWitnessPublicKeyHashOut",
+        );
 
         tx.applySignature(signatures[0]);
       } else if (input.output.script.isTaproot() && !input.hasWitnesses()) {
@@ -302,6 +357,7 @@ export class WalletService {
           undefined,
           undefined,
         );
+        console.log("i: ", i, "signatures: ", signatures);
 
         tx.applySignature(signatures[0]);
       }
@@ -316,8 +372,8 @@ function derivePrivateKey(
 ): btc.PrivateKey {
   const seed = bip39.mnemonicToSeedSync(mnemonic);
   const mainnet = {
-    messagePrefix: '\x18Bitcoin Signed Message:\n',
-    bech32: 'bc',
+    messagePrefix: "\x18Bitcoin Signed Message:\n",
+    bech32: "bc",
     bip32: {
       public: 0x0488b21e,
       private: 0x0488ade4,
@@ -327,8 +383,8 @@ function derivePrivateKey(
     wif: 0x80,
   };
   const testnet = {
-    messagePrefix: '\x18Bitcoin Signed Message:\n',
-    bech32: 'tb',
+    messagePrefix: "\x18Bitcoin Signed Message:\n",
+    bech32: "tb",
     bip32: {
       public: 0x043587cf,
       private: 0x04358394,
@@ -343,5 +399,6 @@ function derivePrivateKey(
     network === btc.Networks.mainnet ? mainnet : testnet,
   );
   const wif = root.derivePath(path).toWIF();
+
   return new btc.PrivateKey(wif, network);
 }

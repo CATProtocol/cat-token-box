@@ -1,9 +1,9 @@
-import { accessSync, constants } from 'fs';
-import { Option, CommandRunner } from 'nest-commander';
-import { CliConfig, logerror, resolveConfigPath } from 'src/common';
-import { WalletService } from 'src/providers';
-import { ConfigService } from 'src/providers/configService';
-import { URL } from 'url';
+import { accessSync, constants } from "fs";
+import { Option, CommandRunner } from "nest-commander";
+import { CliConfig, logerror, resolveConfigPath } from "../common";
+import { WalletService } from "../providers";
+import { ConfigService } from "../providers/configService";
+import { URL } from "url";
 export interface BaseCommandOptions {
   config?: string;
   network?: string;
@@ -32,12 +32,12 @@ export abstract class BaseCommand extends CommandRunner {
     passedParams: string[],
     options?: BaseCommandOptions,
   ): Promise<void> {
-    const configPath = resolveConfigPath(options?.config || '');
+    const configPath = resolveConfigPath(options?.config || "");
 
     const error = this.configService.loadCliConfig(configPath);
 
     if (error instanceof Error) {
-      console.warn('WARNING:', error.message);
+      console.warn("WARNING:", error.message);
     }
 
     const cliConfig = this.takeConfig(options);
@@ -118,8 +118,8 @@ export abstract class BaseCommand extends CommandRunner {
   }
 
   @Option({
-    flags: '-c, --config [config file]',
-    description: 'Special a config file',
+    flags: "-c, --config [config file]",
+    description: "Special a config file",
   })
   parseConfig(val: string): string {
     const configPath = resolveConfigPath(val);
@@ -133,23 +133,23 @@ export abstract class BaseCommand extends CommandRunner {
   }
 
   @Option({
-    flags: '-d, --datadir [datadir]',
-    description: 'Special a data dir',
+    flags: "-d, --datadir [datadir]",
+    description: "Special a data dir",
   })
   parseDataDir(val: string): string {
     return val;
   }
 
   @Option({
-    flags: '-n, --network [network]',
-    description: 'Special a network',
-    choices: ['fractal-mainnet', 'fractal-testnet', 'btc-signet'],
+    flags: "-n, --network [network]",
+    description: "Special a network",
+    choices: ["fractal-mainnet", "fractal-testnet", "btc-signet"],
   })
   parseNetwork(val: string): string {
     if (
-      val === 'fractal-mainnet' ||
-      val === 'fractal-testnet' ||
-      val === 'btc-signet'
+      val === "fractal-mainnet" ||
+      val === "fractal-testnet" ||
+      val === "btc-signet"
     ) {
       return val;
     }
@@ -157,8 +157,8 @@ export abstract class BaseCommand extends CommandRunner {
   }
 
   @Option({
-    flags: '-t, --tracker [tracker]',
-    description: 'Special a tracker URL',
+    flags: "-t, --tracker [tracker]",
+    description: "Special a tracker URL",
   })
   parseTracker(val: string): string {
     try {
@@ -170,8 +170,8 @@ export abstract class BaseCommand extends CommandRunner {
   }
 
   @Option({
-    flags: '--rpc-url [rpcurl]',
-    description: 'Special a rpc URL',
+    flags: "--rpc-url [rpcurl]",
+    description: "Special a rpc URL",
   })
   parseRpcUrl(val: string): string {
     try {
@@ -183,16 +183,16 @@ export abstract class BaseCommand extends CommandRunner {
   }
 
   @Option({
-    flags: '--rpc-username [rpcusername]',
-    description: 'Special a rpc username',
+    flags: "--rpc-username [rpcusername]",
+    description: "Special a rpc username",
   })
   parseRpcUsername(val: string): string {
     return val;
   }
 
   @Option({
-    flags: '--rpc-password [rpcpassword]',
-    description: 'Special a rpc password',
+    flags: "--rpc-password [rpcpassword]",
+    description: "Special a rpc password",
   })
   parseRpcPassword(val: string): string {
     return val;

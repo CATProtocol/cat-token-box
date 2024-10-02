@@ -1,6 +1,6 @@
 export enum AddressType {
-  P2WPKH = 'p2wpkh',
-  P2TR = 'p2tr',
+  P2WPKH = "p2wpkh",
+  P2TR = "p2tr",
 }
 
 export interface Wallet {
@@ -8,4 +8,7 @@ export interface Wallet {
   accountPath: string;
   addressType?: AddressType;
   mnemonic: string;
+  privateKey: string;
+  address: string;
+  pubKey: Buffer;
 }

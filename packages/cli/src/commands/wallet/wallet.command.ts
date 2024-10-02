@@ -3,7 +3,7 @@ import { AddressCommand } from './address.command';
 import { CreateCommand } from './create.command';
 import { BalanceCommand } from './balance.command';
 import { ImportCommand } from './import.command';
-import { logerror } from 'src/common';
+import { logerror } from '../../common';
 interface WalletCommandOptions {}
 
 @Command({

@@ -1,4 +1,4 @@
-import { Command, InquirerService, Option } from 'nest-commander';
+import { Command, InquirerService, Option } from "nest-commander";
 import {
   getUtxos,
   getTokens,
@@ -10,19 +10,19 @@ import {
   sleep,
   btc,
   unScaleByDecimals,
-} from 'src/common';
-import { sendToken } from './ft';
-import { pick, pickLargeFeeUtxo } from './pick';
-import { ConfigService, SpendService, WalletService } from 'src/providers';
-import { Inject } from '@nestjs/common';
-import { RetrySendQuestionAnswers } from 'src/questions/retry-send.question';
-import { findTokenMetadataById, scaleConfig } from 'src/token';
-import Decimal from 'decimal.js';
+} from "../../common";
+import { sendToken } from "./ft";
+import { pick, pickLargeFeeUtxo } from "./pick";
+import { ConfigService, SpendService, WalletService } from "../../providers";
+import { Inject } from "@nestjs/common";
+import { RetrySendQuestionAnswers } from "../../questions/retry-send.question";
+import { findTokenMetadataById, scaleConfig } from "../../token";
+import Decimal from "decimal.js";
 import {
   BoardcastCommand,
   BoardcastCommandOptions,
-} from '../boardcast.command';
-import { isMergeTxFail, mergeTokens } from './merge';
+} from "../boardcast.command";
+import { isMergeTxFail, mergeTokens } from "./merge";
 
 interface SendCommandOptions extends BoardcastCommandOptions {
   id: string;
@@ -32,8 +32,8 @@ interface SendCommandOptions extends BoardcastCommandOptions {
 }
 
 @Command({
-  name: 'send',
-  description: 'Send tokens',
+  name: "send",
+  description: "Send tokens",
 })
 export class SendCommand extends BoardcastCommand {
   constructor(
@@ -49,7 +49,7 @@ export class SendCommand extends BoardcastCommand {
     options?: SendCommandOptions,
   ): Promise<void> {
     if (!options.id) {
-      logerror('expect a tokenId option', new Error());
+      logerror("expect a tokenId option", new Error());
       return;
     }
     try {
@@ -65,7 +65,7 @@ export class SendCommand extends BoardcastCommand {
       try {
         receiver = btc.Address.fromString(inputs[0]);
 
-        if (receiver.type !== 'taproot') {
+        if (receiver.type !== "taproot") {
           console.error(`Invalid address type: ${receiver.type}`);
           return;
         }
@@ -100,11 +100,11 @@ export class SendCommand extends BoardcastCommand {
           if (needRetry(error)) {
             // if send token failed, we request to retry
             const { retry } = await this.inquirer.ask<RetrySendQuestionAnswers>(
-              'retry_send_question',
+              "retry_send_question",
               {},
             );
 
-            if (retry === 'abort') {
+            if (retry === "abort") {
               return;
             }
             console.warn(`retry to send token [${token.info.symbol}] ...`);
@@ -123,8 +123,9 @@ export class SendCommand extends BoardcastCommand {
     receiver: btc.Address,
     amount: bigint,
     address: btc.Address,
+    feeRate?: number,
   ) {
-    const feeRate = await this.getFeeRate();
+    // const feeRate = await this.getFeeRate();
 
     let feeUtxos = await getUtxos(
       this.configService,
@@ -137,8 +138,9 @@ export class SendCommand extends BoardcastCommand {
     });
 
     if (feeUtxos.length === 0) {
-      console.warn('Insufficient satoshis balance!');
-      return;
+      console.info("Insufficient satoshis balance!");
+      throw new Error("Insufficient satoshis balance!");
+      // return;
     }
 
     const res = await getTokens(
@@ -157,7 +159,7 @@ export class SendCommand extends BoardcastCommand {
     let tokenContracts = pick(contracts, amount);
 
     if (tokenContracts.length === 0) {
-      console.warn('Insufficient token balance!');
+      console.warn("Insufficient token balance!");
       return;
     }
 
@@ -177,7 +179,7 @@ export class SendCommand extends BoardcastCommand {
       );
 
       if (e instanceof Error) {
-        logerror('merge token failed!', e);
+        logerror("merge token failed!", e);
         return;
       }
 
@@ -232,8 +234,8 @@ export class SendCommand extends BoardcastCommand {
   }
 
   @Option({
-    flags: '-i, --id [tokenId]',
-    description: 'ID of the token',
+    flags: "-i, --id [tokenId]",
+    description: "ID of the token",
   })
   parseId(val: string): string {
     return val;

@@ -1,5 +1,5 @@
-import { TokenContract } from 'src/common';
-import { UTXO } from 'scrypt-ts';
+import { TokenContract } from "../../common";
+import { UTXO } from "scrypt-ts";
 
 export function pick(
   tokens: Array<TokenContract>,

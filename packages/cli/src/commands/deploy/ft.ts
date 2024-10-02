@@ -1,5 +1,5 @@
 /* eslint-disable prettier/prettier */
-import { UTXO, toByteString } from 'scrypt-ts';
+import { UTXO, toByteString } from "scrypt-ts";
 import {
   broadcast,
   getTokenContractP2TR,

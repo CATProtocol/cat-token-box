@@ -1,7 +1,7 @@
 import { Option } from 'nest-commander';
 import { BaseCommand, BaseCommandOptions } from './base.command';
-import { ConfigService, SpendService, WalletService } from 'src/providers';
-import { CliConfig, getFeeRate } from 'src/common';
+import { ConfigService, SpendService, WalletService } from '../providers';
+import { CliConfig, getFeeRate } from '../common';
 
 export interface BoardcastCommandOptions extends BaseCommandOptions {
   maxFeeRate?: number;

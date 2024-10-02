@@ -1,16 +1,16 @@
-import { SubCommand, Option } from 'nest-commander';
-import { BaseCommand, BaseCommandOptions } from '../base.command';
-import { log, logerror } from 'src/common';
-import { ConfigService, WalletService } from 'src/providers';
-import { Inject } from '@nestjs/common';
+import { SubCommand, Option } from "nest-commander";
+import { BaseCommand, BaseCommandOptions } from "../base.command";
+import { log, logerror } from "../../common";
+import { ConfigService, WalletService } from "../../providers";
+import { Inject } from "@nestjs/common";
 
 interface ImportCommandOptions extends BaseCommandOptions {
   create: boolean;
 }
 
 @SubCommand({
-  name: 'export',
-  description: 'Export wallet to a RPC node.',
+  name: "export",
+  description: "Export wallet to a RPC node.",
 })
 export class ImportCommand extends BaseCommand {
   constructor(
@@ -27,25 +27,25 @@ export class ImportCommand extends BaseCommand {
   ): Promise<void> {
     try {
       if (!this.configService.useRpc()) {
-        log('Please config your rpc first!');
+        log("Please config your rpc first!");
         return;
       }
-      console.log('exporting address to the RPC node ... ');
+      console.log("exporting address to the RPC node ... ");
 
       const success = await this.walletService.importWallet(options.create);
 
       if (success) {
-        console.log('successfully.');
+        console.log("successfully.");
       }
     } catch (error) {
-      logerror('exporting address to the RPC node failed!', error);
+      logerror("exporting address to the RPC node failed!", error);
     }
   }
 
   @Option({
-    flags: '--create [create]',
+    flags: "--create [create]",
     defaultValue: false,
-    description: 'create watch only wallet before import address',
+    description: "create watch only wallet before import address",
   })
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   parseCreate(val: string): boolean {

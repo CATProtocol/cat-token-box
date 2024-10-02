@@ -2,11 +2,11 @@ import {
   OpenMinterState,
   ProtocolState,
   ProtocolStateList,
-} from '@cat-protocol/cat-smartcontracts';
-import { OpenMinterContract, TokenContract } from './contact';
-import { OpenMinterTokenInfo, TokenMetadata } from './metadata';
-import { isOpenMinter } from './minterFinder';
-import { getRawTransaction } from './apis';
+} from "@cat-protocol/cat-smartcontracts";
+import { OpenMinterContract, TokenContract } from "./contact";
+import { OpenMinterTokenInfo, TokenMetadata } from "./metadata";
+import { isOpenMinter } from "./minterFinder";
+import { getRawTransaction } from "./apis";
 import {
   getTokenContractP2TR,
   p2tr2Address,
@@ -212,7 +212,7 @@ export const getTokenMinter = async function (
               );
             }
 
-            if (typeof c.utxo.satoshis === 'string') {
+            if (typeof c.utxo.satoshis === "string") {
               c.utxo.satoshis = parseInt(c.utxo.satoshis);
             }
 
@@ -226,7 +226,7 @@ export const getTokenMinter = async function (
           }),
         );
       } else {
-        throw new Error('Unkown minter!');
+        throw new Error("Unkown minter!");
       }
     })
     .then((minters) => {
@@ -247,58 +247,80 @@ export const getTokens = async function (
   trackerBlockHeight: number;
   contracts: Array<TokenContract>;
 } | null> {
-  const url = `${config.getTracker()}/api/tokens/${metadata.tokenId}/addresses/${ownerAddress}/utxos`;
-  return fetch(url, config.withProxy())
-    .then((res) => res.json())
-    .then((res: any) => {
-      if (res.code === 0) {
-        return res.data;
-      } else {
-        throw new Error(res.msg);
-      }
-    })
-    .then(({ utxos, trackerBlockHeight }) => {
-      let contracts: Array<TokenContract> = utxos.map((c) => {
-        const protocolState = ProtocolState.fromStateHashList(
-          c.txoStateHashes as ProtocolStateList,
-        );
 
-        if (typeof c.utxo.satoshis === 'string') {
-          c.utxo.satoshis = parseInt(c.utxo.satoshis);
+  let offset = 0;
+  let allContracts: Array<TokenContract> = [];
+  let finalTrackerBlockHeight;
+  let isFinished = false;
+
+  while (true) {
+    const url = `${config.getTracker()}/api/tokens/${metadata.tokenId}/addresses/${ownerAddress}/utxos?limit=100&offset=${offset}`;
+    await fetch(url, config.withProxy())
+      .then((res) => res.json())
+      .then((res: any) => {
+        if (res.code === 0) {
+          return res.data;
+        } else {
+          throw new Error(res.msg);
         }
+      })
+      .then(({ utxos, trackerBlockHeight }) => {
+        let contracts: Array<TokenContract> = utxos.map((c) => {
+          const protocolState = ProtocolState.fromStateHashList(
+            c.txoStateHashes as ProtocolStateList,
+          );
 
-        const r: TokenContract = {
-          utxo: c.utxo,
-          state: {
-            protocolState,
-            data: {
-              ownerAddr: c.state.address,
-              amount: BigInt(c.state.amount),
+          if (typeof c.utxo.satoshis === "string") {
+            c.utxo.satoshis = parseInt(c.utxo.satoshis);
+          }
+
+          const r: TokenContract = {
+            utxo: c.utxo,
+            state: {
+              protocolState,
+              data: {
+                ownerAddr: c.state.address,
+                amount: BigInt(c.state.amount),
+              },
             },
-          },
-        };
+          };
 
-        return r;
+          return r;
+        });
+
+        contracts = contracts.filter((tokenContract) => {
+          return spendService.isUnspent(tokenContract.utxo);
+        });
+
+        allContracts.push(...contracts);
+        finalTrackerBlockHeight = trackerBlockHeight;
+        if (contracts.length == 0) {
+          isFinished = true;
+        }
+        offset += 100;
+
+        if (trackerBlockHeight - spendService.blockHeight() > 100) {
+          spendService.reset();
+        }
+        spendService.updateBlockHeight(trackerBlockHeight);
+
+        // return {
+        //   contracts,
+        //   trackerBlockHeight: trackerBlockHeight as number,
+        // };
+      })
+      .catch((e) => {
+        logerror(`fetch tokens failed:`, e);
+        return null;
       });
+    if (isFinished) {
+      break;
+    }
+  }
 
-      contracts = contracts.filter((tokenContract) => {
-        return spendService.isUnspent(tokenContract.utxo);
-      });
-
-      if (trackerBlockHeight - spendService.blockHeight() > 100) {
-        spendService.reset();
-      }
-      spendService.updateBlockHeight(trackerBlockHeight);
-
-      return {
-        contracts,
-        trackerBlockHeight: trackerBlockHeight as number,
-      };
-    })
-    .catch((e) => {
-      logerror(`fetch tokens failed:`, e);
-      return null;
-    });
+  return {
+    contracts: allContracts, trackerBlockHeight: finalTrackerBlockHeight,
+  }
 };
 
 export const getAllBalance = async function (
@@ -377,10 +399,10 @@ export const getBalance = async function (
 
 export const getTrackerStatus = async function (config: ConfigService): Promise<
   | {
-      trackerBlockHeight: number;
-      nodeBlockHeight: number;
-      latestBlockHeight: number;
-    }
+    trackerBlockHeight: number;
+    nodeBlockHeight: number;
+    latestBlockHeight: number;
+  }
   | Error
 > {
   const url = `${config.getTracker()}/api`;

@@ -9,6 +9,7 @@
     "cat-cli": "bin/cat.js"
   },
   "scripts": {
+    "start": "ts-node index.ts",
     "build": "nest build",
     "prepublishOnly": "yarn build",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",

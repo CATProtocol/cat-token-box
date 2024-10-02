@@ -1,9 +1,9 @@
-import { Inject, Injectable } from '@nestjs/common';
-import { UTXO } from 'scrypt-ts';
-import { ConfigService } from './configService';
-import { join } from 'path';
-import { existsSync, readFileSync, writeFileSync } from 'fs';
-import { logerror, btc } from 'src/common';
+import { Inject, Injectable } from "@nestjs/common";
+import { UTXO } from "scrypt-ts";
+import { ConfigService } from "./configService";
+import { join } from "path";
+import { existsSync, readFileSync, writeFileSync } from "fs";
+import { logerror, btc } from "../common";
 
 @Injectable()
 export class SpendService {
@@ -15,7 +15,7 @@ export class SpendService {
 
   loadSpends() {
     const dataDir = this.configService.getDataDir();
-    const spendFile = join(dataDir, 'spends.json');
+    const spendFile = join(dataDir, "spends.json");
     let spendString = null;
 
     try {
@@ -43,7 +43,7 @@ export class SpendService {
   }
 
   addSpend(spend: UTXO | string) {
-    if (typeof spend === 'string') {
+    if (typeof spend === "string") {
       this.spends.add(spend);
     } else {
       const utxo = spend as UTXO;
@@ -52,7 +52,7 @@ export class SpendService {
   }
 
   isUnspent(utxo: UTXO | string): boolean {
-    if (typeof utxo === 'string') {
+    if (typeof utxo === "string") {
       return !this.spends.has(utxo);
     }
     return !this.spends.has(`${utxo.txId}:${utxo.outputIndex}`);
@@ -61,7 +61,7 @@ export class SpendService {
   updateSpends(tx: btc.Transaction) {
     for (let i = 0; i < tx.inputs.length - 1; i++) {
       const input = tx.inputs[i];
-      this.addSpend(`${input.prevTxId.toString('hex')}:${input.outputIndex}`);
+      this.addSpend(`${input.prevTxId.toString("hex")}:${input.outputIndex}`);
     }
   }
 
@@ -85,7 +85,7 @@ export class SpendService {
 
   save(): void {
     const dataDir = this.configService.getDataDir();
-    const spendsFile = join(dataDir, 'spends.json');
+    const spendsFile = join(dataDir, "spends.json");
     try {
       writeFileSync(
         spendsFile,

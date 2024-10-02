@@ -1,9 +1,9 @@
-import { UTXO } from 'scrypt-ts';
-import { Decimal } from 'decimal.js';
-import * as descriptors from '@bitcoinerlab/descriptors';
-import { logerror } from './log';
-import { ConfigService } from 'src/providers';
-import fetch from 'node-fetch-cjs';
+import { UTXO } from "scrypt-ts";
+import { Decimal } from "decimal.js";
+import * as descriptors from "@bitcoinerlab/descriptors";
+import { logerror } from "./log";
+import { ConfigService } from "../providers";
+import fetch from "node-fetch-cjs";
 
 /**
  * only for localhost
@@ -17,24 +17,24 @@ export const rpc_broadcast = async function (
 ): Promise<string | Error> {
   const Authorization = `Basic ${Buffer.from(
     `${config.getRpcUser()}:${config.getRpcPassword()}`,
-  ).toString('base64')}`;
+  ).toString("base64")}`;
 
   return fetch(config.getRpcUrl(walletName), {
-    method: 'POST',
+    method: "POST",
     headers: {
-      'Content-Type': 'application/json',
+      "Content-Type": "application/json",
       Authorization,
     },
     body: JSON.stringify({
-      jsonrpc: '2.0',
-      id: 'cat-cli',
-      method: 'sendrawtransaction',
+      jsonrpc: "2.0",
+      id: "cat-cli",
+      method: "sendrawtransaction",
       params: [txHex],
     }),
   })
     .then((res) => {
-      const contentType = res.headers.get('content-type');
-      if (contentType.includes('json')) {
+      const contentType = res.headers.get("content-type");
+      if (contentType.includes("json")) {
         return res.json();
       } else {
         throw new Error(
@@ -60,24 +60,24 @@ export const rpc_getrawtransaction = async function (
 ): Promise<string | Error> {
   const Authorization = `Basic ${Buffer.from(
     `${config.getRpcUser()}:${config.getRpcPassword()}`,
-  ).toString('base64')}`;
+  ).toString("base64")}`;
 
   return fetch(config.getRpcUrl(walletName), {
-    method: 'POST',
+    method: "POST",
     headers: {
-      'Content-Type': 'application/json',
+      "Content-Type": "application/json",
       Authorization,
     },
     body: JSON.stringify({
-      jsonrpc: '2.0',
-      id: 'cat-cli',
-      method: 'getrawtransaction',
+      jsonrpc: "2.0",
+      id: "cat-cli",
+      method: "getrawtransaction",
       params: [txid],
     }),
   })
     .then((res) => {
-      const contentType = res.headers.get('content-type');
-      if (contentType.includes('json')) {
+      const contentType = res.headers.get("content-type");
+      if (contentType.includes("json")) {
         return res.json();
       } else {
         throw new Error(
@@ -92,7 +92,7 @@ export const rpc_getrawtransaction = async function (
       return res.result;
     })
     .catch((e) => {
-      logerror('broadcast_rpc failed!', e);
+      logerror("broadcast_rpc failed!", e);
       return e;
     });
 };
@@ -109,24 +109,24 @@ export const rpc_getconfirmations = async function (
 > {
   const Authorization = `Basic ${Buffer.from(
     `${config.getRpcUser()}:${config.getRpcPassword()}`,
-  ).toString('base64')}`;
+  ).toString("base64")}`;
 
   return fetch(config.getRpcUrl(null), {
-    method: 'POST',
+    method: "POST",
     headers: {
-      'Content-Type': 'application/json',
+      "Content-Type": "application/json",
       Authorization,
     },
     body: JSON.stringify({
-      jsonrpc: '2.0',
-      id: 'cat-cli',
-      method: 'getrawtransaction',
+      jsonrpc: "2.0",
+      id: "cat-cli",
+      method: "getrawtransaction",
       params: [txid, true],
     }),
   })
     .then((res) => {
-      const contentType = res.headers.get('content-type');
-      if (contentType.includes('json')) {
+      const contentType = res.headers.get("content-type");
+      if (contentType.includes("json")) {
         return res.json();
       } else {
         throw new Error(
@@ -140,7 +140,7 @@ export const rpc_getconfirmations = async function (
       }
       return {
         confirmations: -1,
-        blockhash: '',
+        blockhash: "",
         ...res.result,
       };
     })
@@ -155,24 +155,24 @@ export const rpc_getfeeRate = async function (
 ): Promise<number | Error> {
   const Authorization = `Basic ${Buffer.from(
     `${config.getRpcUser()}:${config.getRpcPassword()}`,
-  ).toString('base64')}`;
+  ).toString("base64")}`;
 
   return fetch(config.getRpcUrl(walletName), {
-    method: 'POST',
+    method: "POST",
     headers: {
-      'Content-Type': 'application/json',
+      "Content-Type": "application/json",
       Authorization,
     },
     body: JSON.stringify({
-      jsonrpc: '2.0',
-      id: 'cat-cli',
-      method: 'estimatesmartfee',
+      jsonrpc: "2.0",
+      id: "cat-cli",
+      method: "estimatesmartfee",
       params: [1],
     }),
   })
     .then((res) => {
-      const contentType = res.headers.get('content-type');
-      if (contentType.includes('json')) {
+      const contentType = res.headers.get("content-type");
+      if (contentType.includes("json")) {
         return res.json();
       } else {
         throw new Error(
@@ -205,23 +205,25 @@ export const rpc_listunspent = async function (
 ): Promise<UTXO[] | Error> {
   const Authorization = `Basic ${Buffer.from(
     `${config.getRpcUser()}:${config.getRpcPassword()}`,
-  ).toString('base64')}`;
+  ).toString("base64")}`;
 
   return fetch(config.getRpcUrl(walletName), {
-    method: 'POST',
+    method: "POST",
     headers: {
-      'Content-Type': 'application/json',
+      "Content-Type": "application/json",
       Authorization,
     },
     body: JSON.stringify({
-      jsonrpc: '2.0',
-      id: 'cat-cli',
-      method: 'listunspent',
+      jsonrpc: "2.0",
+      id: "cat-cli",
+      method: "listunspent",
       params: [0, 9999999, [address]],
     }),
   })
     .then((res) => {
       if (res.status === 200) {
+        console.log("---->res* ", res);
+
         return res.json();
       }
       throw new Error(res.statusText);
@@ -231,7 +233,12 @@ export const rpc_listunspent = async function (
         throw new Error(JSON.stringify(res));
       }
 
+      console.log("---->res ", res);
+
+      console.log("---->res.result ", res.result);
+
       const utxos: UTXO[] = res.result.map((item: any) => {
+        console.log("---->item ", item);
         return {
           txId: item.txid,
           outputIndex: item.vout,
@@ -245,6 +252,8 @@ export const rpc_listunspent = async function (
       return utxos;
     })
     .catch((e: Error) => {
+      console.log("---->err ", e);
+
       return e;
     });
 };
@@ -255,23 +264,23 @@ export const rpc_create_watchonly_wallet = async function (
 ): Promise<null | Error> {
   const Authorization = `Basic ${Buffer.from(
     `${config.getRpcUser()}:${config.getRpcPassword()}`,
-  ).toString('base64')}`;
+  ).toString("base64")}`;
 
   return fetch(config.getRpcUrl(null), {
-    method: 'POST',
+    method: "POST",
     headers: {
-      'Content-Type': 'application/json',
+      "Content-Type": "application/json",
       Authorization,
     },
     body: JSON.stringify({
-      jsonrpc: '2.0',
-      id: 'cat-cli',
-      method: 'createwallet',
+      jsonrpc: "2.0",
+      id: "cat-cli",
+      method: "createwallet",
       params: {
         wallet_name: walletName,
         disable_private_keys: true,
         blank: true,
-        passphrase: '',
+        passphrase: "",
         descriptors: true,
         load_on_startup: true,
       },
@@ -301,21 +310,21 @@ export const rpc_importdescriptors = async function (
 ): Promise<null | Error> {
   const Authorization = `Basic ${Buffer.from(
     `${config.getRpcUser()}:${config.getRpcPassword()}`,
-  ).toString('base64')}`;
+  ).toString("base64")}`;
 
   const checksum = descriptors.checksum(desc);
 
   const timestamp = Math.ceil(new Date().getTime() / 1000);
   return fetch(config.getRpcUrl(walletName), {
-    method: 'POST',
+    method: "POST",
     headers: {
-      'Content-Type': 'application/json',
+      "Content-Type": "application/json",
       Authorization,
     },
     body: JSON.stringify({
-      jsonrpc: '2.0',
-      id: 'cat-cli',
-      method: 'importdescriptors',
+      jsonrpc: "2.0",
+      id: "cat-cli",
+      method: "importdescriptors",
       params: [
         [
           {
@@ -324,7 +333,7 @@ export const rpc_importdescriptors = async function (
             index: 0,
             internal: false,
             timestamp,
-            label: '',
+            label: "",
           },
         ],
       ],
