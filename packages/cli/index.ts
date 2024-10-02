@@ -26,6 +26,21 @@ const walletHD = {
 console.log("WalletService --- ", WalletService);
 console.log("ConfigService --- ", ConfigService);
 
+interface SendCAT20Result {
+  commitTxID: string
+  revealTxID: string
+  commitTxHex: string
+  revealTxHex: string
+  networkFee: number  // in fb decimal
+}
+
+interface SendCAT20Response {
+  errorCode: number
+  errorMsg: string
+  result: SendCAT20Result
+}
+
+
 app.use(express.json());
 
 // Start the server
@@ -136,8 +151,8 @@ app.post("/send-cat20", async (req: any, res: any) => {
       amount,
       tokenId,
       utxos,
-      feeRate,    
-      withdrawUUID,  
+      feeRate,
+      withdrawUUID,
       isBroadcast = false,
     } = req.body as {
       privateKey: string;
@@ -197,7 +212,7 @@ app.post("/send-cat20", async (req: any, res: any) => {
     try {
       receiver = btc.Address.fromString(receiverAddress);
 
-      if (receiver.type !== "taproot") {        
+      if (receiver.type !== "taproot") {
         return createErrorUnknown(res, `Invalid address type: ${receiver.type}`)
       }
     } catch (error) {
@@ -217,17 +232,13 @@ app.post("/send-cat20", async (req: any, res: any) => {
       feeRate,
     );
 
-
-
-
-
     if (resp.errorCode) {
       // save logs 1
       try {
-        saveLogs(withdrawUUID, senderAddress.toString(), receiver.toString(), token.tokenId, token.info.symbol, amount.toString(),res, resp)  
+        saveLogs(withdrawUUID, senderAddress.toString(), receiver.toString(), token.tokenId, token.info.symbol, amount.toString(), res, resp)
       } catch (error) {
         console.log("saveLogs1 er", error)
-      }  
+      }
       return handleErrorResponse(res, resp.errorCode, resp.errorMsg)
     }
 
@@ -240,22 +251,28 @@ app.post("/send-cat20", async (req: any, res: any) => {
     console.log("Total network fee: ", networkFee);
 
 
-    const dataResp = {
-        commitTxHash: result.commitTx.id,
-        commitTxHex: result.commitTx.uncheckedSerialize(),
-        revealTxHash: result.revealTx.id,
-        revealTxHex: result.revealTx.uncheckedSerialize(),
-        networkFee: networkFee,
+    const dataResp: SendCAT20Result = {
+      commitTxID: result.commitTx.id,
+      commitTxHex: result.commitTx.uncheckedSerialize(),
+      revealTxID: result.revealTx.id,
+      revealTxHex: result.revealTx.uncheckedSerialize(),
+      networkFee: networkFee,
+    }
+
+    let logResp: SendCAT20Response = {
+      errorCode: 0,
+      errorMsg: "",
+      result: dataResp,
     }
 
     // save logs 2:
-    try {      
-      saveLogs(withdrawUUID, senderAddress.toString(), receiver.toString(), token.tokenId, token.info.symbol, amount.toString(),res, {result: dataResp})  
+    try {
+      saveLogs(withdrawUUID, senderAddress.toString(), receiver.toString(), token.tokenId, token.info.symbol, amount.toString(), res, logResp)
     } catch (error) {
       console.log("saveLogs2 er", error)
-    }  
+    }
 
-    return handleResponseOK(res, dataResp)   
+    return handleResponseOK(res, dataResp)
 
   } catch (error) {
     console.log("/send -- ERROR --- ", error);
@@ -441,33 +458,35 @@ app.post("/create-tx-send-cat20", async (req: any, res: any) => {
 
 
 
-const errorCodes = {  
+const errorCodes = {
   '-1000': "Insufficient satoshis balance!",
   '-1001': "Insufficient token balance!",
   '-1002': "Merge token failed!"
 };
 
-function handleErrorResponse(res: any, errorCode, errorMsgInput="") {  
+function handleErrorResponse(res: any, errorCode, errorMsgInput = "") {
   const errorMsg = errorCodes[errorCode] || errorMsgInput;
   res.status(500).json({
-    errorCode:  parseInt(errorCode),
+    errorCode: parseInt(errorCode),
     errorMsg: errorMsg,
     result: null
-  }); 
+  });
 }
 
-function createErrorUnknown(res: any, errorMsg) {  
+function createErrorUnknown(res: any, errorMsg) {
   res.status(500).json({
-    errorCode:  parseInt('-9999'),
+    errorCode: parseInt('-9999'),
     errorMsg: errorMsg,
     result: null
   });
 }
 
 function handleResponseOK(res: any, result = {}) {
-  res.status(200).json({   
+  res.status(200).json({
+    errorCode: 0,
+    errorMsg: "",
     result: result
-  });  
+  });
 }
 
 function handleError(res: any, message: string) {
@@ -477,12 +496,12 @@ function handleError(res: any, message: string) {
 
 // save log:
 const axios = require('axios');
-function saveLogs(withdrawUUID, senderAddress, receivedAddresses, tokenID, symbol, amount, reqs, resps){
+function saveLogs(withdrawUUID, senderAddress, receivedAddresses, tokenID, symbol, amount, reqs, resps) {
 
   try {
-    let data = JSON.stringify({  
-      "withdrawUUID": withdrawUUID,  
-      "senderAddress": senderAddress,  
+    let data = JSON.stringify({
+      "withdrawUUID": withdrawUUID,
+      "senderAddress": senderAddress,
       "tokenID": tokenID,
       "symbol": symbol,
       "amount": amount,
@@ -490,25 +509,25 @@ function saveLogs(withdrawUUID, senderAddress, receivedAddresses, tokenID, symbo
       "reqs": reqs,
       "resps": resps,
     });
-    
+
     let config = {
       method: 'post',
       maxBodyLength: Infinity,
       url: 'https://fractal-bridges-api.trustless.computer/api/cat20/internal/add-withdraw-logs',
-      headers: { 
+      headers: {
         'Content-Type': 'application/json'
       },
-      data : data
+      data: data
     };
-    
+
     axios.request(config)
-    .then((response) => {
-      console.log(JSON.stringify(response.data));
-    })
-    .catch((error) => {
-      console.log("function saveLogs error1", error);
-    });
+      .then((response) => {
+        console.log(JSON.stringify(response.data));
+      })
+      .catch((error) => {
+        console.log("function saveLogs error1", error);
+      });
   } catch (error) {
     console.log("function saveLogs error2", error);
-  }  
+  }
 }
