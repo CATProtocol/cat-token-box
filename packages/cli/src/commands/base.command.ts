@@ -76,9 +76,9 @@ export abstract class BaseCommand extends CommandRunner {
       });
     }
 
-    if (options.dataDir) {
+    if (options.datadir) {
       Object.assign(cliConfig, {
-        dataDir: options.dataDir,
+        dataDir: options.datadir,
       });
     }
 
