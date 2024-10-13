@@ -360,7 +360,7 @@ export async function sendToken(
   ];
 
   if (inputUtxos.length > MAX_INPUT) {
-    throw new Error('to much input');
+    throw new Error('too much input');
   }
 
   const revealTx = new btc.Transaction()
