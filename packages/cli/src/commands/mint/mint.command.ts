@@ -29,6 +29,7 @@ import { calcTotalAmount, sendToken } from '../send/ft';
 import { pickLargeFeeUtxo } from '../send/pick';
 interface MintCommandOptions extends BoardcastCommandOptions {
   id: string;
+  merge: boolean;
   new?: number;
 }
 
@@ -89,7 +90,9 @@ export class MintCommand extends BoardcastCommand {
         const MAX_RETRY_COUNT = 10;
 
         for (let index = 0; index < MAX_RETRY_COUNT; index++) {
-          await this.merge(token, address);
+          if (options.merge) {
+            await this.merge(token, address);
+          }
           const feeRate = await this.getFeeRate();
           const feeUtxos = await this.getFeeUTXOs(address);
           if (feeUtxos.length === 0) {
@@ -283,6 +286,15 @@ export class MintCommand extends BoardcastCommand {
   })
   parseId(val: string): string {
     return val;
+  }
+  @Option({
+    flags: '-m, --merge [merge]',
+    defaultValue: false,
+    description: 'merge token utxos when mint',
+  })
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  parseMerge(val: string): boolean {
+    return true;
   }
 
   async getFeeUTXOs(address: btc.Address) {
