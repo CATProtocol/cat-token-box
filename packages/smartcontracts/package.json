@@ -10,7 +10,7 @@
     "prepublishOnly": "npm run build",
     "build": "tsc",
     "deploy": "npx ts-node ./deploy.ts",
-    "clean": "rimraf scrypt.index.json && rimraf dist && rimraf artifacts",
+    "clean": "rimraf scrypt.index.json && rimraf dist",
     "compile": "npx scrypt-cli compile",
     "_pretest": "npm run build",
     "test": "npm run test:mocha",
