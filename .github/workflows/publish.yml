@@ -1,0 +1,30 @@
+on:
+  push:
+    tags:
+      - "v*" # Push events to matching v*, i.e. v1.0, v20.15.10
+
+name: Publish to NPM
+
+jobs:
+  build:
+    name: Publish to NPM
+    runs-on: ubuntu-latest
+    steps:
+      - name: Prepare git
+        run: git config --global core.autocrlf false
+      - uses: actions/checkout@v3
+      # Setup .npmrc file to publish to npm
+      - uses: actions/setup-node@v3
+        with:
+          node-version: "20.x"
+          registry-url: "https://registry.npmjs.org"
+      - name: Yarn Install
+        run: yarn
+      - name: Run test
+        run: turbo test
+      - name: Verify Versions
+        run: node -e "if ('refs/tags/v' + require('./package.json').version !== '${{ github.ref }}') { console.log('::error' + 'Version Mismatch. refs/tags/v' + require('./package.json').version, '${{ github.ref }}'); throw Error('Version Mismatch')} "
+      - name: Publish
+        run: npm publish
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN_CAT }}
