@@ -8,7 +8,7 @@ export interface BaseCommandOptions {
   config?: string;
   network?: string;
   tracker?: string;
-  dataDir?: string;
+  datadir?: string;
   rpcurl?: string;
   rpcusername?: string;
   rpcpassword?: string;
