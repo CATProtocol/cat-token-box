@@ -2,6 +2,7 @@ import { Controller, Get, Param, Query } from '@nestjs/common';
 import { TokenService } from './token.service';
 import { okResponse, errorResponse } from '../../common/utils';
 import { ApiOperation, ApiParam, ApiQuery, ApiTags } from '@nestjs/swagger';
+import { TokenTypeScope } from '../../common/types';
 
 @Controller('tokens')
 export class TokenController {
@@ -21,6 +22,7 @@ export class TokenController {
       const tokenInfo =
         await this.tokenService.getTokenInfoByTokenIdOrTokenAddress(
           tokenIdOrTokenAddr,
+          TokenTypeScope.Fungible,
         );
       return okResponse(tokenInfo);
     } catch (e) {
@@ -28,7 +30,7 @@ export class TokenController {
     }
   }
 
-  @Get(':tokenIdOrTokenAddr/addresses/:ownerAddr/utxos')
+  @Get(':tokenIdOrTokenAddr/addresses/:ownerAddrOrPkh/utxos')
   @ApiTags('token')
   @ApiOperation({ summary: 'Get token utxos by owner address' })
   @ApiParam({
@@ -38,10 +40,10 @@ export class TokenController {
     description: 'token id or token address',
   })
   @ApiParam({
-    name: 'ownerAddr',
+    name: 'ownerAddrOrPkh',
     required: true,
     type: String,
-    description: 'token owner address',
+    description: 'token owner address or public key hash',
   })
   @ApiQuery({
     name: 'offset',
@@ -57,14 +59,15 @@ export class TokenController {
   })
   async getTokenUtxosByOwnerAddress(
     @Param('tokenIdOrTokenAddr') tokenIdOrTokenAddr: string,
-    @Param('ownerAddr') ownerAddr: string,
-    @Query('offset') offset: number,
-    @Query('limit') limit: number,
+    @Param('ownerAddrOrPkh') ownerAddrOrPkh: string,
+    @Query('offset') offset?: number,
+    @Query('limit') limit?: number,
   ) {
     try {
       const utxos = await this.tokenService.getTokenUtxosByOwnerAddress(
         tokenIdOrTokenAddr,
-        ownerAddr,
+        TokenTypeScope.Fungible,
+        ownerAddrOrPkh,
         offset,
         limit,
       );
@@ -74,7 +77,7 @@ export class TokenController {
     }
   }
 
-  @Get(':tokenIdOrTokenAddr/addresses/:ownerAddr/balance')
+  @Get(':tokenIdOrTokenAddr/addresses/:ownerAddrOrPkh/balance')
   @ApiTags('token')
   @ApiOperation({ summary: 'Get token balance by owner address' })
   @ApiParam({
@@ -84,19 +87,20 @@ export class TokenController {
     description: 'token id or token address',
   })
   @ApiParam({
-    name: 'ownerAddr',
+    name: 'ownerAddrOrPkh',
     required: true,
     type: String,
-    description: 'token owner address',
+    description: 'token owner address or public key hash',
   })
   async getTokenBalanceByOwnerAddress(
     @Param('tokenIdOrTokenAddr') tokenIdOrTokenAddr: string,
-    @Param('ownerAddr') ownerAddr: string,
+    @Param('ownerAddrOrPkh') ownerAddrOrPkh: string,
   ) {
     try {
       const balance = await this.tokenService.getTokenBalanceByOwnerAddress(
         tokenIdOrTokenAddr,
-        ownerAddr,
+        TokenTypeScope.Fungible,
+        ownerAddrOrPkh,
       );
       return okResponse(balance);
     } catch (e) {

@@ -1,13 +1,3 @@
-export interface TokenInfo {
-  name: string;
-  symbol: string;
-  decimals: number;
-  max?: bigint;
-  limit?: bigint;
-  premine?: bigint;
-  minterMd5?: string;
-}
-
 export interface BlockHeader {
   hash: string;
   version: number;
@@ -24,4 +14,38 @@ export interface BlockHeader {
   chainwork: string;
   nTx: number;
   nextblockhash: string;
+}
+
+export enum TokenTypeScope {
+  Fungible,
+  NonFungible,
+  All,
+}
+
+export enum EnvelopeMarker {
+  Token = 'OP_1',
+  Collection = 'OP_2',
+  NFT = 'OP_3',
+}
+
+export interface Content {
+  type?: string;
+  encoding?: string;
+  raw?: Buffer;
+}
+
+export interface EnvelopeData {
+  metadata?: object;
+  content?: Content;
+}
+
+export interface TokenInfoEnvelope {
+  marker: EnvelopeMarker;
+  data: EnvelopeData;
+}
+
+export interface TaprootPayment {
+  pubkey?: Buffer;
+  redeemScript?: Buffer;
+  witness?: Buffer[];
 }

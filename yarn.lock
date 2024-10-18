@@ -7084,7 +7084,7 @@ scrypt-ts-transpiler@^1.2.26:
     ts-patch "=3.0.1"
     typescript "~5.3.0"
 
-scrypt-ts@latest:
+scrypt-ts@1.4.0:
   version "1.4.0"
   resolved "https://registry.yarnpkg.com/scrypt-ts/-/scrypt-ts-1.4.0.tgz#d72b9aa4e28ba16d2b33e58e93c503f10d97f448"
   integrity sha512-mmdnJ0zDopUo44sfXbgUOlxBF1mXNJhL8lyTy77GgC/rez85vS1nzeLf9SuKe9/BZJDM/vu7rIu08mpMkS/8ag==

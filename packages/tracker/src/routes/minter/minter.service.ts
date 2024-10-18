@@ -5,6 +5,7 @@ import { TxOutEntity } from '../../entities/txOut.entity';
 import { IsNull, LessThanOrEqual, Repository } from 'typeorm';
 import { Constants } from '../../common/constants';
 import { CommonService } from '../../services/common/common.service';
+import { TokenTypeScope } from '../../common/types';
 
 @Injectable()
 export class MinterService {
@@ -17,8 +18,8 @@ export class MinterService {
 
   async getMinterUtxos(
     tokenIdOrTokenAddr: string,
-    offset: number,
-    limit: number,
+    offset?: number,
+    limit?: number,
   ) {
     const utxos = await this.queryMinterUtxos(
       tokenIdOrTokenAddr,
@@ -42,14 +43,15 @@ export class MinterService {
   async queryMinterUtxos(
     tokenIdOrTokenAddr: string,
     isCountQuery: boolean = false,
-    offset: number = null,
-    limit: number = null,
+    offset: number | null = null,
+    limit: number | null = null,
   ) {
     const lastProcessedHeight =
       await this.commonService.getLastProcessedBlockHeight();
     const tokenInfo =
       await this.tokenService.getTokenInfoByTokenIdOrTokenAddress(
         tokenIdOrTokenAddr,
+        TokenTypeScope.All,
       );
     let count = 0;
     let utxos = [];

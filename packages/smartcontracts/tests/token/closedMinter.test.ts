@@ -1,26 +1,26 @@
 import * as dotenv from 'dotenv'
 dotenv.config()
 import { expect, use } from 'chai'
-import { ClosedMinter } from '../src/contracts/token/closedMinter'
+import { ClosedMinter } from '../../src/contracts/token/closedMinter'
 import chaiAsPromised from 'chai-as-promised'
 import { MethodCallOptions, hash160, toByteString } from 'scrypt-ts'
-import { getOutpointString } from '../src/lib/txTools'
+import { getOutpointString } from '../../src/lib/txTools'
 import {
     getDummyGenesisTx,
     getDummySigner,
     getDummyUTXO,
-} from './utils/txHelper'
-import { CAT20Proto } from '../src/contracts/token/cat20Proto'
-import { getKeyInfoFromWif, getPrivKey } from './utils/privateKey'
+} from '../utils/txHelper'
+import { CAT20Proto } from '../../src/contracts/token/cat20Proto'
+import { getKeyInfoFromWif, getPrivKey } from '../utils/privateKey'
 import {
     GetTokenScript,
     closedMinterCall,
     closedMinterDeploy,
 } from './closedMinter'
-import { CatTx, ContractCallResult, ContractIns } from '../src/lib/catTx'
-import { getBackTraceInfo } from '../src/lib/proof'
-import { unlockTaprootContractInput } from './utils/contractUtils'
-import { btc } from '../src/lib/btc'
+import { CatTx, ContractCallResult, ContractIns } from '../../src/lib/catTx'
+import { getBackTraceInfo } from '../../src/lib/proof'
+import { unlockTaprootContractInput } from '../utils/contractUtils'
+import { btc } from '../../src/lib/btc'
 use(chaiAsPromised)
 
 const DUST = toByteString('4a01000000000000')

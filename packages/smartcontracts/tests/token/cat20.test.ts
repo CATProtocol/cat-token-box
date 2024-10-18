@@ -6,29 +6,33 @@ import {
     emptyTokenArray,
     getBackTraceInfoSearch,
     getTxHeaderCheck,
-} from '../src/lib/proof'
+} from '../../src/lib/proof'
 import chaiAsPromised from 'chai-as-promised'
 import { MethodCallOptions, fill, hash160, toByteString } from 'scrypt-ts'
-import { getOutpointObj, getOutpointString, getTxCtx } from '../src/lib/txTools'
-import { CAT20Proto, CAT20State } from '../src/contracts/token/cat20Proto'
-import { GuardProto } from '../src/contracts/token/guardProto'
-import { CAT20, GuardInfo } from '../src/contracts/token/cat20'
-import { ClosedMinter } from '../src/contracts/token/closedMinter'
-import { TransferGuard } from '../src/contracts/token/transferGuard'
+import {
+    getOutpointObj,
+    getOutpointString,
+    getTxCtx,
+} from '../../src/lib/txTools'
+import { CAT20Proto, CAT20State } from '../../src/contracts/token/cat20Proto'
+import { GuardProto } from '../../src/contracts/token/guardProto'
+import { CAT20, GuardInfo } from '../../src/contracts/token/cat20'
+import { ClosedMinter } from '../../src/contracts/token/closedMinter'
+import { TransferGuard } from '../../src/contracts/token/transferGuard'
 import {
     UTXO,
     getBtcDummyUtxo,
     getDummyGenesisTx,
     getDummySigner,
     getDummyUTXO,
-} from './utils/txHelper'
+} from '../utils/txHelper'
 import {
     MAX_INPUT,
     MAX_TOKEN_INPUT,
     MAX_TOKEN_OUTPUT,
-} from '../src/contracts/utils/txUtil'
-import { KeyInfo, getKeyInfoFromWif, getPrivKey } from './utils/privateKey'
-import { unlockTaprootContractInput } from './utils/contractUtils'
+} from '../../src/contracts/utils/txUtil'
+import { KeyInfo, getKeyInfoFromWif, getPrivKey } from '../utils/privateKey'
+import { unlockTaprootContractInput } from '../utils/contractUtils'
 import {
     closedMinterCall,
     closedMinterDeploy,
@@ -40,9 +44,9 @@ import {
     ContractIns,
     TaprootMastSmartContract,
     TaprootSmartContract,
-} from '../src/lib/catTx'
-import { BurnGuard } from '../src/contracts/token/burnGuard'
-import { btc } from '../src/lib/btc'
+} from '../../src/lib/catTx'
+import { BurnGuard } from '../../src/contracts/token/burnGuard'
+import { btc } from '../../src/lib/btc'
 use(chaiAsPromised)
 
 export async function tokenTransferCall(

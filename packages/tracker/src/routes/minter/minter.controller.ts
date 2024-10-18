@@ -30,8 +30,8 @@ export class MinterController {
   })
   async getMinterUtxos(
     @Param('tokenIdOrTokenAddr') tokenIdOrTokenAddr: string,
-    @Query('offset') offset: number,
-    @Query('limit') limit: number,
+    @Query('offset') offset?: number,
+    @Query('limit') limit?: number,
   ) {
     try {
       const utxos = await this.minterService.getMinterUtxos(

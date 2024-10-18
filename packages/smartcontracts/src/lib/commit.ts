@@ -59,11 +59,11 @@ export function chunks<T>(bin: T[], chunkSize: number): T[][] {
 export const getCatCommitScript = (
     leafKeyXPub: string,
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    contractMeta: Record<string, any>
+    metadata: Record<string, any>
 ) => {
     const m = new Map()
-    for (const key in contractMeta) {
-        m.set(key, contractMeta[key])
+    for (const key in metadata) {
+        m.set(key, metadata[key])
     }
     const data = Buffer.from(cbor2.encode(m))
 
@@ -83,6 +83,124 @@ export const getCatCommitScript = (
     // if the metadata exceeds the limit of 520, it is split into multiple chunks.
     for (const chunk of dataChunks) {
         res.push(toPushData(Buffer.from(chunk)))
+    }
+
+    res.push(btc.Script.fromASM('OP_ENDIF').toBuffer()) // cat protocal envelope end
+
+    res.push(btc.Script.fromASM('OP_1').toBuffer()) // put true on top stack
+
+    return Buffer.concat(res).toString('hex')
+}
+
+
+
+export const getCatCollectionCommitScript = (
+    leafKeyXPub: string,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    metadata: Record<string, any>,
+    content?: {
+        type: string,
+        body: string,
+    }
+) => {
+
+    const res = []
+
+    res.push(
+        toPushData(Buffer.from(leafKeyXPub, 'hex')) // 0 OP_IF "cat"
+    )
+
+    res.push(btc.Script.fromASM('OP_CHECKSIGVERIFY').toBuffer()) // checkSig
+    res.push(btc.Script.fromASM('OP_2DROP OP_2DROP OP_DROP').toBuffer()) // drop all stateHashes in the witness
+    res.push(btc.Script.fromASM('OP_0 OP_IF 636174').toBuffer()) //  cat protocal envelope start
+    res.push(btc.Script.fromASM('OP_2').toBuffer()) // cat NFT collection
+
+    if (Object.keys(metadata).length > 0) {
+        const m = new Map()
+        for (const key in metadata) {
+            m.set(key, metadata[key])
+        }
+
+        const metadataChunks = chunks(Array.from(Buffer.from(cbor2.encode(m))), limit)
+
+        // if the metadata exceeds the limit of 520, it is split into multiple chunks.
+        for (const chunk of metadataChunks) {
+            res.push(toPushData(Buffer.from([5])))
+            res.push(toPushData(Buffer.from(chunk)))
+        }
+    }
+
+    if(content) {
+        
+        res.push(toPushData(Buffer.from([1])))
+
+        res.push(toPushData(Buffer.from(content.type, 'utf-8')))
+
+        res.push(Buffer.from([0]))
+
+        const dataChunks = chunks(Array.from(Buffer.from(content.body, 'hex')), limit)
+
+        // if the contentBody exceeds the limit of 520, it is split into multiple chunks.
+        for (const chunk of dataChunks) {
+            res.push(toPushData(Buffer.from(chunk)))
+        }
+
+    }
+
+    res.push(btc.Script.fromASM('OP_ENDIF').toBuffer()) // cat protocal envelope end
+
+    res.push(btc.Script.fromASM('OP_1').toBuffer()) // put true on top stack
+
+    return Buffer.concat(res).toString('hex')
+}
+
+
+export const getCatNFTCommitScript = (
+    leafKeyXPub: string,
+    metadata: Record<string, any>,
+    content?: {
+        type: string,
+        body: string,
+    },
+) => {
+    const res = []
+    res.push(
+        toPushData(Buffer.from(leafKeyXPub, 'hex')) // 0 OP_IF "cat"
+    )
+
+    res.push(btc.Script.fromASM('OP_CHECKSIGVERIFY').toBuffer()) // checkSig
+    res.push(btc.Script.fromASM('OP_0 OP_IF 636174').toBuffer()) //  cat protocal envelope start
+    res.push(btc.Script.fromASM('OP_3').toBuffer()) // cat NFT
+
+    if (Object.keys(metadata).length > 0) {
+        const m = new Map()
+        for (const key in metadata) {
+            m.set(key, metadata[key])
+        }
+
+        const metadataChunks = chunks(Array.from(Buffer.from(cbor2.encode(m))), limit)
+
+        // if the metadata exceeds the limit of 520, it is split into multiple chunks.
+        for (const chunk of metadataChunks) {
+            res.push(toPushData(Buffer.from([5])))
+            res.push(toPushData(Buffer.from(chunk)))
+        }
+    }
+
+    if(content) {
+
+        res.push(toPushData(Buffer.from([1])))
+
+        res.push(toPushData(Buffer.from(content.type, 'utf-8')))
+    
+        res.push(Buffer.from([0]))
+    
+        const dataChunks = chunks(Array.from(Buffer.from(content.body, 'hex')), limit)
+    
+        // if the contentBody exceeds the limit of 520, it is split into multiple chunks.
+        for (const chunk of dataChunks) {
+            res.push(toPushData(Buffer.from(chunk)))
+        }
     }
 
     res.push(btc.Script.fromASM('OP_ENDIF').toBuffer()) // cat protocal envelope end

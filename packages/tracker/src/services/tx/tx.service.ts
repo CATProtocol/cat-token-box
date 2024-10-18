@@ -17,11 +17,20 @@ import { TxOutEntity } from '../../entities/txOut.entity';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Constants } from '../../common/constants';
 import { TokenInfoEntity } from '../../entities/tokenInfo.entity';
+import { NftInfoEntity } from '../../entities/nftInfo.entity';
 import { CatTxError } from '../../common/exceptions';
-import { parseTokenInfo, TaprootPayment } from '../../common/utils';
-import { BlockHeader, TokenInfo } from '../../common/types';
+import { parseTokenInfoEnvelope } from '../../common/utils';
+import {
+  BlockHeader,
+  EnvelopeMarker,
+  TaprootPayment,
+  TokenInfoEnvelope,
+} from '../../common/types';
 import { TokenMintEntity } from '../../entities/tokenMint.entity';
-import { getGuardContractInfo } from '@cat-protocol/cat-smartcontracts';
+import {
+  getGuardContractInfo,
+  getNftGuardContractInfo,
+} from '@cat-protocol/cat-smartcontracts';
 import { LRUCache } from 'lru-cache';
 import { CommonService } from '../common/common.service';
 import { TxOutArchiveEntity } from 'src/entities/txOutArchive.entity';
@@ -31,8 +40,11 @@ import { Cron } from '@nestjs/schedule';
 export class TxService {
   private readonly logger = new Logger(TxService.name);
 
-  private readonly GUARD_PUBKEY: string;
-  private readonly TRANSFER_GUARD_SCRIPT_HASH: string;
+  private readonly FT_GUARD_PUBKEY: string;
+  private readonly FT_TRANSFER_GUARD_SCRIPT_HASH: string;
+
+  private readonly NFT_GUARD_PUBKEY: string;
+  private readonly NFT_TRANSFER_GUARD_SCRIPT_HASH: string;
 
   private static readonly taprootPaymentCache = new LRUCache<
     string,
@@ -56,13 +68,22 @@ export class TxService {
     @InjectRepository(TxEntity)
     private txEntityRepository: Repository<TxEntity>,
   ) {
-    const guardContractInfo = getGuardContractInfo();
-    this.GUARD_PUBKEY = guardContractInfo.tpubkey;
-    this.TRANSFER_GUARD_SCRIPT_HASH =
-      guardContractInfo.contractTaprootMap.transfer.contractScriptHash;
-    this.logger.log(`guard xOnlyPubKey = ${this.GUARD_PUBKEY}`);
+    const tokenGuardContractInfo = getGuardContractInfo();
+    this.FT_GUARD_PUBKEY = tokenGuardContractInfo.tpubkey;
+    this.FT_TRANSFER_GUARD_SCRIPT_HASH =
+      tokenGuardContractInfo.contractTaprootMap.transfer.contractScriptHash;
+    this.logger.log(`token guard xOnlyPubKey = ${this.FT_GUARD_PUBKEY}`);
     this.logger.log(
-      `guard transferScriptHash = ${this.TRANSFER_GUARD_SCRIPT_HASH}`,
+      `token guard transferScriptHash = ${this.FT_TRANSFER_GUARD_SCRIPT_HASH}`,
+    );
+
+    const nftGuardContractInfo = getNftGuardContractInfo();
+    this.NFT_GUARD_PUBKEY = nftGuardContractInfo.tpubkey;
+    this.NFT_TRANSFER_GUARD_SCRIPT_HASH =
+      nftGuardContractInfo.contractTaprootMap.transfer.contractScriptHash;
+    this.logger.log(`nft guard xOnlyPubKey = ${this.NFT_GUARD_PUBKEY}`);
+    this.logger.log(
+      `nft guard transferScriptHash = ${this.NFT_TRANSFER_GUARD_SCRIPT_HASH}`,
     );
   }
 
@@ -120,6 +141,7 @@ export class TxService {
             queryRunner.manager,
             promises,
             tx,
+            payIns,
             payOuts,
             minterInput,
             tokenInfo,
@@ -218,7 +240,10 @@ export class TxService {
    */
   private searchGuardOutputs(payOuts: TaprootPayment[]): boolean {
     for (const payOut of payOuts) {
-      if (this.GUARD_PUBKEY === payOut?.pubkey?.toString('hex')) {
+      if (
+        this.FT_GUARD_PUBKEY === payOut?.pubkey?.toString('hex') ||
+        this.NFT_GUARD_PUBKEY === payOut?.pubkey?.toString('hex')
+      ) {
         return true;
       }
     }
@@ -231,7 +256,10 @@ export class TxService {
    */
   private searchGuardInputs(payIns: TaprootPayment[]): TaprootPayment[] {
     return payIns.filter((payIn) => {
-      return this.GUARD_PUBKEY === payIn?.pubkey?.toString('hex');
+      return (
+        this.FT_GUARD_PUBKEY === payIn?.pubkey?.toString('hex') ||
+        this.NFT_GUARD_PUBKEY === payIn?.pubkey?.toString('hex')
+      );
     });
   }
 
@@ -273,6 +301,17 @@ export class TxService {
     let tokenInfo = TxService.tokenInfoCache.get(minterPubKey);
     if (!tokenInfo) {
       tokenInfo = await this.tokenInfoEntityRepository.findOne({
+        select: [
+          'tokenId',
+          'revealTxid',
+          'revealHeight',
+          'genesisTxid',
+          'name',
+          'symbol',
+          'decimals',
+          'minterPubKey',
+          'tokenPubKey',
+        ],
         where: { minterPubKey },
       });
       if (tokenInfo && tokenInfo.tokenPubKey) {
@@ -281,7 +320,7 @@ export class TxService {
         if (
           lastProcessedHeight !== null &&
           lastProcessedHeight - tokenInfo.revealHeight >=
-            Constants.TOKEN_INFO_CACHE_BLOCKS_THRESHOLD
+            Constants.CACHE_AFTER_N_BLOCKS
         ) {
           TxService.tokenInfoCache.set(minterPubKey, tokenInfo);
         }
@@ -299,13 +338,17 @@ export class TxService {
     blockHeader: BlockHeader,
   ) {
     // commit input
-    const { inputIndex: commitInputIndex, tokenInfo } =
+    const { inputIndex: commitInputIndex, envelope } =
       this.searchRevealTxCommitInput(payIns);
     const commitInput = payIns[commitInputIndex];
     const genesisTxid = Buffer.from(tx.ins[commitInputIndex].hash)
       .reverse()
       .toString('hex');
     const tokenId = `${genesisTxid}_${tx.ins[commitInputIndex].index}`;
+    const {
+      marker,
+      data: { metadata, content },
+    } = envelope;
     // state hashes
     const stateHashes = commitInput.witness.slice(
       Constants.CONTRACT_INPUT_WITNESS_STATE_HASHES_OFFSET,
@@ -322,10 +365,13 @@ export class TxService {
         revealTxid: tx.getId(),
         revealHeight: blockHeader.height,
         genesisTxid,
-        name: tokenInfo.name,
-        symbol: tokenInfo.symbol,
-        decimals: tokenInfo.decimals,
-        rawInfo: tokenInfo,
+        name: metadata['name'],
+        symbol: metadata['symbol'],
+        decimals: marker === EnvelopeMarker.Token ? metadata['decimals'] : -1,
+        rawInfo: metadata,
+        contentType: content?.type,
+        contentEncoding: content?.encoding,
+        contentRaw: content?.raw,
         minterPubKey,
       }),
     );
@@ -353,20 +399,24 @@ export class TxService {
    * If there are multiple commit inputs, throw an error.
    * If there is no commit input, throw an error.
    */
-  private searchRevealTxCommitInput(payIn: TaprootPayment[]): {
+  private searchRevealTxCommitInput(payIns: TaprootPayment[]): {
     inputIndex: number;
-    tokenInfo: TokenInfo;
+    envelope: TokenInfoEnvelope;
   } {
     let commit = null;
-    for (let i = 0; i < payIn.length; i++) {
+    for (let i = 0; i < payIns.length; i++) {
       if (
-        payIn[i] &&
-        payIn[i].witness.length >= Constants.COMMIT_INPUT_WITNESS_MIN_SIZE
+        payIns[i] &&
+        payIns[i].witness.length >= Constants.COMMIT_INPUT_WITNESS_MIN_SIZE
       ) {
         try {
           // parse token info from commit redeem script
-          const tokenInfo = parseTokenInfo(payIn[i].redeemScript);
-          if (tokenInfo) {
+          const envelope = parseTokenInfoEnvelope(payIns[i].redeemScript);
+          if (
+            envelope &&
+            (envelope.marker === EnvelopeMarker.Token ||
+              envelope.marker === EnvelopeMarker.Collection)
+          ) {
             // token info is valid here
             if (commit) {
               throw new CatTxError(
@@ -375,7 +425,7 @@ export class TxService {
             }
             commit = {
               inputIndex: i,
-              tokenInfo,
+              envelope,
             };
           }
         } catch (e) {
@@ -419,6 +469,7 @@ export class TxService {
     manager: EntityManager,
     promises: Promise<any>[],
     tx: Transaction,
+    payIns: TaprootPayment[],
     payOuts: TaprootPayment[],
     minterInput: TaprootPayment,
     tokenInfo: TokenInfoEntity,
@@ -435,43 +486,63 @@ export class TxService {
     this.validateStateHashes(stateHashes);
 
     // ownerPubKeyHash
-    if (
-      minterInput.witness[Constants.MINTER_INPUT_WITNESS_ADDR_OFFSET].length !==
-      Constants.PUBKEY_HASH_BYTES
-    ) {
+    const pkh = minterInput.witness[Constants.MINTER_INPUT_WITNESS_ADDR_OFFSET];
+    if (pkh.length !== Constants.PUBKEY_HASH_BYTES) {
       throw new CatTxError(
         'invalid mint tx, invalid byte length of owner pubkey hash',
       );
     }
-    const ownerPubKeyHash =
-      minterInput.witness[Constants.MINTER_INPUT_WITNESS_ADDR_OFFSET].toString(
-        'hex',
-      );
+    const ownerPubKeyHash = pkh.toString('hex');
+
     // tokenAmount
-    if (
-      minterInput.witness[Constants.MINTER_INPUT_WITNESS_AMOUNT_OFFSET].length >
-      Constants.TOKEN_AMOUNT_MAX_BYTES
-    ) {
+    const amount =
+      minterInput.witness[Constants.MINTER_INPUT_WITNESS_AMOUNT_OFFSET];
+    if (amount.length > Constants.TOKEN_AMOUNT_MAX_BYTES) {
       throw new CatTxError(
         'invalid mint tx, invalid byte length of token amount',
       );
     }
-    const tokenAmount = BigInt(
-      minterInput.witness[
-        Constants.MINTER_INPUT_WITNESS_AMOUNT_OFFSET
-      ].readIntLE(
-        0,
-        minterInput.witness[Constants.MINTER_INPUT_WITNESS_AMOUNT_OFFSET]
-          .length,
-      ),
-    );
-    if (tokenAmount <= 0n) {
+    const tokenAmount =
+      amount.length === 0 ? 0n : BigInt(amount.readIntLE(0, amount.length));
+    if (tokenAmount < 0n) {
+      throw new CatTxError(
+        'invalid mint tx, token amount should be non-negative',
+      );
+    }
+    if (tokenAmount === 0n && tokenInfo.decimals >= 0) {
       throw new CatTxError('invalid mint tx, token amount should be positive');
     }
+
     // token output
     const { tokenPubKey, outputIndex: tokenOutputIndex } =
       this.searchMintTxTokenOutput(payOuts, tokenInfo);
 
+    // save nft info
+    if (tokenInfo.decimals < 0) {
+      const commitInput = this.searchMintTxCommitInput(payIns);
+      if (commitInput) {
+        const { inputIndex: commitInuptIndex, envelope } = commitInput;
+        const commitTxid = Buffer.from(tx.ins[commitInuptIndex].hash)
+          .reverse()
+          .toString('hex');
+        const {
+          data: { metadata, content },
+        } = envelope;
+        promises.push(
+          manager.save(NftInfoEntity, {
+            collectionId: tokenInfo.tokenId,
+            localId: tokenAmount,
+            mintTxid: tx.getId(),
+            mintHeight: blockHeader.height,
+            commitTxid,
+            metadata: metadata,
+            contentType: content?.type,
+            contentEncoding: content?.encoding,
+            contentRaw: content?.raw,
+          }),
+        );
+      }
+    }
     // update token info when first mint
     if (tokenInfo.tokenPubKey === null) {
       promises.push(
@@ -523,6 +594,7 @@ export class TxService {
           .filter((out) => out !== null),
       ),
     );
+
     return stateHashes;
   }
 
@@ -597,6 +669,31 @@ export class TxService {
     return tokenOutput;
   }
 
+  /**
+   * try to parse the nft info in mint tx inputs
+   */
+  private searchMintTxCommitInput(payIns: TaprootPayment[]): {
+    inputIndex: number;
+    envelope: TokenInfoEnvelope;
+  } | null {
+    for (let i = 0; i < payIns.length; i++) {
+      if (payIns[i]) {
+        try {
+          const envelope = parseTokenInfoEnvelope(payIns[i].redeemScript);
+          if (envelope && envelope.marker === EnvelopeMarker.NFT) {
+            return {
+              inputIndex: i,
+              envelope,
+            };
+          }
+        } catch (e) {
+          this.logger.error(`search commit in mint tx error, ${e.message}`);
+        }
+      }
+    }
+    return null;
+  }
+
   private async processTransferTx(
     manager: EntityManager,
     promises: Promise<any>[],
@@ -618,7 +715,10 @@ export class TxService {
     const scriptHash = crypto
       .hash160(guardInput?.redeemScript || Buffer.alloc(0))
       .toString('hex');
-    if (scriptHash === this.TRANSFER_GUARD_SCRIPT_HASH) {
+    if (
+      scriptHash === this.FT_TRANSFER_GUARD_SCRIPT_HASH ||
+      scriptHash === this.NFT_TRANSFER_GUARD_SCRIPT_HASH
+    ) {
       const tokenOutputs = this.parseTokenOutputs(guardInput);
       // save tx outputs
       promises.push(
@@ -666,9 +766,10 @@ export class TxService {
     for (let i = 0; i < Constants.CONTRACT_OUTPUT_MAX_COUNT; i++) {
       if (masks[i].toString('hex') !== '') {
         const ownerPubKeyHash = ownerPubKeyHashes[i].toString('hex');
-        const tokenAmount = BigInt(
-          tokenAmounts[i].readIntLE(0, tokenAmounts[i].length),
-        );
+        const tokenAmount =
+          tokenAmounts[i].length === 0
+            ? 0n
+            : BigInt(tokenAmounts[i].readIntLE(0, tokenAmounts[i].length));
         tokenOutputs.set(i + 1, {
           ownerPubKeyHash,
           tokenAmount,
@@ -761,6 +862,9 @@ export class TxService {
       manager.delete(TokenInfoEntity, {
         revealHeight: MoreThanOrEqual(height),
       }),
+      manager.delete(NftInfoEntity, {
+        mintHeight: MoreThanOrEqual(height),
+      }),
       manager.update(
         TokenInfoEntity,
         { firstMintHeight: MoreThanOrEqual(height) },
@@ -812,6 +916,7 @@ export class TxService {
 
   @Cron('* * * * *')
   private async archiveTxOuts() {
+    const startTime = Date.now();
     const lastProcessedHeight =
       await this.commonService.getLastProcessedBlockHeight();
     if (lastProcessedHeight === null) {
@@ -842,6 +947,8 @@ export class TxService {
         ),
       ]);
     });
-    this.logger.log(`archived ${txOuts.length} tx outputs`);
+    this.logger.log(
+      `archived ${txOuts.length} outs in ${Math.ceil(Date.now() - startTime)} ms`,
+    );
   }
 }

@@ -1,16 +1,19 @@
-import { ClosedMinter } from '../src/contracts/token/closedMinter'
+import { ClosedMinter } from '../../src/contracts/token/closedMinter'
 import {
     CatTx,
     ContractCallResult,
     ContractIns,
     TaprootMastSmartContract,
     TaprootSmartContract,
-} from '../src/lib/catTx'
-import { CAT20Proto, CAT20State } from '../src/contracts/token/cat20Proto'
+} from '../../src/lib/catTx'
+import { CAT20Proto, CAT20State } from '../../src/contracts/token/cat20Proto'
 import { SmartContract } from 'scrypt-ts'
-import { BurnGuard } from '../src/contracts/token/burnGuard'
-import { TransferGuard } from '../src/contracts/token/transferGuard'
-import { GuardProto, GuardConstState } from '../src/contracts/token/guardProto'
+import { BurnGuard } from '../../src/contracts/token/burnGuard'
+import { TransferGuard } from '../../src/contracts/token/transferGuard'
+import {
+    GuardProto,
+    GuardConstState,
+} from '../../src/contracts/token/guardProto'
 
 export type GetTokenScript = (
     minterScript: string

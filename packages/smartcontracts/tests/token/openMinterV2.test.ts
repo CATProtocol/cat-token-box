@@ -5,28 +5,28 @@ dotenv.config()
 import { expect, use } from 'chai'
 import chaiAsPromised from 'chai-as-promised'
 import { UTXO, hash160 } from 'scrypt-ts'
-import { getOutpointString } from '../src/lib/txTools'
-import { OpenMinterV2 } from '../src/contracts/token/openMinterV2'
-import { getBtcDummyUtxo, getDummyGenesisTx } from './utils/txHelper'
+import { getOutpointString } from '../../src/lib/txTools'
+import { OpenMinterV2 } from '../../src/contracts/token/openMinterV2'
+import { getBtcDummyUtxo, getDummyGenesisTx } from '../utils/txHelper'
 import {
     OpenMinterV2Proto,
     OpenMinterV2State,
-} from '../src/contracts/token/openMinterV2Proto'
-import { CAT20Proto, CAT20State } from '../src/contracts/token/cat20Proto'
-import { KeyInfo, getKeyInfoFromWif, getPrivKey } from './utils/privateKey'
+} from '../../src/contracts/token/openMinterV2Proto'
+import { CAT20Proto, CAT20State } from '../../src/contracts/token/cat20Proto'
+import { KeyInfo, getKeyInfoFromWif, getPrivKey } from '../utils/privateKey'
 import { openMinterCall, openMinterV2Deploy } from './openMinterV2'
 import {
     CatTx,
     ContractIns,
     TaprootSmartContract,
     script2P2TR,
-} from '../src/lib/catTx'
-import { getCatCommitScript } from '../src/lib/commit'
-import { CAT20 } from '../src/contracts/token/cat20'
+} from '../../src/lib/catTx'
+import { getCatCommitScript } from '../../src/lib/commit'
+import { CAT20 } from '../../src/contracts/token/cat20'
 import { getGuardContractInfo } from './cat20'
-import { TransferGuard } from '../src/contracts/token/transferGuard'
-import { BurnGuard } from '../src/contracts/token/burnGuard'
-import { btc } from '../src/lib/btc'
+import { TransferGuard } from '../../src/contracts/token/transferGuard'
+import { BurnGuard } from '../../src/contracts/token/burnGuard'
+import { btc } from '../../src/lib/btc'
 use(chaiAsPromised)
 
 export interface TokenInfo {

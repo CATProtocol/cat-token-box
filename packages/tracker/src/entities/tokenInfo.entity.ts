@@ -1,4 +1,3 @@
-import { TokenInfo } from '../common/types';
 import {
   Column,
   CreateDateColumn,
@@ -34,7 +33,16 @@ export class TokenInfoEntity {
   decimals: number;
 
   @Column({ name: 'raw_info', type: 'jsonb' })
-  rawInfo: TokenInfo;
+  rawInfo: object;
+
+  @Column({ name: 'content_type', nullable: true })
+  contentType: string;
+
+  @Column({ name: 'content_encoding', nullable: true })
+  contentEncoding: string;
+
+  @Column({ name: 'content_raw', type: 'bytea', nullable: true })
+  contentRaw: Buffer;
 
   @Column({ name: 'minter_pubkey', length: 64 })
   @Index()

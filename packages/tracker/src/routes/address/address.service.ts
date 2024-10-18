@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { TokenService } from '../token/token.service';
 import { xOnlyPubKeyToAddress } from '../../common/utils';
 import { CommonService } from '../../services/common/common.service';
+import { TokenTypeScope } from '../../common/types';
 
 @Injectable()
 export class AddressService {
@@ -10,19 +11,30 @@ export class AddressService {
     private readonly tokenService: TokenService,
   ) {}
 
-  async getTokenBalances(ownerAddr: string) {
+  async getTokenBalances(ownerAddrOrPkh: string) {
+    return this.getBalances(ownerAddrOrPkh, TokenTypeScope.Fungible);
+  }
+
+  async getCollectionBalances(ownerAddrOrPkh: string) {
+    return this.getBalances(ownerAddrOrPkh, TokenTypeScope.NonFungible);
+  }
+
+  private async getBalances(ownerAddrOrPkh: string, scope: TokenTypeScope) {
     const lastProcessedHeight =
       await this.commonService.getLastProcessedBlockHeight();
     const utxos = await this.tokenService.queryTokenUtxosByOwnerAddress(
       lastProcessedHeight,
-      ownerAddr,
+      ownerAddrOrPkh,
     );
-    const tokenBalances = this.tokenService.groupTokenBalances(utxos);
+    const tokenBalances = await this.tokenService.groupTokenBalances(utxos);
     const balances = [];
     for (const tokenPubKey in tokenBalances) {
       const tokenAddr = xOnlyPubKeyToAddress(tokenPubKey);
       const tokenInfo =
-        await this.tokenService.getTokenInfoByTokenIdOrTokenAddress(tokenAddr);
+        await this.tokenService.getTokenInfoByTokenIdOrTokenAddress(
+          tokenAddr,
+          scope,
+        );
       if (tokenInfo) {
         balances.push({
           tokenId: tokenInfo.tokenId,

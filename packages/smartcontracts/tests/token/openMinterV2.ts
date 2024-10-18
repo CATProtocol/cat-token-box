@@ -3,21 +3,21 @@ import {
     ContractCallResult,
     ContractIns,
     TaprootSmartContract,
-} from '../src/lib/catTx'
+} from '../../src/lib/catTx'
 import {
     OpenMinterV2Proto,
     OpenMinterV2State,
-} from '../src/contracts/token/openMinterV2Proto'
-import { int32 } from '../src/contracts/utils/txUtil'
-import { CAT20Proto, CAT20State } from '../src/contracts/token/cat20Proto'
-import { getTxCtx } from '../src/lib/txTools'
-import { getBackTraceInfo } from '../src/lib/proof'
-import { getDummySigner, getDummyUTXO } from './utils/txHelper'
-import { KeyInfo } from './utils/privateKey'
+} from '../../src/contracts/token/openMinterV2Proto'
+import { int32 } from '../../src/contracts/utils/txUtil'
+import { CAT20Proto, CAT20State } from '../../src/contracts/token/cat20Proto'
+import { getTxCtx } from '../../src/lib/txTools'
+import { getBackTraceInfo } from '../../src/lib/proof'
+import { getDummySigner, getDummyUTXO } from '../utils/txHelper'
+import { KeyInfo } from '../utils/privateKey'
 import { MethodCallOptions, toByteString } from 'scrypt-ts'
-import { unlockTaprootContractInput } from './utils/contractUtils'
-import { btc } from '../src/lib/btc'
-import { OpenMinterV2 } from '../src/contracts/token/openMinterV2'
+import { unlockTaprootContractInput } from '../utils/contractUtils'
+import { btc } from '../../src/lib/btc'
+import { OpenMinterV2 } from '../../src/contracts/token/openMinterV2'
 
 export type GetTokenScript = (minterScript: string) => Promise<string>
 

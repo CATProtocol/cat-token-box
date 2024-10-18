@@ -1,11 +1,11 @@
-import { ClosedMinter } from '../src/contracts/token/closedMinter'
+import { ClosedMinter } from '../../src/contracts/token/closedMinter'
 import {
     CatTx,
     ContractCallResult,
     ContractIns,
     TaprootSmartContract,
-} from '../src/lib/catTx'
-import { CAT20Proto, CAT20State } from '../src/contracts/token/cat20Proto'
+} from '../../src/lib/catTx'
+import { CAT20Proto, CAT20State } from '../../src/contracts/token/cat20Proto'
 
 export type GetTokenScript = (minterScript: string) => Promise<string>
 
