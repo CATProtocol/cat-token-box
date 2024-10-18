@@ -1,3 +1,6 @@
+
+[![Test](https://github.com/CATProtocol/cat-token-box/actions/workflows/ci.yml/badge.svg)](https://github.com/CATProtocol/cat-token-box/actions/workflows/ci.yml)
+
 # CAT Token Box
 
 A reference implementation of the `Covenant Attested Token (CAT)` protocol on BTC signet and Fractal, where `OP_CAT` is re-activated.
