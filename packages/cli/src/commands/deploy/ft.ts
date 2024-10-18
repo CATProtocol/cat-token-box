@@ -227,8 +227,9 @@ export async function deploy(
   commitTx.outputs[1].satoshis = revealTxFee;
 
   commitTx.change(changeAddress);
-  if (commitTx.outputs[2] && commitTx.outputs[2].satoshi > 1) {
-    commitTx.outputs[2].satoshis -= 1;
+
+  if (commitTx.getChangeOutput() !== null) {
+    commitTx.getChangeOutput().satoshis  -= 1;
   }
 
   wallet.signTx(commitTx);
