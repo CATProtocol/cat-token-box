@@ -16,5 +16,7 @@ jobs:
           registry-url: "https://registry.npmjs.org"
       - name: Yarn install
         run: yarn
+      - name: Install turbo
+        run: yarn global add turbo
       - name: Run test
         run: turbo test
