@@ -107,4 +107,29 @@ export class TokenController {
       return errorResponse(e);
     }
   }
+
+  @Get(':tokenIdOrTokenAddr/mintCount')
+  @ApiTags('token')
+  @ApiOperation({
+    summary: 'Get token mint count by token id or token address',
+  })
+  @ApiParam({
+    name: 'tokenIdOrTokenAddr',
+    required: true,
+    type: String,
+    description: 'token id or token address',
+  })
+  async getTokenMintCount(
+    @Param('tokenIdOrTokenAddr') tokenIdOrTokenAddr: string,
+  ) {
+    try {
+      const mintCount = await this.tokenService.getTokenMintCount(
+        tokenIdOrTokenAddr,
+        TokenTypeScope.Fungible,
+      );
+      return okResponse(mintCount);
+    } catch (e) {
+      return errorResponse(e);
+    }
+  }
 }

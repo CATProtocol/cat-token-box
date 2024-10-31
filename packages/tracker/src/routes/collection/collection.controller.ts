@@ -258,4 +258,29 @@ export class CollectionController {
       return errorResponse(e);
     }
   }
+
+  @Get(':collectionIdOrAddr/mintCount')
+  @ApiTags('collection')
+  @ApiOperation({
+    summary: 'Get collection mint count by collection id or collection address',
+  })
+  @ApiParam({
+    name: 'collectionIdOrAddr',
+    required: true,
+    type: String,
+    description: 'collection id or collection address',
+  })
+  async getTokenMintCount(
+    @Param('collectionIdOrAddr') collectionIdOrAddr: string,
+  ) {
+    try {
+      const mintCount = await this.tokenService.getTokenMintCount(
+        collectionIdOrAddr,
+        TokenTypeScope.NonFungible,
+      );
+      return okResponse(mintCount);
+    } catch (e) {
+      return errorResponse(e);
+    }
+  }
 }

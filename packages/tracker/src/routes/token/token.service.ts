@@ -19,6 +19,7 @@ import { LRUCache } from 'lru-cache';
 import { TxEntity } from '../../entities/tx.entity';
 import { CommonService } from '../../services/common/common.service';
 import { TokenTypeScope } from '../../common/types';
+import { TokenMintEntity } from '../../entities/tokenMint.entity';
 
 @Injectable()
 export class TokenService {
@@ -41,6 +42,8 @@ export class TokenService {
     private readonly txOutRepository: Repository<TxOutEntity>,
     @InjectRepository(TxEntity)
     private readonly txRepository: Repository<TxEntity>,
+    @InjectRepository(TokenMintEntity)
+    private readonly tokenMintRepository: Repository<TokenMintEntity>,
   ) {}
 
   async getTokenInfoByTokenIdOrTokenAddress(
@@ -293,5 +296,42 @@ export class TokenService {
       }
     }
     return balances;
+  }
+
+  async getTokenMintCount(
+    tokenIdOrTokenAddr: string,
+    scope: TokenTypeScope.Fungible | TokenTypeScope.NonFungible,
+  ): Promise<{
+    count: string;
+    trackerBlockHeight: number;
+  }> {
+    const lastProcessedHeight =
+      await this.commonService.getLastProcessedBlockHeight();
+    const tokenInfo = await this.getTokenInfoByTokenIdOrTokenAddress(
+      tokenIdOrTokenAddr,
+      scope,
+    );
+    let count = '0';
+    if (tokenInfo && tokenInfo.tokenPubKey && lastProcessedHeight) {
+      const where = {
+        tokenPubKey: tokenInfo.tokenPubKey,
+        blockHeight: LessThanOrEqual(lastProcessedHeight),
+      };
+      if (scope === TokenTypeScope.Fungible) {
+        const r = await this.tokenMintRepository
+          .createQueryBuilder()
+          .select('SUM(token_amount)', 'count')
+          .where(where)
+          .getRawOne();
+        count = r?.count || '0';
+      } else {
+        const r = await this.tokenMintRepository.count({ where });
+        count = (r || 0).toString();
+      }
+    }
+    return {
+      count,
+      trackerBlockHeight: lastProcessedHeight,
+    };
   }
 }
