@@ -270,7 +270,7 @@ export class CollectionController {
     type: String,
     description: 'collection id or collection address',
   })
-  async getTokenMintCount(
+  async getCollectionMintCount(
     @Param('collectionIdOrAddr') collectionIdOrAddr: string,
   ) {
     try {
