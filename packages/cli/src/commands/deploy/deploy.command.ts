@@ -178,7 +178,6 @@ export class DeployCommand extends BoardcastCommand {
               },
             ],
             metadata,
-            2,
             minter,
             scalePremine,
           );

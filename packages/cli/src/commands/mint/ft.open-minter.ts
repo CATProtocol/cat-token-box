@@ -145,34 +145,45 @@ export function createOpenMinterState(
   newMinter: number,
 ): {
   splitAmountList: bigint[];
-  minterStates: OpenMinterState[];
+  minterStates: Array<OpenMinterState | OpenMinterV2State>;
 } {
   const scaledInfo = scaleConfig(metadata.info as OpenMinterTokenInfo);
 
   const premine = !isPriemined ? scaledInfo.premine : 0n;
   const limit = scaledInfo.limit;
-  let splitAmountList = OpenMinterProto.getSplitAmountList(
-    premine + remainingSupply,
-    mintAmount,
-    limit,
-    newMinter,
-  );
+  const tokenP2TR = toP2tr(metadata.tokenAddr);
 
+  let splitAmountList = []
+  const minterStates: Array<OpenMinterState | OpenMinterV2State> = [];
   if (metadata.info.minterMd5 == MinterType.OPEN_MINTER_V2) {
     splitAmountList = OpenMinterV2Proto.getSplitAmountList(
       remainingSupply,
       isPriemined,
       scaledInfo.premine,
     );
-  }
-  const tokenP2TR = toP2tr(metadata.tokenAddr);
 
-  const minterStates: Array<OpenMinterState> = [];
-  for (let i = 0; i < splitAmountList.length; i++) {
-    const amount = splitAmountList[i];
-    if (amount > 0n) {
-      const minterState = OpenMinterProto.create(tokenP2TR, true, amount);
-      minterStates.push(minterState);
+    for (let i = 0; i < splitAmountList.length; i++) {
+      const amount = splitAmountList[i];
+      if (amount > 0n) {
+        const minterState = OpenMinterV2Proto.create(tokenP2TR, true, amount);
+        minterStates.push(minterState);
+      }
+    }
+  } else {
+    splitAmountList = OpenMinterProto.getSplitAmountList(
+      premine + remainingSupply,
+      mintAmount,
+      limit,
+      newMinter,
+    );
+  
+
+    for (let i = 0; i < splitAmountList.length; i++) {
+      const amount = splitAmountList[i];
+      if (amount > 0n) {
+        const minterState = OpenMinterProto.create(tokenP2TR, true, amount);
+        minterStates.push(minterState);
+      }
     }
   }
 
@@ -207,10 +218,13 @@ export async function openMint(
   feeRate: number,
   feeUtxos: UTXO[],
   metadata: TokenMetadata,
-  newMinter: number /* number of new minter utxo */,
   minterContract: OpenMinterContract,
   mintAmount: bigint,
-): Promise<string | Error> {
+): Promise<{
+  newFeeUtxo: UTXO,
+  newMinters: OpenMinterContract[];
+  txId: string;
+} | Error> {
   const {
     utxo: minterUtxo,
     state: { protocolState, data: preState },
@@ -234,12 +248,16 @@ export async function openMint(
     preState.isPremined,
     getRemainSupply(preState, tokenInfo.minterMd5),
     metadata,
-    newMinter,
+    2,
   );
 
   for (let i = 0; i < minterStates.length; i++) {
     const minterState = minterStates[i];
-    newState.updateDataList(i, OpenMinterProto.toByteString(minterState));
+    if(tokenInfo.minterMd5 === MinterType.OPEN_MINTER_V2) {
+      newState.updateDataList(i, OpenMinterV2Proto.toByteString(minterState as OpenMinterV2State));
+    } else {
+      newState.updateDataList(i, OpenMinterProto.toByteString(minterState as OpenMinterState));
+    }
   }
 
   const tokenState = CAT20Proto.create(mintAmount, tokenReceiver);
@@ -295,8 +313,10 @@ export async function openMint(
       }),
     );
 
+  let newMinterCount = 0;
   for (let i = 0; i < splitAmountList.length; i++) {
     if (splitAmountList[i] > 0n) {
+      newMinterCount++;
       revealTx.addOutput(
         new btc.Transaction.Output({
           script: new btc.Script(minterUtxo.script),
@@ -373,7 +393,7 @@ export async function openMint(
   const changeAmount =
     revealTx.inputAmount -
     vsize * feeRate -
-    Postage.MINTER_POSTAGE * newMinter -
+    Postage.MINTER_POSTAGE * newMinterCount -
     Postage.TOKEN_POSTAGE;
 
   if (changeAmount < 546) {
@@ -451,5 +471,39 @@ export async function openMint(
     return res;
   }
   spendService.updateSpends(revealTx);
-  return res;
+
+  const newMinters: OpenMinterContract[] = [];
+
+  for (let i = 0; i < splitAmountList.length; i++) {
+    if (splitAmountList[i] > 0n) {
+      newMinters.push({
+        utxo: {
+          txId: revealTx.id,
+          outputIndex: i + 1,
+          satoshis: Postage.MINTER_POSTAGE,
+          script: minterUtxo.script,
+        },
+        state: {
+          protocolState: newState,
+          data: minterStates[i]
+        }
+      })
+    }
+  }
+
+  const outputIndex = revealTx.outputs.length -1;
+
+  const newFeeUtxo = {
+    txId: revealTx.id,
+    outputIndex: outputIndex,
+    satoshis: revealTx.outputs[outputIndex].satoshis,
+    script: revealTx.outputs[outputIndex].script.toHex(),
+  }
+
+
+  return {
+    newMinters,
+    txId: revealTx.id,
+    newFeeUtxo
+  };
 }
