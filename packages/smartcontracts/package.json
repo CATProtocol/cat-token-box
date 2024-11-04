@@ -1,12 +1,11 @@
 {
   "name": "@cat-protocol/cat-smartcontracts",
-  "version": "0.2.3",
+  "version": "0.2.4",
   "description": "CAT protocol smart contracts.",
   "author": "",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "scripts": {
-    "prebuild": "npm run clean && npm run compile",
     "prepublishOnly": "npm run build",
     "build": "tsc",
     "deploy": "npx ts-node ./deploy.ts",
