@@ -1,14 +1,6 @@
-import {
-  Column,
-  CreateDateColumn,
-  Entity,
-  Index,
-  PrimaryColumn,
-} from 'typeorm';
+import { Column, CreateDateColumn, Entity, PrimaryColumn } from 'typeorm';
 
 @Entity('tx_out_archive')
-@Index(['spendTxid', 'spendInputIndex'], { unique: true })
-@Index(['xOnlyPubKey', 'ownerPubKeyHash'])
 export class TxOutArchiveEntity {
   @PrimaryColumn({ length: 64 })
   txid: string;
@@ -17,7 +9,6 @@ export class TxOutArchiveEntity {
   outputIndex: number;
 
   @Column({ name: 'block_height' })
-  @Index()
   blockHeight: number;
 
   @Column({ type: 'bigint' })
@@ -30,7 +21,6 @@ export class TxOutArchiveEntity {
   xOnlyPubKey: string;
 
   @Column({ name: 'owner_pkh', nullable: true })
-  @Index()
   ownerPubKeyHash: string;
 
   @Column({ name: 'token_amount', type: 'bigint', nullable: true })

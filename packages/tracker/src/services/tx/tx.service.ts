@@ -927,11 +927,9 @@ export class TxService {
       .innerJoin('tx', 'tx', 'txOut.spend_txid = tx.txid')
       .where('txOut.spend_txid IS NOT NULL')
       .andWhere('tx.block_height < :blockHeight', {
-        blockHeight: lastProcessedHeight - 3 * 2880, // blocks before three days ago
+        blockHeight: lastProcessedHeight - 2880, // blocks before one day ago
       })
-      .orderBy('tx.block_height', 'ASC')
-      .addOrderBy('tx.tx_index', 'ASC')
-      .limit(1000) // archive no more than 1000 records once a time
+      .limit(2500) // archive no more than 2500 records once a time
       .getMany();
     if (txOuts.length === 0) {
       return;
