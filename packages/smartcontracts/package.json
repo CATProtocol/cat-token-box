@@ -1,6 +1,6 @@
 {
   "name": "@cat-protocol/cat-smartcontracts",
-  "version": "0.2.2",
+  "version": "0.2.3",
   "description": "CAT protocol smart contracts.",
   "author": "",
   "main": "./dist/index.js",
