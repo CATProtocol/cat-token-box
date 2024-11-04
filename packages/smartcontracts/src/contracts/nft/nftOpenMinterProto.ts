@@ -3,6 +3,7 @@ import {
     hash160,
     int2ByteString,
     method,
+    Ripemd160,
     SmartContractLib,
     toByteString,
 } from 'scrypt-ts'
@@ -97,7 +98,13 @@ export class NftOpenMinterMerkleTreeData {
         return this.hashNodes[this.hashNodes.length - 1][0]
     }
 
-    getMerklePath(leafIndex: number) {
+    getMerklePath(leafIndex: number): {
+        leaf: Ripemd160,
+        leafNode: NftMerkleLeaf,
+        neighbor: string[],
+        neighborType: boolean[],
+        merkleRoot: string,
+    } {
         const leafNode = this.leafArray[leafIndex]
         let prevHash = this.hashNodes[0]
         const neighbor: string[] = []
