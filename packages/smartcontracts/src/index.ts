@@ -13,12 +13,14 @@ import burnGuard from '../artifacts/contracts/token/burnGuard.json'
 import transferGuard from '../artifacts/contracts/token/transferGuard.json'
 
 import { NftClosedMinter } from './contracts/nft/nftClosedMinter'
+import { NftParallelClosedMinter } from './contracts/nft/nftParallelClosedMinter'
 import { NftOpenMinter } from './contracts/nft/nftOpenMinter'
 import { CAT721 } from './contracts/nft/cat721'
 import { NftTransferGuard } from './contracts/nft/nftTransferGuard'
 import { NftBurnGuard } from './contracts/nft/nftBurnGuard'
 
 import nftClosedMinter from '../artifacts/contracts/nft/nftClosedMinter.json'
+import nftParallelClosedMinter from '../artifacts/contracts/nft/nftParallelClosedMinter.json'
 import nftOpenMinter from '../artifacts/contracts/nft/nftOpenMinter.json'
 import cat721 from '../artifacts/contracts/nft/cat721.json'
 import nftTransferGuard from '../artifacts/contracts/nft/nftTransferGuard.json'
@@ -34,6 +36,7 @@ import nftBurnGuard from '../artifacts/contracts/nft/nftBurnGuard.json'
     TransferGuard.loadArtifact(transferGuard)
     // nft minter
     NftClosedMinter.loadArtifact(nftClosedMinter)
+    NftParallelClosedMinter.loadArtifact(nftParallelClosedMinter)
     NftOpenMinter.loadArtifact(nftOpenMinter)
     // nft
     CAT721.loadArtifact(cat721)
@@ -52,8 +55,10 @@ export * from './contracts/token/openMinterV2'
 export * from './contracts/token/openMinterProto'
 export * from './contracts/token/openMinterV2Proto'
 export * from './contracts/nft/nftClosedMinter'
+export * from './contracts/nft/nftParallelClosedMinter'
 export * from './contracts/nft/nftOpenMinter'
 export * from './contracts/nft/nftClosedMinterProto'
+export * from './contracts/nft/nftParallelClosedMinterProto'
 export * from './contracts/nft/nftOpenMinterProto'
 export * from './contracts/nft/nftOpenMinterMerkleTree'
 export * from './contracts/nft/cat721'
