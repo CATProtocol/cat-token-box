@@ -1,4 +1,4 @@
-import { Controller, Get, Param, Query, Res } from '@nestjs/common';
+import { Controller, Get, Header, Param, Query, Res } from '@nestjs/common';
 import { CollectionService } from './collection.service';
 import { okResponse, errorResponse } from '../../common/utils';
 import { ApiOperation, ApiParam, ApiQuery, ApiTags } from '@nestjs/swagger';
@@ -53,6 +53,7 @@ export class CollectionController {
   }
 
   @Get(':collectionIdOrAddr/content')
+  @Header('Cache-Control', 'public, max-age=31536000')
   @ApiTags('collection')
   @ApiOperation({ summary: 'Get collection content' })
   @ApiParam({
@@ -68,15 +69,22 @@ export class CollectionController {
     try {
       const content =
         await this.collectionService.getCollectionContent(collectionIdOrAddr);
-      if (content.type) {
+      if (content?.type) {
         res.setHeader('Content-Type', content.type);
       }
-      if (content.encoding) {
+      if (content?.encoding) {
         res.setHeader('Content-Encoding', content.encoding);
       }
-      res.send(content.raw);
+      if (content?.lastModified) {
+        res.setHeader('Last-Modified', content.lastModified.toUTCString());
+      }
+      if (content?.raw) {
+        res.send(content.raw);
+      } else {
+        res.sendStatus(404);
+      }
     } catch (e) {
-      return errorResponse(e);
+      return res.send(errorResponse(e));
     }
   }
 
@@ -111,6 +119,7 @@ export class CollectionController {
   }
 
   @Get(':collectionIdOrAddr/localId/:localId/content')
+  @Header('Cache-Control', 'public, max-age=31536000')
   @ApiTags('collection')
   @ApiOperation({ summary: 'Get nft content' })
   @ApiParam({
@@ -135,15 +144,22 @@ export class CollectionController {
         collectionIdOrAddr,
         localId,
       );
-      if (content.type) {
+      if (content?.type) {
         res.setHeader('Content-Type', content.type);
       }
-      if (content.encoding) {
+      if (content?.encoding) {
         res.setHeader('Content-Encoding', content.encoding);
       }
-      res.send(content.raw);
+      if (content?.lastModified) {
+        res.setHeader('Last-Modified', content.lastModified.toUTCString());
+      }
+      if (content?.raw) {
+        res.send(content.raw);
+      } else {
+        res.sendStatus(404);
+      }
     } catch (e) {
-      return errorResponse(e);
+      return res.send(errorResponse(e));
     }
   }
 

@@ -10,15 +10,19 @@ import { Constants } from '../../common/constants';
 import { Content, TokenTypeScope } from '../../common/types';
 import { TokenInfoEntity } from '../../entities/tokenInfo.entity';
 
+type CachedContent = Content & { lastModified?: Date };
+
 @Injectable()
 export class CollectionService {
   private static readonly nftInfoCache = new LRUCache<string, NftInfoEntity>({
     max: Constants.CACHE_MAX_SIZE,
   });
 
-  private static readonly nftContentCache = new LRUCache<string, Content>({
-    max: Constants.CACHE_MAX_SIZE,
-  });
+  private static readonly nftContentCache = new LRUCache<string, CachedContent>(
+    {
+      max: Constants.CACHE_MAX_SIZE,
+    },
+  );
 
   constructor(
     private readonly commonService: CommonService,
@@ -33,7 +37,7 @@ export class CollectionService {
 
   async getCollectionContent(
     collectionIdOrAddr: string,
-  ): Promise<Content | null> {
+  ): Promise<CachedContent | null> {
     const key = `${collectionIdOrAddr}`;
     let cached = CollectionService.nftContentCache.get(key);
     if (!cached) {
@@ -49,6 +53,7 @@ export class CollectionService {
             'contentType',
             'contentEncoding',
             'contentRaw',
+            'createdAt',
           ],
           where: { tokenId: collectionInfo.tokenId },
         });
@@ -57,6 +62,7 @@ export class CollectionService {
             type: collectionContent.contentType,
             encoding: collectionContent.contentEncoding,
             raw: collectionContent.contentRaw,
+            lastModified: collectionContent.createdAt,
           };
           const lastProcessedHeight =
             await this.commonService.getLastProcessedBlockHeight();
@@ -114,7 +120,7 @@ export class CollectionService {
   async getNftContent(
     collectionIdOrAddr: string,
     localId: bigint,
-  ): Promise<Content | null> {
+  ): Promise<CachedContent | null> {
     const key = `${collectionIdOrAddr}_${localId}`;
     let cached = CollectionService.nftContentCache.get(key);
     if (!cached) {
@@ -130,6 +136,7 @@ export class CollectionService {
             'contentType',
             'contentEncoding',
             'contentRaw',
+            'createdAt',
           ],
           where: { collectionId: collectionInfo.tokenId, localId },
         });
@@ -138,6 +145,7 @@ export class CollectionService {
             type: nftContent.contentType,
             encoding: nftContent.contentEncoding,
             raw: nftContent.contentRaw,
+            lastModified: nftContent.createdAt,
           };
           const lastProcessedHeight =
             await this.commonService.getLastProcessedBlockHeight();

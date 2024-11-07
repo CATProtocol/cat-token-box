@@ -12,7 +12,7 @@ export function okResponse(data: any) {
   return {
     code: 0,
     msg: 'OK',
-    data: data,
+    data,
   };
 }
 
