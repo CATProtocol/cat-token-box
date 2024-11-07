@@ -3,6 +3,7 @@ import { AppApiModule } from './app-api.module';
 import * as ecc from '@bitcoin-js/tiny-secp256k1-asmjs';
 import { initEccLib } from 'bitcoinjs-lib';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+import { LoggingInterceptor } from './logging.interceptor';
 
 async function bootstrap() {
   initEccLib(ecc);
@@ -29,6 +30,8 @@ async function bootstrap() {
 
   app.setGlobalPrefix('api');
   app.enableCors();
+
+  app.useGlobalInterceptors(new LoggingInterceptor());
 
   await app.listen(process.env.API_PORT || 3000);
   console.log(`tracker api is running on: ${await app.getUrl()}`);
