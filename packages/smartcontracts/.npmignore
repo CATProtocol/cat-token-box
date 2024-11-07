@@ -17,3 +17,4 @@ tests/
 *.md
 .prettierrc
 .prettierignore
+tsconfig-scryptTS.json

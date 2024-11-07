@@ -1,6 +1,6 @@
 {
   "name": "@cat-protocol/cat-smartcontracts",
-  "version": "0.2.6",
+  "version": "0.2.7",
   "description": "CAT protocol smart contracts.",
   "author": "",
   "main": "./dist/index.js",
@@ -40,7 +40,7 @@
     "ecpair": "^2.1.0",
     "ecurve": "^1.0.6",
     "js-sha256": "^0.9.0",
-    "scrypt-ts": "^1.4.1",
+    "scrypt-ts": "^1.4.2",
     "varuint-bitcoin": "=1.1.2"
   },
   "devDependencies": {
