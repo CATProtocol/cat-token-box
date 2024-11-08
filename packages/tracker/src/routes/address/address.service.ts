@@ -1,6 +1,5 @@
 import { Injectable } from '@nestjs/common';
 import { TokenService } from '../token/token.service';
-import { xOnlyPubKeyToAddress } from '../../common/utils';
 import { CommonService } from '../../services/common/common.service';
 import { TokenTypeScope } from '../../common/types';
 
@@ -19,29 +18,17 @@ export class AddressService {
     return this.getBalances(ownerAddrOrPkh, TokenTypeScope.NonFungible);
   }
 
-  private async getBalances(ownerAddrOrPkh: string, scope: TokenTypeScope) {
+  private async getBalances(
+    ownerAddrOrPkh: string,
+    scope: TokenTypeScope.Fungible | TokenTypeScope.NonFungible,
+  ) {
     const lastProcessedHeight =
       await this.commonService.getLastProcessedBlockHeight();
-    const utxos = await this.tokenService.queryTokenUtxosByOwnerAddress(
+    const balances = await this.tokenService.queryTokenBalancesByOwnerAddress(
       lastProcessedHeight,
       ownerAddrOrPkh,
+      scope,
     );
-    const tokenBalances = await this.tokenService.groupTokenBalances(utxos);
-    const balances = [];
-    for (const tokenPubKey in tokenBalances) {
-      const tokenAddr = xOnlyPubKeyToAddress(tokenPubKey);
-      const tokenInfo =
-        await this.tokenService.getTokenInfoByTokenIdOrTokenAddress(
-          tokenAddr,
-          scope,
-        );
-      if (tokenInfo) {
-        balances.push({
-          tokenId: tokenInfo.tokenId,
-          confirmed: tokenBalances[tokenPubKey].toString(),
-        });
-      }
-    }
     return { balances, trackerBlockHeight: lastProcessedHeight };
   }
 }

@@ -265,11 +265,13 @@ export class CollectionController {
         TokenTypeScope.NonFungible,
         ownerAddrOrPkh,
       );
-      return okResponse({
-        collectionId: balance.tokenId,
-        confirmed: balance.confirmed,
-        trackerBlockHeight: balance.trackerBlockHeight,
-      });
+      return okResponse(
+        balance && {
+          collectionId: balance.tokenId,
+          confirmed: balance.confirmed,
+          trackerBlockHeight: balance.trackerBlockHeight,
+        },
+      );
     } catch (e) {
       return errorResponse(e);
     }

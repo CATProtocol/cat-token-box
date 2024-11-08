@@ -159,7 +159,7 @@ export class TokenService {
 
   async getTokenBalanceByOwnerAddress(
     tokenIdOrTokenAddr: string,
-    scope: TokenTypeScope,
+    scope: TokenTypeScope.Fungible | TokenTypeScope.NonFungible,
     ownerAddrOrPkh: string,
   ) {
     const lastProcessedHeight =
@@ -168,22 +168,18 @@ export class TokenService {
       tokenIdOrTokenAddr,
       scope,
     );
-    let utxos = [];
-    if (tokenInfo) {
-      utxos = await this.queryTokenUtxosByOwnerAddress(
-        lastProcessedHeight,
-        ownerAddrOrPkh,
-        tokenInfo,
-      );
+    if (!tokenInfo) {
+      return null;
     }
-    let confirmed = '0';
-    if (tokenInfo?.tokenPubKey) {
-      const tokenBalances = await this.groupTokenBalances(utxos);
-      confirmed = tokenBalances[tokenInfo.tokenPubKey]?.toString() || '0';
-    }
+    const balances = await this.queryTokenBalancesByOwnerAddress(
+      lastProcessedHeight,
+      ownerAddrOrPkh,
+      scope,
+      tokenInfo,
+    );
     return {
-      tokenId: tokenInfo?.tokenId || null,
-      confirmed,
+      tokenId: tokenInfo.tokenId,
+      confirmed: balances.length === 1 ? balances[0].confirmed.toString() : '0',
       trackerBlockHeight: lastProcessedHeight,
     };
   }
@@ -220,6 +216,49 @@ export class TokenService {
       skip: offset,
       take: limit,
     });
+  }
+
+  async queryTokenBalancesByOwnerAddress(
+    lastProcessedHeight: number,
+    ownerAddrOrPkh: string,
+    scope: TokenTypeScope.Fungible | TokenTypeScope.NonFungible,
+    tokenInfo: TokenInfoEntity | null = null,
+  ) {
+    const ownerPubKeyHash =
+      ownerAddrOrPkh.length === Constants.PUBKEY_HASH_BYTES * 2
+        ? ownerAddrOrPkh
+        : ownerAddressToPubKeyHash(ownerAddrOrPkh);
+    if (
+      lastProcessedHeight === null ||
+      (tokenInfo && !tokenInfo.tokenPubKey) ||
+      !ownerPubKeyHash
+    ) {
+      return [];
+    }
+    const query = this.txOutRepository
+      .createQueryBuilder('t1')
+      .select('t2.token_id', 'tokenId')
+      .innerJoin(TokenInfoEntity, 't2', 't1.xonly_pubkey = t2.token_pubkey')
+      .where('t1.spend_txid IS NULL')
+      .andWhere('t1.owner_pkh = :ownerPkh', { ownerPkh: ownerPubKeyHash })
+      .groupBy('t2.token_id');
+    if (scope === TokenTypeScope.Fungible) {
+      query
+        .addSelect('SUM(t1.token_amount)', 'confirmed')
+        .andWhere('t2.decimals >= 0');
+    } else {
+      query.addSelect('COUNT(1)', 'confirmed').andWhere('t2.decimals < 0');
+    }
+    if (tokenInfo) {
+      query.andWhere('t1.xonly_pubkey = :tokenPubKey', {
+        tokenPubKey: tokenInfo.tokenPubKey,
+      });
+    }
+    const results = await query.getRawMany();
+    return results.map((r) => ({
+      tokenId: r.tokenId,
+      confirmed: r.confirmed,
+    }));
   }
 
   async queryStateHashes(txid: string) {
@@ -277,25 +316,6 @@ export class TokenService {
       renderedUtxos.push(renderedUtxo);
     }
     return renderedUtxos;
-  }
-
-  /**
-   * @param utxos utxos with the same owner address
-   * @returns token balances grouped by xOnlyPubKey
-   */
-  async groupTokenBalances(utxos: TxOutEntity[]) {
-    const balances = {};
-    for (const utxo of utxos) {
-      const tokenInfo = await this.getTokenInfoByTokenPubKey(
-        utxo.xOnlyPubKey,
-        TokenTypeScope.All,
-      );
-      if (tokenInfo) {
-        const acc = tokenInfo.decimals >= 0 ? BigInt(utxo.tokenAmount) : 1n;
-        balances[utxo.xOnlyPubKey] = (balances[utxo.xOnlyPubKey] || 0n) + acc;
-      }
-    }
-    return balances;
   }
 
   async getTokenMintCount(
