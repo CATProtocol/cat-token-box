@@ -8,9 +8,9 @@ import {
   rpc_getrawtransaction,
   rpc_listunspent,
 } from './apis-rpc';
-import { logerror, logwarn } from './log';
-import { btc } from './btc';
+import { logerror } from './log';
 import { ConfigService, WalletService } from 'src/providers';
+import { btc } from '@cat-protocol/cat-sdk';
 
 export const getFeeRate = async function (
   config: ConfigService,
@@ -98,8 +98,12 @@ export const getFractalUtxos = async function (
 export const getUtxos = async function (
   config: ConfigService,
   wallet: WalletService,
-  address: btc.Address,
+  address: btc.Address | string,
 ): Promise<UTXO[]> {
+  if (typeof address === 'string') {
+    address = btc.Address.fromString(address);
+  }
+
   if (config.useRpc()) {
     const utxos = await rpc_listunspent(
       config,
@@ -112,7 +116,7 @@ export const getUtxos = async function (
     return utxos;
   }
 
-  if (config.isFractalNetwork() && !config.useRpc()) {
+  if (config.isFractalNetwork() && !config.useRpc() && config.getApiKey()) {
     return getFractalUtxos(config, address);
   }
 
@@ -150,11 +154,10 @@ export const getUtxos = async function (
 
 export const getRawTransaction = async function (
   config: ConfigService,
-  wallet: WalletService,
   txid: string,
 ): Promise<string | Error> {
   if (config.useRpc()) {
-    return rpc_getrawtransaction(config, wallet.getWalletName(), txid);
+    return rpc_getrawtransaction(config, txid);
   }
   const url = `${config.getMempoolApiHost()}/api/tx/${txid}/hex`;
   return (
@@ -190,20 +193,40 @@ export const getConfirmations = async function (
     return rpc_getconfirmations(config, txid);
   }
 
-  logwarn('No supported getconfirmations', new Error());
-  return {
-    blockhash: '',
-    confirmations: -1,
-  };
+  const url = `${config.getMempoolApiHost()}/api/tx/${txid}/status`;
+  return fetch(url, config.withProxy())
+    .then(async (res) => {
+      const contentType = res.headers.get('content-type');
+      if (contentType.includes('json')) {
+        return res.json();
+      } else {
+        return res.text();
+      }
+    })
+    .then(async (data) => {
+      if (typeof data === 'object') {
+        return {
+          blockhash: data['block_hash'],
+          confirmations: data['confirmed'] ? 1 : -1,
+        };
+      } else if (typeof data === 'object') {
+        throw new Error(JSON.stringify(data));
+      } else if (typeof data === 'string') {
+        throw new Error(data);
+      }
+    })
+    .catch((e) => {
+      logerror('broadcast failed!', e);
+      return e;
+    });
 };
 
 export async function broadcast(
   config: ConfigService,
-  wallet: WalletService,
   txHex: string,
 ): Promise<string | Error> {
   if (config.useRpc()) {
-    return rpc_broadcast(config, wallet.getWalletName(), txHex);
+    return rpc_broadcast(config, txHex);
   }
 
   const url = `${config.getMempoolApiHost()}/api/tx`;

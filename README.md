@@ -14,14 +14,14 @@ There are three major packages implementing the protocol and tools for `CAT` out
 packages
 ├── cli
 ├── common
-├── smartcontracts
+├── sdk
 └── tracker
 ```
 
 
-* `smartcontracts`
+* `sdk`
 
-Smart contracts implementing the `CAT` protocol written in [sCrypt](https://github.com/sCrypt-Inc/scrypt-ts).
+A SDK that enables the integration of CAT protocol tokens (CAT20/CAT721) into various applications.
 
 
 * `tracker`

@@ -1,50 +1,29 @@
 import {
+  Cat20TokenInfo,
+  OpenMinterCat20Meta,
   OpenMinterState,
-  ProtocolState,
-  ProtocolStateList,
-} from '@cat-protocol/cat-smartcontracts';
-import { OpenMinterContract, TokenContract } from './contact';
-import { OpenMinterTokenInfo, TokenMetadata } from './metadata';
+  ChainProvider,
+  OpenMinterV2State,
+  Cat20Utxo,
+  Cat20MinterUtxo,
+  addrToP2trLockingScript,
+  p2trLockingScriptToAddr,
+  btc,
+  scriptToP2tr,
+} from '@cat-protocol/cat-sdk';
 import { isOpenMinter } from './minterFinder';
-import { getRawTransaction } from './apis';
-import {
-  getTokenContractP2TR,
-  p2tr2Address,
-  script2P2TR,
-  toP2tr,
-} from './utils';
+import { getTokenContractP2TR } from './utils';
 import { byteString2Int } from 'scrypt-ts';
-import { findTokenMetadataById, scaleConfig } from 'src/token';
+import { findTokenInfoById, scaleMetadata } from 'src/token';
 import { logerror } from './log';
-import { ConfigService, SpendService, WalletService } from 'src/providers';
-import { btc } from './btc';
+import { ConfigService, SpendService } from 'src/providers';
 import fetch from 'node-fetch-cjs';
 import { MinterType } from './minter';
-import { OpenMinterV2State } from '@cat-protocol/cat-smartcontracts';
 
-export type ContractJSON = {
-  utxo: {
-    txId: string;
-    outputIndex: number;
-    script: string;
-    satoshis: number;
-  };
-  txoStateHashes: Array<string>;
-  state: any;
-};
-
-export type BalanceJSON = {
-  blockHeight: number;
-  balances: Array<{
-    tokenId: string;
-    confirmed: string;
-  }>;
-};
-
-export const getTokenMetadata = async function (
+export const getTokenInfo = async function (
   config: ConfigService,
   id: string,
-): Promise<TokenMetadata | null> {
+): Promise<Cat20TokenInfo<OpenMinterCat20Meta> | null> {
   const url = `${config.getTracker()}/api/tokens/${id}`;
   return fetch(url, config.withProxy())
     .then((res) => res.json())
@@ -54,22 +33,36 @@ export const getTokenMetadata = async function (
           return null;
         }
         const token = res.data;
-        if (token.info.max) {
-          // convert string to  bigint
-          token.info.max = BigInt(token.info.max);
-          token.info.premine = BigInt(token.info.premine);
-          token.info.limit = BigInt(token.info.limit);
+
+        const { info, metadata, tokenAddr, ...rest } = token;
+
+        let metadataTmp: any = {};
+        if (info) {
+          Object.assign(metadataTmp, info);
+        } else {
+          metadataTmp = metadata;
         }
 
-        if (!token.tokenAddr) {
-          const minterP2TR = toP2tr(token.minterAddr);
+        if (typeof metadataTmp.max === 'string') {
+          // convert string to  bigint
+          metadataTmp.max = BigInt(metadataTmp.max);
+          metadataTmp.premine = BigInt(metadataTmp.premine);
+          metadataTmp.limit = BigInt(metadataTmp.limit);
+        }
+        let tokenAddrTmp: string = tokenAddr;
+        if (!tokenAddrTmp) {
+          const minterP2TR = addrToP2trLockingScript(token.minterAddr);
           const network = config.getNetwork();
-          token.tokenAddr = p2tr2Address(
-            getTokenContractP2TR(minterP2TR).p2tr,
+          tokenAddrTmp = p2trLockingScriptToAddr(
+            getTokenContractP2TR(minterP2TR),
             network,
           );
         }
-        return token;
+        return {
+          tokenAddr: tokenAddrTmp,
+          metadata: metadataTmp,
+          ...rest,
+        };
       } else {
         throw new Error(res.msg);
       }
@@ -103,38 +96,32 @@ export const getTokenMinterCount = async function (
     });
 };
 
-const fetchOpenMinterState = async function (
-  config: ConfigService,
-  wallet: WalletService,
-  metadata: TokenMetadata,
+const fetchCat20MinterState = async function (
+  chainProvider: ChainProvider,
+  tokenInfo: Cat20TokenInfo<OpenMinterCat20Meta>,
   txId: string,
   vout: number,
 ): Promise<OpenMinterState | OpenMinterV2State | null> {
-  const minterP2TR = toP2tr(metadata.minterAddr);
-  const tokenP2TR = toP2tr(metadata.tokenAddr);
-  const info = metadata.info as OpenMinterTokenInfo;
-  const scaledInfo = scaleConfig(info);
-  if (txId === metadata.revealTxid) {
-    if (metadata.info.minterMd5 == MinterType.OPEN_MINTER_V2) {
+  const minterP2TR = addrToP2trLockingScript(tokenInfo.minterAddr);
+  const tokenP2TR = addrToP2trLockingScript(tokenInfo.tokenAddr);
+  const scaledMetadata = scaleMetadata(tokenInfo.metadata);
+  if (txId === tokenInfo.revealTxid) {
+    if (tokenInfo.metadata.minterMd5 == MinterType.OPEN_MINTER_V2) {
       return {
         isPremined: false,
         remainingSupplyCount:
-          (scaledInfo.max - scaledInfo.premine) / scaledInfo.limit,
+          (scaledMetadata.max - scaledMetadata.premine) / scaledMetadata.limit,
         tokenScript: tokenP2TR,
       };
     }
     return {
       isPremined: false,
-      remainingSupply: scaledInfo.max - scaledInfo.premine,
+      remainingSupply: scaledMetadata.max - scaledMetadata.premine,
       tokenScript: tokenP2TR,
     };
   }
 
-  const txhex = await getRawTransaction(config, wallet, txId);
-  if (txhex instanceof Error) {
-    logerror(`get raw transaction ${txId} failed!`, txhex);
-    return null;
-  }
+  const txhex = await chainProvider.getRawTransaction(txId);
 
   const tx = new btc.Transaction(txhex);
 
@@ -145,9 +132,9 @@ const fetchOpenMinterState = async function (
 
     if (witnesses.length > 2) {
       const lockingScriptBuffer = witnesses[witnesses.length - 2];
-      const { p2tr } = script2P2TR(lockingScriptBuffer);
+      const { p2trLockingScript: p2tr } = scriptToP2tr(lockingScriptBuffer);
       if (p2tr === minterP2TR) {
-        if (metadata.info.minterMd5 == MinterType.OPEN_MINTER_V2) {
+        if (tokenInfo.metadata.minterMd5 == MinterType.OPEN_MINTER_V2) {
           const preState: OpenMinterV2State = {
             tokenScript:
               witnesses[REMAININGSUPPLY_WITNESS_INDEX - 2].toString('hex'),
@@ -176,11 +163,12 @@ const fetchOpenMinterState = async function (
 
 export const getTokenMinter = async function (
   config: ConfigService,
-  wallet: WalletService,
-  metadata: TokenMetadata,
+  spendService: SpendService,
+  chainProvider: ChainProvider,
+  tokenInfo: Cat20TokenInfo<OpenMinterCat20Meta>,
   offset: number = 0,
-): Promise<OpenMinterContract | null> {
-  const url = `${config.getTracker()}/api/minters/${metadata.tokenId}/utxos?limit=1&offset=${offset}`;
+): Promise<Cat20MinterUtxo | null> {
+  const url = `${config.getTracker()}/api/minters/${tokenInfo.tokenId}/utxos?limit=1&offset=${offset}`;
   return fetch(url, config.withProxy())
     .then((res) => res.json())
     .then((res: any) => {
@@ -190,40 +178,38 @@ export const getTokenMinter = async function (
         throw new Error(res.msg);
       }
     })
-    .then(({ utxos: contracts }) => {
-      if (isOpenMinter(metadata.info.minterMd5)) {
+    .then(({ utxos }) => {
+      if (isOpenMinter(tokenInfo.metadata.minterMd5)) {
         return Promise.all(
-          contracts.map(async (c) => {
-            const protocolState = ProtocolState.fromStateHashList(
-              c.txoStateHashes as ProtocolStateList,
-            );
-
-            const data = await fetchOpenMinterState(
-              config,
-              wallet,
-              metadata,
-              c.utxo.txId,
-              c.utxo.outputIndex,
-            );
-
-            if (data === null) {
-              throw new Error(
-                `fetch open minter state failed, minter: ${metadata.minterAddr}, txId: ${c.utxo.txId}`,
+          utxos
+            .filter((utxoData) => {
+              return spendService.isUnspent(utxoData.utxo);
+            })
+            .map(async (utxoData) => {
+              const data = await fetchCat20MinterState(
+                chainProvider,
+                tokenInfo,
+                utxoData.utxo.txId,
+                utxoData.utxo.outputIndex,
               );
-            }
 
-            if (typeof c.utxo.satoshis === 'string') {
-              c.utxo.satoshis = parseInt(c.utxo.satoshis);
-            }
+              if (data === null) {
+                throw new Error(
+                  `fetch open minter state failed, minter: ${tokenInfo.minterAddr}, txId: ${utxoData.utxo.txId}`,
+                );
+              }
 
-            return {
-              utxo: c.utxo,
-              state: {
-                protocolState,
-                data,
-              },
-            } as OpenMinterContract;
-          }),
+              if (typeof utxoData.utxo.satoshis === 'string') {
+                utxoData.utxo.satoshis = parseInt(utxoData.utxo.satoshis);
+              }
+
+              const minterUtxo: Cat20MinterUtxo = {
+                utxo: utxoData.utxo,
+                txoStateHashes: utxoData.txoStateHashes,
+                state: data,
+              };
+              return minterUtxo;
+            }),
         );
       } else {
         throw new Error('Unkown minter!');
@@ -233,7 +219,7 @@ export const getTokenMinter = async function (
       return minters[0] || null;
     })
     .catch((e) => {
-      logerror(`fetch minters failed, minter: ${metadata.minterAddr}`, e);
+      logerror(`fetch minters failed, minter: ${tokenInfo.minterAddr}`, e);
       return null;
     });
 };
@@ -241,13 +227,10 @@ export const getTokenMinter = async function (
 export const getTokens = async function (
   config: ConfigService,
   spendService: SpendService,
-  metadata: TokenMetadata,
+  tokenInfo: Cat20TokenInfo<OpenMinterCat20Meta>,
   ownerAddress: string,
-): Promise<{
-  trackerBlockHeight: number;
-  contracts: Array<TokenContract>;
-} | null> {
-  const url = `${config.getTracker()}/api/tokens/${metadata.tokenId}/addresses/${ownerAddress}/utxos`;
+): Promise<Array<Cat20Utxo>> {
+  const url = `${config.getTracker()}/api/tokens/${tokenInfo.tokenId}/addresses/${ownerAddress}/utxos`;
   return fetch(url, config.withProxy())
     .then((res) => res.json())
     .then((res: any) => {
@@ -258,30 +241,24 @@ export const getTokens = async function (
       }
     })
     .then(({ utxos, trackerBlockHeight }) => {
-      let contracts: Array<TokenContract> = utxos.map((c) => {
-        const protocolState = ProtocolState.fromStateHashList(
-          c.txoStateHashes as ProtocolStateList,
-        );
-
-        if (typeof c.utxo.satoshis === 'string') {
-          c.utxo.satoshis = parseInt(c.utxo.satoshis);
+      let cat20Utxos: Array<Cat20Utxo> = utxos.map((utxoData) => {
+        if (typeof utxoData.utxo.satoshis === 'string') {
+          utxoData.utxo.satoshis = parseInt(utxoData.utxo.satoshis);
         }
 
-        const r: TokenContract = {
-          utxo: c.utxo,
+        const cat20Utxo: Cat20Utxo = {
+          utxo: utxoData.utxo,
+          txoStateHashes: utxoData.txoStateHashes,
           state: {
-            protocolState,
-            data: {
-              ownerAddr: c.state.address,
-              amount: BigInt(c.state.amount),
-            },
+            ownerAddr: utxoData.state.address,
+            amount: BigInt(utxoData.state.amount),
           },
         };
 
-        return r;
+        return cat20Utxo;
       });
 
-      contracts = contracts.filter((tokenContract) => {
+      cat20Utxos = cat20Utxos.filter((tokenContract) => {
         return spendService.isUnspent(tokenContract.utxo);
       });
 
@@ -290,14 +267,11 @@ export const getTokens = async function (
       }
       spendService.updateBlockHeight(trackerBlockHeight);
 
-      return {
-        contracts,
-        trackerBlockHeight: trackerBlockHeight as number,
-      };
+      return cat20Utxos;
     })
     .catch((e) => {
-      logerror(`fetch tokens failed:`, e);
-      return null;
+      logerror(`fetch cat20Utxo failed:`, e);
+      return [];
     });
 };
 
@@ -324,10 +298,10 @@ export const getAllBalance = async function (
     .then(({ balances }) => {
       return Promise.all(
         balances.map(async (b) => {
-          const metadata = await findTokenMetadataById(config, b.tokenId);
+          const tokenInfo = await findTokenInfoById(config, b.tokenId);
           return {
             tokenId: b.tokenId,
-            symbol: metadata.info.symbol,
+            symbol: tokenInfo.metadata.symbol,
             confirmed: BigInt(b.confirmed),
           };
         }),
@@ -341,14 +315,14 @@ export const getAllBalance = async function (
 
 export const getBalance = async function (
   config: ConfigService,
-  metadata: TokenMetadata,
+  info: Cat20TokenInfo<OpenMinterCat20Meta>,
   ownerAddress: string,
 ): Promise<{
   tokenId: string;
   symbol: string;
   confirmed: bigint;
 }> {
-  const url = `${config.getTracker()}/api/tokens/${metadata.tokenId}/addresses/${ownerAddress}/balance`;
+  const url = `${config.getTracker()}/api/tokens/${info.tokenId}/addresses/${ownerAddress}/balance`;
   return fetch(url, config.withProxy())
     .then((res) => res.json())
     .then((res: any) => {
@@ -361,15 +335,15 @@ export const getBalance = async function (
     .then(({ confirmed, tokenId }) => {
       return {
         tokenId: tokenId,
-        symbol: metadata.info.symbol,
+        symbol: info.metadata.symbol,
         confirmed: BigInt(confirmed),
       };
     })
     .catch((e) => {
       logerror(`fetch balance failed`, e);
       return {
-        tokenId: metadata.tokenId,
-        symbol: metadata.info.symbol,
+        tokenId: info.tokenId,
+        symbol: info.metadata.symbol,
         confirmed: 0n,
       };
     });
@@ -398,6 +372,3 @@ export const getTrackerStatus = async function (config: ConfigService): Promise<
       return e;
     });
 };
-
-// Tracker block height lags behind node
-// Insufficient token balance

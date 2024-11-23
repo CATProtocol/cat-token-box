@@ -25,7 +25,7 @@ export class AddressCommand extends BaseCommand {
     options?: AddressCommandOptions,
   ): Promise<void> {
     try {
-      const address = this.walletService.getAddress();
+      const address = await this.walletService.getAddress();
 
       log(`Your address is ${address}`);
     } catch (error) {

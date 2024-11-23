@@ -44,4 +44,4 @@ typings/
 # build / generate output
 **/dist
 
-/bitcoin/signet
+*.csv

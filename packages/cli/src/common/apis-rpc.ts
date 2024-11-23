@@ -1,9 +1,9 @@
 import { UTXO } from 'scrypt-ts';
 import { Decimal } from 'decimal.js';
-import * as descriptors from '@bitcoinerlab/descriptors';
 import { logerror } from './log';
 import { ConfigService } from 'src/providers';
 import fetch from 'node-fetch-cjs';
+import { descriptorChecksum } from './checksum';
 
 /**
  * only for localhost
@@ -12,14 +12,13 @@ import fetch from 'node-fetch-cjs';
  */
 export const rpc_broadcast = async function (
   config: ConfigService,
-  walletName: string,
   txHex: string,
 ): Promise<string | Error> {
   const Authorization = `Basic ${Buffer.from(
     `${config.getRpcUser()}:${config.getRpcPassword()}`,
   ).toString('base64')}`;
 
-  return fetch(config.getRpcUrl(walletName), {
+  return fetch(config.getRpcUrl(null), {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -55,14 +54,13 @@ export const rpc_broadcast = async function (
 
 export const rpc_getrawtransaction = async function (
   config: ConfigService,
-  walletName: string,
   txid: string,
 ): Promise<string | Error> {
   const Authorization = `Basic ${Buffer.from(
     `${config.getRpcUser()}:${config.getRpcPassword()}`,
   ).toString('base64')}`;
 
-  return fetch(config.getRpcUrl(walletName), {
+  return fetch(config.getRpcUrl(null), {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -303,7 +301,7 @@ export const rpc_importdescriptors = async function (
     `${config.getRpcUser()}:${config.getRpcPassword()}`,
   ).toString('base64')}`;
 
-  const checksum = descriptors.checksum(desc);
+  const checksum = descriptorChecksum(desc);
 
   const timestamp = Math.ceil(new Date().getTime() / 1000);
   return fetch(config.getRpcUrl(walletName), {

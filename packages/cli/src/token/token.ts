@@ -1,78 +1,87 @@
+import { Cat20TokenInfo, OpenMinterCat20Meta } from '@cat-protocol/cat-sdk';
 import { existsSync, readFileSync, writeFileSync } from 'fs';
 import { join } from 'path';
-import {
-  OpenMinterTokenInfo,
-  TokenMetadata,
-  TokenInfo,
-  scaleByDecimals,
-  getTokenMetadata,
-  logerror,
-} from 'src/common';
+import { scaleByDecimals, getTokenInfo, logerror } from 'src/common';
 import { ConfigService } from 'src/providers';
 
-export function scaleConfig(config: OpenMinterTokenInfo): OpenMinterTokenInfo {
-  const clone = Object.assign({}, config);
-
-  clone.max = scaleByDecimals(config.max, config.decimals);
-  clone.premine = scaleByDecimals(config.premine, config.decimals);
-  clone.limit = scaleByDecimals(config.limit, config.decimals);
-
+export function scaleMetadata(
+  metadata: OpenMinterCat20Meta,
+): OpenMinterCat20Meta {
+  const clone = Object.assign({}, metadata);
+  clone.max = scaleByDecimals(metadata.max, metadata.decimals);
+  clone.premine = scaleByDecimals(metadata.premine, metadata.decimals);
+  clone.limit = scaleByDecimals(metadata.limit, metadata.decimals);
   return clone;
 }
 
-export function getAllTokenMetadatas(config: ConfigService): TokenMetadata[] {
-  const path = getTokenMetadataPath(config);
+export function getAllTokenInfos(
+  config: ConfigService,
+): Cat20TokenInfo<OpenMinterCat20Meta>[] {
+  const path = getTokenInfosPath(config);
 
   try {
     if (existsSync(path)) {
       const tokens = JSON.parse(readFileSync(path).toString()) as Array<any>;
 
       // eslint-disable-next-line prettier/prettier
-      tokens.forEach((token) => {
-        if (token.info.max) {
-          // convert string to  bigint
-          token.info.max = BigInt(token.info.max);
-          token.info.premine = BigInt(token.info.premine);
-          token.info.limit = BigInt(token.info.limit);
+      return tokens.map((token) => {
+        const { info, metadata, ...rest } = token;
+
+        let metadataTmp: any = {};
+        if (info) {
+          Object.assign(metadataTmp, info);
+        } else {
+          metadataTmp = metadata;
         }
+
+        if (typeof metadataTmp.max === 'string') {
+          // convert string to  bigint
+          metadataTmp.max = BigInt(metadataTmp.max);
+          metadataTmp.premine = BigInt(metadataTmp.premine);
+          metadataTmp.limit = BigInt(metadataTmp.limit);
+        }
+
+        return {
+          metadata: metadataTmp,
+          ...rest,
+        };
       });
-      return tokens;
     } else {
       return [];
     }
   } catch (error) {
-    logerror('getAllTokenMetadatas failed!', error);
+    logerror('getAllTokenInfos failed!', error);
   }
 
   return [];
 }
 
-export async function findTokenMetadataById(
+export async function findTokenInfoById(
   config: ConfigService,
   id: string,
-): Promise<TokenMetadata | null> {
-  const tokens = getAllTokenMetadatas(config);
+): Promise<Cat20TokenInfo<OpenMinterCat20Meta> | null> {
+  const tokens = getAllTokenInfos(config);
   let token = tokens.find((token) => token.tokenId === id);
   if (token) {
     return token;
   }
 
-  token = await getTokenMetadata(config, id);
+  token = await getTokenInfo(config, id);
 
   if (token) {
-    saveTokenMetadata(token, config);
+    saveTokenInfo(token, config);
   }
 
   return token;
 }
 
-function saveTokenMetadata(
-  token: TokenMetadata,
+function saveTokenInfo(
+  token: Cat20TokenInfo<OpenMinterCat20Meta>,
   config: ConfigService,
-): TokenMetadata[] {
-  const tokens = getAllTokenMetadatas(config);
+): Cat20TokenInfo<OpenMinterCat20Meta>[] {
+  const tokens = getAllTokenInfos(config);
   tokens.push(token);
-  const path = getTokenMetadataPath(config);
+  const path = getTokenInfosPath(config);
   try {
     writeFileSync(path, JSON.stringify(tokens, null, 1));
   } catch (error) {
@@ -82,17 +91,17 @@ function saveTokenMetadata(
   return tokens;
 }
 
-export function addTokenMetadata(
+export function addTokenInfo(
   config: ConfigService,
   tokenId: string,
-  info: TokenInfo,
+  metadata: OpenMinterCat20Meta,
   tokenAddr: string,
   minterAddr: string,
   genesisTxid: string,
   revealTxid: string,
-) {
-  const metadata: TokenMetadata = {
-    info: info,
+): Cat20TokenInfo<OpenMinterCat20Meta> {
+  const tokenInfo: Cat20TokenInfo<OpenMinterCat20Meta> = {
+    metadata: metadata,
     tokenId,
     tokenAddr: tokenAddr,
     minterAddr: minterAddr,
@@ -100,10 +109,10 @@ export function addTokenMetadata(
     revealTxid,
     timestamp: new Date().getTime(),
   };
-  saveTokenMetadata(metadata, config);
-  return metadata;
+  saveTokenInfo(tokenInfo, config);
+  return tokenInfo;
 }
 
-export function getTokenMetadataPath(config: ConfigService) {
+export function getTokenInfosPath(config: ConfigService) {
   return join(config.getDataDir(), 'tokens.json');
 }

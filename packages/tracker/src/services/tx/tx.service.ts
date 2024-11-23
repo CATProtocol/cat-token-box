@@ -27,14 +27,11 @@ import {
   TokenInfoEnvelope,
 } from '../../common/types';
 import { TokenMintEntity } from '../../entities/tokenMint.entity';
-import {
-  getGuardContractInfo,
-  getNftGuardContractInfo,
-} from '@cat-protocol/cat-smartcontracts';
 import { LRUCache } from 'lru-cache';
 import { CommonService } from '../common/common.service';
 import { TxOutArchiveEntity } from 'src/entities/txOutArchive.entity';
 import { Cron } from '@nestjs/schedule';
+import { Cat20GuardCovenant, CAT721GuardCovenant } from '@cat-protocol/cat-sdk';
 
 @Injectable()
 export class TxService {
@@ -60,27 +57,30 @@ export class TxService {
     max: Constants.CACHE_MAX_SIZE,
   });
 
+  private dataSource: DataSource;
+
   constructor(
-    private dataSource: DataSource,
     private commonService: CommonService,
     @InjectRepository(TokenInfoEntity)
     private tokenInfoEntityRepository: Repository<TokenInfoEntity>,
     @InjectRepository(TxEntity)
     private txEntityRepository: Repository<TxEntity>,
   ) {
-    const tokenGuardContractInfo = getGuardContractInfo();
+    this.dataSource = this.txEntityRepository.manager.connection;
+
+    const tokenGuardContractInfo = new Cat20GuardCovenant();
     this.FT_GUARD_PUBKEY = tokenGuardContractInfo.tpubkey;
     this.FT_TRANSFER_GUARD_SCRIPT_HASH =
-      tokenGuardContractInfo.contractTaprootMap.transfer.contractScriptHash;
+      tokenGuardContractInfo.getTapLeafContract('transfer').contractScriptHash;
     this.logger.log(`token guard xOnlyPubKey = ${this.FT_GUARD_PUBKEY}`);
     this.logger.log(
       `token guard transferScriptHash = ${this.FT_TRANSFER_GUARD_SCRIPT_HASH}`,
     );
 
-    const nftGuardContractInfo = getNftGuardContractInfo();
+    const nftGuardContractInfo = new CAT721GuardCovenant();
     this.NFT_GUARD_PUBKEY = nftGuardContractInfo.tpubkey;
     this.NFT_TRANSFER_GUARD_SCRIPT_HASH =
-      nftGuardContractInfo.contractTaprootMap.transfer.contractScriptHash;
+      nftGuardContractInfo.getTapLeafContract('transfer').contractScriptHash;
     this.logger.log(`nft guard xOnlyPubKey = ${this.NFT_GUARD_PUBKEY}`);
     this.logger.log(
       `nft guard transferScriptHash = ${this.NFT_TRANSFER_GUARD_SCRIPT_HASH}`,
@@ -187,7 +187,9 @@ export class TxService {
   private isCatTx(tx: Transaction) {
     if (tx.outs.length > 0) {
       // OP_RETURN OP_PUSHBYTES_24 'cat' <1 byte version> <20 bytes root_hash>
-      return tx.outs[0].script.toString('hex').startsWith('6a1863617401');
+      return Buffer.from(tx.outs[0].script)
+        .toString('hex')
+        .startsWith('6a1863617401');
     }
     return false;
   }
@@ -712,9 +714,9 @@ export class TxService {
     );
     this.validateStateHashes(stateHashes);
 
-    const scriptHash = crypto
-      .hash160(guardInput?.redeemScript || Buffer.alloc(0))
-      .toString('hex');
+    const scriptHash = Buffer.from(
+      crypto.hash160(guardInput?.redeemScript || Buffer.alloc(0)),
+    ).toString('hex');
     if (
       scriptHash === this.FT_TRANSFER_GUARD_SCRIPT_HASH ||
       scriptHash === this.NFT_TRANSFER_GUARD_SCRIPT_HASH
@@ -805,24 +807,28 @@ export class TxService {
    */
   private parseTaprootInput(input: TxInput): TaprootPayment | null {
     try {
-      const key = crypto
-        .hash160(
+      const key = Buffer.from(
+        crypto.hash160(
           Buffer.concat([
             crypto.hash160(input.witness[input.witness.length - 2]), // redeem script
             crypto.hash160(input.witness[input.witness.length - 1]), // cblock
           ]),
-        )
-        .toString('hex');
+        ),
+      ).toString('hex');
       let cached = TxService.taprootPaymentCache.get(key);
       if (!cached) {
         const taproot = payments.p2tr({ witness: input.witness });
         cached = {
-          pubkey: taproot?.pubkey,
-          redeemScript: taproot?.redeem?.output,
+          pubkey: taproot.pubkey ? Buffer.from(taproot.pubkey) : undefined,
+          redeemScript: taproot?.redeem?.output
+            ? Buffer.from(taproot.redeem.output)
+            : undefined,
         };
         TxService.taprootPaymentCache.set(key, cached);
       }
-      return Object.assign({}, cached, { witness: input.witness });
+      return Object.assign({}, cached, {
+        witness: input.witness.map((w) => Buffer.from(w)),
+      });
     } catch {
       return null;
     }
@@ -835,12 +841,12 @@ export class TxService {
     try {
       if (
         output.script.length !== Constants.TAPROOT_LOCKING_SCRIPT_LENGTH ||
-        !output.script.toString('hex').startsWith('5120')
+        !Buffer.from(output.script).toString('hex').startsWith('5120')
       ) {
         return null;
       }
       return {
-        pubkey: output.script.subarray(2, 34),
+        pubkey: Buffer.from(output.script.subarray(2, 34)),
         redeemScript: null,
         witness: null,
       };
@@ -909,7 +915,7 @@ export class TxService {
       outputIndex,
       blockHeight: blockHeader.height,
       satoshis: BigInt(tx.outs[outputIndex].value),
-      lockingScript: tx.outs[outputIndex].script.toString('hex'),
+      lockingScript: Buffer.from(tx.outs[outputIndex].script).toString('hex'),
       xOnlyPubKey: payOuts[outputIndex].pubkey.toString('hex'),
     };
   }
@@ -929,7 +935,7 @@ export class TxService {
       .andWhere('tx.block_height < :blockHeight', {
         blockHeight: lastProcessedHeight - 2880, // blocks before one day ago
       })
-      .limit(2500) // archive no more than 2500 records once a time
+      .limit(1000) // archive no more than 1000 records once a time
       .getMany();
     if (txOuts.length === 0) {
       return;

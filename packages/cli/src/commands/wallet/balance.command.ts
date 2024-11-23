@@ -9,7 +9,7 @@ import {
 import { BaseCommand, BaseCommandOptions } from '../base.command';
 import { ConfigService, WalletService } from 'src/providers';
 import { Inject } from '@nestjs/common';
-import { findTokenMetadataById } from 'src/token';
+import { findTokenInfoById } from 'src/token';
 import { table } from './table';
 import Decimal from 'decimal.js';
 
@@ -49,21 +49,25 @@ export class BalanceCommand extends BaseCommand {
     options?: BalanceCommandOptions,
   ): Promise<void> {
     try {
-      const address = this.walletService.getAddress();
+      const address = await this.walletService.getAddress();
 
       if (options.id) {
-        const metadata = await findTokenMetadataById(
+        const tokenInfo = await findTokenInfoById(
           this.configService,
           options.id,
         );
 
-        if (!metadata) {
+        if (!tokenInfo) {
           logerror(`No token found for tokenId: ${options.id}`, new Error());
           await this.checkTrackerStatus();
           return;
         }
 
-        const balance = await getBalance(this.configService, metadata, address);
+        const balance = await getBalance(
+          this.configService,
+          tokenInfo,
+          address,
+        );
 
         console.log(
           table([
@@ -72,7 +76,7 @@ export class BalanceCommand extends BaseCommand {
               symbol: balance.symbol,
               balance: unScaleByDecimals(
                 balance.confirmed,
-                metadata.info.decimals,
+                tokenInfo.metadata.decimals,
               ),
             },
           ]),
@@ -88,7 +92,7 @@ export class BalanceCommand extends BaseCommand {
 
         const all = await Promise.all(
           balances.map(async (balance) => {
-            const metadata = await findTokenMetadataById(
+            const metadata = await findTokenInfoById(
               this.configService,
               balance.tokenId,
             );
@@ -98,7 +102,7 @@ export class BalanceCommand extends BaseCommand {
               symbol: balance.symbol,
               balance: unScaleByDecimals(
                 balance.confirmed,
-                metadata.info.decimals,
+                metadata.metadata.decimals,
               ),
             };
           }),

@@ -11,7 +11,7 @@
     "lib": ["ESNext"],
     "module": "CommonJS",
     "allowJs": true,
-    "moduleResolution": "node",
+    "moduleResolution": "Node",
     "noEmitOnError": true,
     "noFallthroughCasesInSwitch": true,
     "noImplicitAny": true,

@@ -17,8 +17,9 @@ export class BlockService implements OnModuleInit {
 
   private readonly genesisBlockHeight: number;
 
+  private dataSource: DataSource;
+
   constructor(
-    private dataSource: DataSource,
     private readonly rpcService: RpcService,
     private readonly txService: TxService,
     private readonly configService: ConfigService,
@@ -26,6 +27,7 @@ export class BlockService implements OnModuleInit {
     @InjectRepository(BlockEntity)
     private blockEntityRepository: Repository<BlockEntity>,
   ) {
+    this.dataSource = this.blockEntityRepository.manager.connection;
     this.genesisBlockHeight = this.configService.get('genesisBlockHeight');
   }
 

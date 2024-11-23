@@ -1,28 +1,28 @@
 import { Command, InquirerService, Option } from 'nest-commander';
+import { getTokens, logerror, needRetry, unScaleByDecimals } from 'src/common';
 import {
-  getUtxos,
-  getTokens,
-  TokenMetadata,
-  broadcast,
-  logerror,
-  needRetry,
-  OpenMinterTokenInfo,
-  sleep,
-  btc,
-  unScaleByDecimals,
-} from 'src/common';
-import { sendToken } from './ft';
-import { pick, pickLargeFeeUtxo } from './pick';
-import { ConfigService, SpendService, WalletService } from 'src/providers';
+  ConfigService,
+  getProviders,
+  SpendService,
+  WalletService,
+} from 'src/providers';
 import { Inject } from '@nestjs/common';
 import { RetrySendQuestionAnswers } from 'src/questions/retry-send.question';
-import { findTokenMetadataById, scaleConfig } from 'src/token';
+import { findTokenInfoById, scaleMetadata } from 'src/token';
 import Decimal from 'decimal.js';
 import {
   BoardcastCommand,
   BoardcastCommandOptions,
 } from '../boardcast.command';
-import { isMergeTxFail, mergeTokens } from './merge';
+import {
+  Cat20TokenInfo,
+  OpenMinterCat20Meta,
+  singleSend,
+  mergeCat20Utxo,
+  pick,
+  toTokenAddress,
+  btc,
+} from '@cat-protocol/cat-sdk';
 
 interface SendCommandOptions extends BoardcastCommandOptions {
   id: string;
@@ -53,8 +53,8 @@ export class SendCommand extends BoardcastCommand {
       return;
     }
     try {
-      const address = this.walletService.getAddress();
-      const token = await findTokenMetadataById(this.configService, options.id);
+      const address = await this.walletService.getAddress();
+      const token = await findTokenInfoById(this.configService, options.id);
 
       if (!token) {
         throw new Error(`No token metadata found for tokenId: ${options.id}`);
@@ -65,7 +65,10 @@ export class SendCommand extends BoardcastCommand {
       try {
         receiver = btc.Address.fromString(inputs[0]);
 
-        if (receiver.type !== 'taproot') {
+        if (
+          receiver.type !== 'taproot' &&
+          receiver.type !== 'witnesspubkeyhash'
+        ) {
           console.error(`Invalid address type: ${receiver.type}`);
           return;
         }
@@ -74,10 +77,12 @@ export class SendCommand extends BoardcastCommand {
         return;
       }
 
-      const scaledInfo = scaleConfig(token.info as OpenMinterTokenInfo);
+      const scaledMetadata = scaleMetadata(token.metadata);
 
       try {
-        const d = new Decimal(inputs[1]).mul(Math.pow(10, scaledInfo.decimals));
+        const d = new Decimal(inputs[1]).mul(
+          Math.pow(10, scaledMetadata.decimals),
+        );
         amount = BigInt(d.toString());
       } catch (error) {
         logerror(`Invalid amount: "${inputs[1]}"`, error);
@@ -89,14 +94,6 @@ export class SendCommand extends BoardcastCommand {
           await this.send(token, receiver, amount, address);
           return;
         } catch (error) {
-          // if merge failed, we can auto retry
-          if (isMergeTxFail(error)) {
-            logerror(`Merge [${token.info.symbol}] tokens failed.`, error);
-            console.warn(`retry to merge [${token.info.symbol}] tokens ...`);
-            await sleep(6);
-            continue;
-          }
-
           if (needRetry(error)) {
             // if send token failed, we request to retry
             const { retry } = await this.inquirer.ask<RetrySendQuestionAnswers>(
@@ -107,7 +104,7 @@ export class SendCommand extends BoardcastCommand {
             if (retry === 'abort') {
               return;
             }
-            console.warn(`retry to send token [${token.info.symbol}] ...`);
+            console.warn(`retry to send token [${token.metadata.symbol}] ...`);
           } else {
             throw error;
           }
@@ -119,114 +116,70 @@ export class SendCommand extends BoardcastCommand {
   }
 
   async send(
-    token: TokenMetadata,
+    tokenInfo: Cat20TokenInfo<OpenMinterCat20Meta>,
     receiver: btc.Address,
     amount: bigint,
     address: btc.Address,
   ) {
     const feeRate = await this.getFeeRate();
 
-    let feeUtxos = await getUtxos(
-      this.configService,
-      this.walletService,
-      address,
-    );
-
-    feeUtxos = feeUtxos.filter((utxo) => {
-      return this.spendService.isUnspent(utxo);
-    });
-
-    if (feeUtxos.length === 0) {
-      console.warn('Insufficient satoshis balance!');
-      return;
-    }
-
-    const res = await getTokens(
+    let cat20Utxos = await getTokens(
       this.configService,
       this.spendService,
-      token,
+      tokenInfo,
       address,
     );
 
-    if (res === null) {
-      return;
-    }
+    cat20Utxos = pick(cat20Utxos, amount);
 
-    const { contracts } = res;
-
-    let tokenContracts = pick(contracts, amount);
-
-    if (tokenContracts.length === 0) {
+    if (cat20Utxos.length === 0) {
       console.warn('Insufficient token balance!');
       return;
     }
 
-    const cachedTxs: Map<string, btc.Transaction> = new Map();
-    if (tokenContracts.length > 4) {
-      console.info(`Merging your [${token.info.symbol}] tokens ...`);
-      const [mergedTokens, newfeeUtxos, e] = await mergeTokens(
-        this.configService,
-        this.walletService,
-        this.spendService,
-        feeUtxos,
-        feeRate,
-        token,
-        tokenContracts,
-        address,
-        cachedTxs,
-      );
-
-      if (e instanceof Error) {
-        logerror('merge token failed!', e);
-        return;
-      }
-
-      tokenContracts = mergedTokens;
-      feeUtxos = newfeeUtxos;
-    }
-
-    const feeUtxo = pickLargeFeeUtxo(feeUtxos);
-
-    const result = await sendToken(
+    const { chainProvider, utxoProvider } = getProviders(
       this.configService,
       this.walletService,
-      feeUtxo,
+    );
+
+    if (cat20Utxos.length > 2) {
+      console.info(`Merging your [${tokenInfo.metadata.symbol}] tokens ...`);
+      const { cat20Utxos: newCat20Utxos } = await mergeCat20Utxo(
+        this.walletService,
+        utxoProvider,
+        chainProvider,
+        tokenInfo.minterAddr,
+        cat20Utxos,
+        feeRate,
+      );
+      cat20Utxos = newCat20Utxos;
+    }
+
+    cat20Utxos = pick(cat20Utxos, amount);
+    const result = await singleSend(
+      this.walletService,
+      utxoProvider,
+      chainProvider,
+      tokenInfo.minterAddr,
+      cat20Utxos,
+      [
+        {
+          address: toTokenAddress(receiver),
+          amount: amount,
+        },
+      ],
+      toTokenAddress(address),
       feeRate,
-      token,
-      tokenContracts,
-      address,
-      receiver,
-      amount,
-      cachedTxs,
     );
 
     if (result) {
-      const commitTxId = await broadcast(
-        this.configService,
-        this.walletService,
-        result.commitTx.uncheckedSerialize(),
-      );
-
-      if (commitTxId instanceof Error) {
-        throw commitTxId;
-      }
-
-      this.spendService.updateSpends(result.commitTx);
-
-      const revealTxId = await broadcast(
-        this.configService,
-        this.walletService,
-        result.revealTx.uncheckedSerialize(),
-      );
-
-      if (revealTxId instanceof Error) {
-        throw revealTxId;
-      }
-
-      this.spendService.updateSpends(result.revealTx);
+      this.spendService.updateTxsSpends([
+        result.guardTx.extractTransaction(),
+        result.sendTx.extractTransaction(),
+      ]);
 
       console.log(
-        `Sending ${unScaleByDecimals(amount, token.info.decimals)} ${token.info.symbol} tokens to ${receiver} \nin txid: ${result.revealTx.id}`,
+        `Sending ${unScaleByDecimals(amount, tokenInfo.metadata.decimals)} ${tokenInfo.metadata.symbol} tokens to ${receiver} \nin txid: ${result.sendTxId}`,
       );
     }
   }

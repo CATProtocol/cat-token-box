@@ -1,6 +1,6 @@
 import { payments, script } from 'bitcoinjs-lib';
 import { Constants, network } from './constants';
-import { hash160 } from 'bitcoinjs-lib/src/crypto';
+import { crypto } from 'bitcoinjs-lib';
 import { decode as cborDecode } from 'cbor';
 import { EnvelopeMarker, EnvelopeData, TokenInfoEnvelope } from './types';
 
@@ -35,7 +35,9 @@ export function xOnlyPubKeyToAddress(xOnlyPubKey: string) {
 
 export function addressToXOnlyPubKey(addr: string) {
   try {
-    return payments.p2tr({ address: addr, network }).pubkey.toString('hex');
+    return Buffer.from(
+      payments.p2tr({ address: addr, network }).pubkey,
+    ).toString('hex');
   } catch {
     return null;
   }
@@ -45,16 +47,15 @@ export function ownerAddressToPubKeyHash(ownerAddr: string) {
   try {
     const pubKey = addressToXOnlyPubKey(ownerAddr);
     if (pubKey) {
-      return hash160(Buffer.from(pubKey, 'hex')).toString('hex');
+      return Buffer.from(crypto.hash160(Buffer.from(pubKey, 'hex'))).toString(
+        'hex',
+      );
     }
-    return (
-      payments
-        .p2wpkh({
-          address: ownerAddr,
-          network,
-        })
-        ?.hash?.toString('hex') || null
-    );
+    const pkhash = payments.p2wpkh({
+      address: ownerAddr,
+      network,
+    })?.hash;
+    return pkhash ? Buffer.from(pkhash).toString('hex') : null;
   } catch {
     return null;
   }

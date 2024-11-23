@@ -1,30 +1,20 @@
 import { Command, Option } from 'nest-commander';
-import {
-  MinterType,
-  getUtxos,
-  OpenMinterTokenInfo,
-  logerror,
-  logwarn,
-  toP2tr,
-  OpenMinterContract,
-  log,
-  checkTokenInfo,
-  btc,
-  scaleByDecimals,
-} from 'src/common';
-import { deploy, getMinterInitialTxState } from './ft';
+import { getUtxos, logerror, logwarn, checkTokenInfo, log } from 'src/common';
 import { ConfigService } from 'src/providers/configService';
-import { SpendService, WalletService } from 'src/providers';
+import { getProviders, SpendService, WalletService } from 'src/providers';
 import { Inject } from '@nestjs/common';
-import { addTokenMetadata } from 'src/token';
-import { openMint } from '../mint/ft.open-minter';
+import { addTokenInfo } from 'src/token';
 import { isAbsolute, join } from 'path';
 import { accessSync, constants, readFileSync } from 'fs';
 import {
   BoardcastCommand,
   BoardcastCommandOptions,
 } from '../boardcast.command';
-import { OpenMinterV2 } from '@cat-protocol/cat-smartcontracts';
+import {
+  OpenMinterCat20Meta,
+  OpenMinterV2,
+  deploy,
+} from '@cat-protocol/cat-sdk';
 
 interface DeployCommandOptions extends BoardcastCommandOptions {
   config?: string;
@@ -70,14 +60,26 @@ export class DeployCommand extends BoardcastCommand {
     options?: DeployCommandOptions,
   ): Promise<void> {
     try {
-      const address = this.walletService.getAddress();
+      const address = await this.walletService.getAddress();
 
-      let info: OpenMinterTokenInfo;
+      let cat20Meta: OpenMinterCat20Meta;
       if (options.metadata) {
         const content = readFileSync(options.metadata).toString();
-        info = JSON.parse(content);
+        cat20Meta = JSON.parse(content);
+        Object.assign(cat20Meta, {
+          minterMd5: OpenMinterV2.getArtifact().md5,
+        });
       } else {
-        info = options as unknown as OpenMinterTokenInfo;
+        const { name, symbol, decimals, premine, max, limit } = options;
+        cat20Meta = {
+          name,
+          symbol,
+          decimals,
+          premine,
+          max,
+          limit,
+          minterMd5: OpenMinterV2.getArtifact().md5,
+        };
       }
 
       if (isEmptyOption(options)) {
@@ -88,7 +90,7 @@ export class DeployCommand extends BoardcastCommand {
         return;
       }
 
-      const err = checkTokenInfo(info);
+      const err = checkTokenInfo(cat20Meta);
 
       if (err instanceof Error) {
         logerror('Invalid token metadata!', err);
@@ -108,91 +110,44 @@ export class DeployCommand extends BoardcastCommand {
         return;
       }
 
-      Object.assign(info, {
-        minterMd5: OpenMinterV2.getArtifact().md5,
-      });
-
-      const result: {
-        genesisTx: btc.Transaction;
-        revealTx: btc.Transaction;
-        tokenId: string;
-        tokenAddr: string;
-        minterAddr: string;
-      } = await deploy(
-        info as OpenMinterTokenInfo,
-        feeRate,
-        utxos,
-        MinterType.OPEN_MINTER_V2,
-        this.walletService,
+      const { chainProvider, utxoProvider } = getProviders(
         this.configService,
+        this.walletService,
+      );
+
+      const result = await deploy(
+        this.walletService,
+        utxoProvider,
+        chainProvider,
+        cat20Meta,
+        feeRate,
       );
 
       if (!result) {
-        console.log(`deploying Token ${info.name} failed!`);
+        console.log(`deploying Token ${cat20Meta.name} failed!`);
         return;
       }
 
-      this.spendService.updateTxsSpends([result.genesisTx, result.revealTx]);
-
-      console.log(`Token ${info.symbol} has been deployed.`);
+      console.log(`Token ${cat20Meta.symbol} has been deployed.`);
       console.log(`TokenId: ${result.tokenId}`);
-      console.log(`Genesis txid: ${result.genesisTx.id}`);
-      console.log(`Reveal txid: ${result.revealTx.id}`);
+      console.log(`Genesis txid: ${result.genesisTxid}`);
+      console.log(`Reveal txid: ${result.revealTxid}`);
 
-      const metadata = addTokenMetadata(
+      const tokenInfo = addTokenInfo(
         this.configService,
         result.tokenId,
-        info,
+        cat20Meta,
         result.tokenAddr,
         result.minterAddr,
-        result.genesisTx.id,
-        result.revealTx.id,
+        result.genesisTxid,
+        result.revealTxid,
       );
 
       // auto premine
-      if (info.premine > 0n) {
-        if (result.genesisTx.outputs.length === 3) {
-          const minter: OpenMinterContract = {
-            utxo: {
-              txId: result.revealTx.id,
-              script: result.revealTx.outputs[1].script.toHex(),
-              satoshis: result.revealTx.outputs[1].satoshis,
-              outputIndex: 1,
-            },
-            state: getMinterInitialTxState(toP2tr(metadata.tokenAddr), info),
-          };
-
-          const scalePremine = scaleByDecimals(info.premine, info.decimals);
-
-          const mintTxId = await openMint(
-            this.configService,
-            this.walletService,
-            this.spendService,
-            feeRate,
-            [
-              {
-                txId: result.genesisTx.id,
-                script: result.genesisTx.outputs[2].script.toHex(),
-                satoshis: result.genesisTx.outputs[2].satoshis,
-                outputIndex: 2,
-              },
-            ],
-            metadata,
-            minter,
-            scalePremine,
-          );
-
-          if (mintTxId instanceof Error) {
-            logerror(`minting premine tokens failed!`, mintTxId);
-            return;
-          }
-
-          log(
-            `Minting ${info.premine} ${info.symbol} as premine in txId: ${mintTxId}`,
-          );
-        } else {
-          logwarn(`Insufficient satoshis to premine`, new Error());
-        }
+      if (result.premineTx) {
+        log(
+          `Minting ${tokenInfo.metadata.premine} ${tokenInfo.metadata.symbol} as premine in txId: ${result.premineTx.extractTransaction().getId()}`,
+        );
       }
     } catch (error) {
       logerror('Deploy failed!', error);

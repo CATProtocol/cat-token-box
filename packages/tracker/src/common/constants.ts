@@ -1,4 +1,4 @@
-import { bitcoin, testnet, regtest, Network } from 'bitcoinjs-lib/src/networks';
+import { Network, networks } from 'bitcoinjs-lib';
 
 export class Constants {
   static readonly BLOCK_PROCESSING_INTERVAL = 10000;
@@ -59,12 +59,12 @@ const _network = process.env.NETWORK || 'mainnet';
 export let network: Network;
 switch (_network) {
   case 'mainnet':
-    network = bitcoin;
+    network = networks.bitcoin;
     break;
   case 'regtest':
-    network = regtest;
+    network = networks.regtest;
     break;
   default:
-    network = testnet;
+    network = networks.testnet;
     break;
 }

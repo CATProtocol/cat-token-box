@@ -3,7 +3,8 @@ import { UTXO } from 'scrypt-ts';
 import { ConfigService } from './configService';
 import { join } from 'path';
 import { existsSync, readFileSync, writeFileSync } from 'fs';
-import { logerror, btc } from 'src/common';
+import { logerror } from 'src/common';
+import { bitcoinjs, getTxId } from '@cat-protocol/cat-sdk';
 
 @Injectable()
 export class SpendService {
@@ -58,15 +59,16 @@ export class SpendService {
     return !this.spends.has(`${utxo.txId}:${utxo.outputIndex}`);
   }
 
-  updateSpends(tx: btc.Transaction) {
-    for (let i = 0; i < tx.inputs.length - 1; i++) {
-      const input = tx.inputs[i];
-      this.addSpend(`${input.prevTxId.toString('hex')}:${input.outputIndex}`);
+  updateSpends(tx: bitcoinjs.Transaction) {
+    for (let i = 0; i < tx.ins.length; i++) {
+      const input = tx.ins[i];
+      const prevTxId = getTxId(input);
+      this.addSpend(`${prevTxId}:${input.index}`);
     }
   }
 
-  updateTxsSpends(txs: btc.Transaction[]) {
-    for (let i = 0; i < txs.length - 1; i++) {
+  updateTxsSpends(txs: bitcoinjs.Transaction[]) {
+    for (let i = 0; i < txs.length; i++) {
       this.updateSpends(txs[i]);
     }
   }

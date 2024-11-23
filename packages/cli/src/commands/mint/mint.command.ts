@@ -1,33 +1,41 @@
 import { Command, Option } from 'nest-commander';
 import {
   getUtxos,
-  OpenMinterTokenInfo,
+  getTokenMinter,
   logerror,
   getTokenMinterCount,
   isOpenMinter,
-  sleep,
-  needRetry,
   unScaleByDecimals,
-  getTokens,
-  btc,
-  TokenMetadata,
   MinterType,
-  OpenMinterContract,
-  getTokenMinter,
+  getTokens,
 } from 'src/common';
-import { getRemainSupply, openMint } from './ft.open-minter';
-import { ConfigService, SpendService, WalletService } from 'src/providers';
+import {
+  ConfigService,
+  getProviders,
+  SpendService,
+  WalletService,
+} from 'src/providers';
 import { Inject } from '@nestjs/common';
 import { log } from 'console';
-import { findTokenMetadataById, scaleConfig } from 'src/token';
+import { findTokenInfoById, scaleMetadata } from 'src/token';
 import Decimal from 'decimal.js';
 import {
   BoardcastCommand,
   BoardcastCommandOptions,
 } from '../boardcast.command';
-import { broadcastMergeTokenTxs, mergeTokens } from '../send/merge';
-import { calcTotalAmount, sendToken } from '../send/ft';
-import { pickLargeFeeUtxo } from '../send/pick';
+import {
+  mint,
+  OpenMinterCat20Meta,
+  Cat20MinterUtxo,
+  getRemainSupply,
+  Cat20TokenInfo,
+  mergeCat20Utxo,
+  UtxoProvider,
+  ChainProvider,
+  toTokenAddress,
+  btc,
+} from '@cat-protocol/cat-sdk';
+
 interface MintCommandOptions extends BoardcastCommandOptions {
   id: string;
   merge: boolean;
@@ -52,45 +60,44 @@ export class MintCommand extends BoardcastCommand {
   }
 
   fixAmount = (
-    minter: OpenMinterContract,
-    token: TokenMetadata,
-    scaledInfo: OpenMinterTokenInfo,
+    minter: Cat20MinterUtxo,
+    scaledMetadata: OpenMinterCat20Meta,
     amount?: bigint,
   ) => {
-    const minterState = minter.state.data;
-    if (minterState.isPremined && amount > scaledInfo.limit) {
+    const minterState = minter.state;
+    if (minterState.isPremined && amount > scaledMetadata.limit) {
       console.error('The number of minted tokens exceeds the limit!');
       return null;
     }
 
-    const limit = scaledInfo.limit;
+    const limit = scaledMetadata.limit;
 
-    if (!minter.state.data.isPremined && scaledInfo.premine > 0n) {
+    if (!minter.state.isPremined && scaledMetadata.premine > 0n) {
       if (typeof amount === 'bigint') {
-        if (amount !== scaledInfo.premine) {
+        if (amount !== scaledMetadata.premine) {
           throw new Error(
-            `first mint amount should equal to premine ${scaledInfo.premine}`,
+            `first mint amount should equal to premine ${scaledMetadata.premine}`,
           );
         }
       } else {
-        amount = scaledInfo.premine;
+        amount = scaledMetadata.premine;
       }
     } else {
       amount = amount || limit;
-      if (token.info.minterMd5 === MinterType.OPEN_MINTER_V1) {
-        if (getRemainSupply(minter.state.data, token.info.minterMd5) < limit) {
+      if (scaledMetadata.minterMd5 === MinterType.OPEN_MINTER_V1) {
+        if (getRemainSupply(minter.state, scaledMetadata.minterMd5) < limit) {
           console.warn(
-            `small limit of ${unScaleByDecimals(limit, token.info.decimals)} in the minter UTXO!`,
+            `small limit of ${unScaleByDecimals(limit, scaledMetadata.decimals)} in the minter UTXO!`,
           );
-          log(`retry to mint token [${token.info.symbol}] ...`);
+          log(`retry to mint token [${scaledMetadata.symbol}] ...`);
           return null;
         }
         amount =
-          amount > getRemainSupply(minter.state.data, token.info.minterMd5)
-            ? getRemainSupply(minter.state.data, token.info.minterMd5)
+          amount > getRemainSupply(minter.state, scaledMetadata.minterMd5)
+            ? getRemainSupply(minter.state, scaledMetadata.minterMd5)
             : amount;
       } else if (
-        token.info.minterMd5 == MinterType.OPEN_MINTER_V2 &&
+        scaledMetadata.minterMd5 == MinterType.OPEN_MINTER_V2 &&
         amount != limit
       ) {
         console.warn(`can only mint at the exactly amount of ${limit} at once`);
@@ -105,29 +112,22 @@ export class MintCommand extends BoardcastCommand {
   ): Promise<void> {
     try {
       if (options.id) {
-        const address = this.walletService.getAddress();
-        const token = await findTokenMetadataById(
-          this.configService,
-          options.id,
-        );
+        const address = await this.walletService.getAddress();
+        const token = await findTokenInfoById(this.configService, options.id);
 
         if (!token) {
           console.error(`No token found for tokenId: ${options.id}`);
           return;
         }
 
-        if (!isOpenMinter(token.info.minterMd5)) {
-          throw new Error('unkown minter!');
-        }
-
-        const scaledInfo = scaleConfig(token.info as OpenMinterTokenInfo);
+        const scaledMetadata = scaleMetadata(token.metadata);
 
         let amount: bigint | undefined;
 
         if (passedParams[0]) {
           try {
             const d = new Decimal(passedParams[0]).mul(
-              Math.pow(10, scaledInfo.decimals),
+              Math.pow(10, scaledMetadata.decimals),
             );
             amount = BigInt(d.toString());
           } catch (error) {
@@ -136,11 +136,16 @@ export class MintCommand extends BoardcastCommand {
           }
         }
 
+        const { chainProvider, utxoProvider } = getProviders(
+          this.configService,
+          this.walletService,
+        );
+
         const MAX_RETRY_COUNT = 10;
 
         for (let index = 0; index < MAX_RETRY_COUNT; index++) {
           if (options.merge) {
-            await this.merge(token, address);
+            await this.merge(token, utxoProvider, chainProvider, address);
           }
           const feeRate = await this.getFeeRate();
           const feeUtxos = await this.getFeeUTXOs(address);
@@ -164,7 +169,8 @@ export class MintCommand extends BoardcastCommand {
           const offset = getRandomInt(count - 1);
           const minter = await getTokenMinter(
             this.configService,
-            this.walletService,
+            this.spendSerivce,
+            chainProvider,
             token,
             offset,
           );
@@ -174,49 +180,36 @@ export class MintCommand extends BoardcastCommand {
             continue;
           }
 
-          if (isOpenMinter(token.info.minterMd5)) {
-            amount = this.fixAmount(minter, token, scaledInfo, amount);
+          if (isOpenMinter(token.metadata.minterMd5)) {
+            amount = this.fixAmount(minter, scaledMetadata, amount);
 
             if (amount === null) {
               return;
             }
 
-            const res = await openMint(
-              this.configService,
+            const res = await mint(
               this.walletService,
-              this.spendService,
-              feeRate,
-              feeUtxos,
-              token,
+              utxoProvider,
+              chainProvider,
               minter,
-              amount,
+              token.tokenId,
+              token.metadata,
+              toTokenAddress(address),
+              address,
+              feeRate,
             );
 
-            if (res instanceof Error) {
-              if (needRetry(res)) {
-                // throw these error, so the caller can handle it.
-                log(`retry to mint token [${token.info.symbol}] ...`);
-                await sleep(6);
-                continue;
-              } else {
-                logerror(`mint token [${token.info.symbol}] failed`, res);
-                return;
-              }
-            } else {
-              const { txId } = res;
-
-              console.log(
-                `Minting ${unScaleByDecimals(amount, token.info.decimals)} ${token.info.symbol} tokens in txid: ${txId} ...`,
-              );
-
-              return;
-            }
+            const { mintTxId } = res;
+            console.log(
+              `Minting ${unScaleByDecimals(amount, token.metadata.decimals)} ${token.metadata.symbol} tokens in txid: ${mintTxId} ...`,
+            );
+            return;
           } else {
             throw new Error('unkown minter!');
           }
         }
 
-        console.error(`mint token [${token.info.symbol}] failed`);
+        console.error(`mint token [${token.metadata.symbol}] failed`);
       } else {
         throw new Error('expect a ID option');
       }
@@ -225,71 +218,39 @@ export class MintCommand extends BoardcastCommand {
     }
   }
 
-  async merge(metadata: TokenMetadata, address: btc.Addres) {
-    const res = await getTokens(
+  async merge(
+    tokenInfo: Cat20TokenInfo<OpenMinterCat20Meta>,
+    utxoProvider: UtxoProvider,
+    chainProvider: ChainProvider,
+    address: btc.Addres,
+  ) {
+    const cat20Utxos = await getTokens(
       this.configService,
       this.spendService,
-      metadata,
+      tokenInfo,
       address,
     );
 
-    if (res !== null) {
-      const { contracts: tokenContracts } = res;
+    if (cat20Utxos.length >= 4) {
+      console.info(
+        `Start merging your [${tokenInfo.metadata.symbol}] tokens ...`,
+      );
 
-      if (tokenContracts.length >= 4) {
-        const cachedTxs: Map<string, btc.Transaction> = new Map();
-        console.info(`Start merging your [${metadata.info.symbol}] tokens ...`);
+      const feeRate = await this.getFeeRate();
+      const result = await mergeCat20Utxo(
+        this.walletService,
+        utxoProvider,
+        chainProvider,
+        tokenInfo.minterAddr,
+        cat20Utxos,
+        feeRate,
+      );
 
-        const feeUtxos = await this.getFeeUTXOs(address);
-        const feeRate = await this.getFeeRate();
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        const [newTokens, newFeeUtxos, e] = await mergeTokens(
-          this.configService,
-          this.walletService,
-          this.spendService,
-          feeUtxos,
-          feeRate,
-          metadata,
-          tokenContracts,
-          address,
-          cachedTxs,
-        );
+      cat20Utxos.forEach((cat20Utxo) => {
+        this.spendSerivce.addSpend(cat20Utxo.utxo);
+      });
 
-        if (e instanceof Error) {
-          logerror('merge token failed!', e);
-          return;
-        }
-
-        const feeUtxo = pickLargeFeeUtxo(newFeeUtxos);
-
-        if (newTokens.length > 1) {
-          const amountTobeMerge = calcTotalAmount(newTokens);
-          const result = await sendToken(
-            this.configService,
-            this.walletService,
-            feeUtxo,
-            feeRate,
-            metadata,
-            newTokens,
-            address,
-            address,
-            amountTobeMerge,
-            cachedTxs,
-          );
-          if (result) {
-            await broadcastMergeTokenTxs(
-              this.configService,
-              this.walletService,
-              this.spendService,
-              [result.commitTx, result.revealTx],
-            );
-
-            console.info(
-              `Merging your [${metadata.info.symbol}] tokens in txid: ${result.revealTx.id} ...`,
-            );
-          }
-        }
-      }
+      return result.cat20Utxos;
     }
   }
 

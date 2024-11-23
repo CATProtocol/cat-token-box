@@ -2,6 +2,7 @@
 
 set -e
 
+npx patch-package
 
 cd ./node_modules/scryptlib
 

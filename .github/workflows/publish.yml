@@ -20,11 +20,13 @@ jobs:
           registry-url: "https://registry.npmjs.org"
       - name: Yarn Install
         run: yarn
+      - name: Install turbo
+        run: yarn global add turbo
       - name: Run test
         run: turbo test
       - name: Verify Versions
-        run: node -e "if ('refs/tags/v' + require('./package.json').version !== '${{ github.ref }}') { console.log('::error' + 'Version Mismatch. refs/tags/v' + require('./package.json').version, '${{ github.ref }}'); throw Error('Version Mismatch')} "
+        run: cd packages/sdk && node -e "if ('refs/tags/v' + require('./package.json').version !== '${{ github.ref }}') { console.log('::error' + 'Version Mismatch. refs/tags/v' + require('./package.json').version, '${{ github.ref }}'); throw Error('Version Mismatch')} "
       - name: Publish
-        run: npm publish
+        run: cd packages/sdk && npm publish
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN_CAT }}

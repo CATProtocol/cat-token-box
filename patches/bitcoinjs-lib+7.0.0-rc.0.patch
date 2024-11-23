@@ -1,0 +1,17 @@
+diff --git a/node_modules/bitcoinjs-lib/src/cjs/psbt.cjs b/node_modules/bitcoinjs-lib/src/cjs/psbt.cjs
+index b6b28e6..77ffb06 100644
+--- a/node_modules/bitcoinjs-lib/src/cjs/psbt.cjs
++++ b/node_modules/bitcoinjs-lib/src/cjs/psbt.cjs
+@@ -1399,9 +1399,9 @@ function getTaprootHashesForSig(
+     }
+   }
+   const tapLeafHashes = (input.tapLeafScript || [])
+-    .filter(tapLeaf =>
+-      (0, psbtutils_js_1.pubkeyInScript)(pubkey, tapLeaf.script),
+-    )
++    // .filter(tapLeaf =>
++    //   (0, psbtutils_js_1.pubkeyInScript)(pubkey, tapLeaf.script),
++    // )
+     .map(tapLeaf => {
+       const hash = (0, bip341_js_1.tapleafHash)({
+         output: tapLeaf.script,

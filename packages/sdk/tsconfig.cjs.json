@@ -1,0 +1,15 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "outDir": "./dist/cjs",
+    "declarationDir": "./dist/types",
+    "rootDir": "./src",
+    // Todo remove below
+    "noImplicitAny": false,
+    "resolveJsonModule": true,
+    "strict": false /* Enable all strict type-checking options. */,
+  },
+  "include": [
+    "./src/**/*"
+  ]
+}

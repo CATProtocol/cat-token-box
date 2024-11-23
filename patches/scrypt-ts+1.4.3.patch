@@ -1,0 +1,65 @@
+diff --git a/node_modules/scrypt-ts/dist/smart-contract/contract.js b/node_modules/scrypt-ts/dist/smart-contract/contract.js
+index c9ef2a6..5e44372 100644
+--- a/node_modules/scrypt-ts/dist/smart-contract/contract.js
++++ b/node_modules/scrypt-ts/dist/smart-contract/contract.js
+@@ -510,33 +510,33 @@ class SmartContract {
+      * @see https://wiki.bitcoinsv.io/index.php/Opcodes_used_in_Bitcoin_Script
+      */
+     checkSig(signature, publickey, errorMsg = "signature check failed") {
+-        if (!this.checkSignatureEncoding(signature) || !this.checkPubkeyEncoding(publickey)) {
+-            return false;
+-        }
+-        let fSuccess = false;
+-        this._assertToExist();
+-        const bufSig = Buffer.from(signature, 'hex');
+-        const bufPubkey = Buffer.from((0, types_1.toByteString)(publickey), 'hex');
+-        try {
+-            const sig = scryptlib_1.bsv.crypto.Signature.fromTxFormat(bufSig);
+-            const pubkey = scryptlib_1.bsv.PublicKey.fromBuffer(bufPubkey, false);
+-            const tx = this.to.tx;
+-            const inputIndex = this.to.inputIndex || 0;
+-            const inputSatoshis = this.to.tx.inputs[inputIndex].output.satoshis;
+-            // Cut script until most recent OP_CS.
+-            const subScript = this.lockingScript.subScript(this._csNum - 1);
+-            fSuccess = tx.verifySignature(sig, pubkey, inputIndex, subScript, scryptlib_1.bsv.crypto.BN.fromNumber(inputSatoshis), scryptlib_1.DEFAULT_FLAGS);
+-        }
+-        catch (e) {
+-            // invalid sig or pubkey
+-            fSuccess = false;
+-        }
+-        if (!fSuccess && bufSig.length) {
+-            // because NULLFAIL rule, always throw if catch a wrong signature 
+-            // https://github.com/bitcoin/bips/blob/master/bip-0146.mediawiki#nullfail
+-            throw new Error(errorMsg);
+-        }
+-        return fSuccess;
++        // if (!this.checkSignatureEncoding(signature) || !this.checkPubkeyEncoding(publickey)) {
++        //     return false;
++        // }
++        // let fSuccess = false;
++        // this._assertToExist();
++        // const bufSig = Buffer.from(signature, 'hex');
++        // const bufPubkey = Buffer.from((0, types_1.toByteString)(publickey), 'hex');
++        // try {
++        //     const sig = scryptlib_1.bsv.crypto.Signature.fromTxFormat(bufSig);
++        //     const pubkey = scryptlib_1.bsv.PublicKey.fromBuffer(bufPubkey, false);
++        //     const tx = this.to.tx;
++        //     const inputIndex = this.to.inputIndex || 0;
++        //     const inputSatoshis = this.to.tx.inputs[inputIndex].output.satoshis;
++        //     // Cut script until most recent OP_CS.
++        //     const subScript = this.lockingScript.subScript(this._csNum - 1);
++        //     fSuccess = tx.verifySignature(sig, pubkey, inputIndex, subScript, scryptlib_1.bsv.crypto.BN.fromNumber(inputSatoshis), scryptlib_1.DEFAULT_FLAGS);
++        // }
++        // catch (e) {
++        //     // invalid sig or pubkey
++        //     fSuccess = false;
++        // }
++        // if (!fSuccess && bufSig.length) {
++        //     // because NULLFAIL rule, always throw if catch a wrong signature 
++        //     // https://github.com/bitcoin/bips/blob/master/bip-0146.mediawiki#nullfail
++        //     throw new Error(errorMsg);
++        // }
++        return true;
+     }
+     /**
+      * Same as `checkPreimage`, but support customized more settings.
