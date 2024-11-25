@@ -240,9 +240,9 @@ export class CollectionController {
     }
   }
 
-  @Get(':collectionIdOrAddr/addresses/:ownerAddrOrPkh/utxoCount')
+  @Get(':collectionIdOrAddr/addresses/:ownerAddrOrPkh/nftAmount')
   @ApiTags('collection')
-  @ApiOperation({ summary: 'Get collection utxo count by owner address' })
+  @ApiOperation({ summary: 'Get collection nft amount by owner address' })
   @ApiParam({
     name: 'collectionIdOrAddr',
     required: true,
@@ -277,10 +277,11 @@ export class CollectionController {
     }
   }
 
-  @Get(':collectionIdOrAddr/mintCount')
+  @Get(':collectionIdOrAddr/mintAmount')
   @ApiTags('collection')
   @ApiOperation({
-    summary: 'Get collection mint count by collection id or collection address',
+    summary:
+      'Get collection total mint amount by collection id or collection address',
   })
   @ApiParam({
     name: 'collectionIdOrAddr',
@@ -288,15 +289,91 @@ export class CollectionController {
     type: String,
     description: 'collection id or collection address',
   })
-  async getCollectionMintCount(
+  async getCollectionMintAmount(
     @Param('collectionIdOrAddr') collectionIdOrAddr: string,
   ) {
     try {
-      const mintCount = await this.tokenService.getTokenMintCount(
+      const mintCount = await this.tokenService.getTokenMintAmount(
         collectionIdOrAddr,
         TokenTypeScope.NonFungible,
       );
       return okResponse(mintCount);
+    } catch (e) {
+      return errorResponse(e);
+    }
+  }
+
+  @Get(':collectionIdOrAddr/circulation')
+  @ApiTags('collection')
+  @ApiOperation({
+    summary:
+      'Get collection current circulation by collection id or collection address',
+  })
+  @ApiParam({
+    name: 'collectionIdOrAddr',
+    required: true,
+    type: String,
+    description: 'collection id or collection address',
+  })
+  async getCollectionCirculation(
+    @Param('collectionIdOrAddr') collectionIdOrAddr: string,
+  ) {
+    try {
+      const circulation = await this.tokenService.getTokenCirculation(
+        collectionIdOrAddr,
+        TokenTypeScope.NonFungible,
+      );
+      return okResponse(circulation);
+    } catch (e) {
+      return errorResponse(e);
+    }
+  }
+
+  @Get(':collectionIdOrAddr/holders')
+  @ApiTags('collection')
+  @ApiOperation({
+    summary: 'Get collection holders by collection id or collection address',
+  })
+  @ApiParam({
+    name: 'collectionIdOrAddr',
+    required: true,
+    type: String,
+    description: 'collection id or collection address',
+  })
+  @ApiQuery({
+    name: 'offset',
+    required: false,
+    type: Number,
+    description: 'paging offset',
+  })
+  @ApiQuery({
+    name: 'limit',
+    required: false,
+    type: Number,
+    description: 'paging limit',
+  })
+  async getCollectionHolders(
+    @Param('collectionIdOrAddr') collectionIdOrAddr: string,
+    @Query('offset') offset?: number,
+    @Query('limit') limit?: number,
+  ) {
+    try {
+      const r = await this.tokenService.getTokenHolders(
+        collectionIdOrAddr,
+        TokenTypeScope.NonFungible,
+        offset,
+        limit,
+      );
+      const holders = r.holders.map((holder) => {
+        return {
+          ownerPubKeyHash: holder.ownerPubKeyHash,
+          nftAmount: holder.nftAmount!,
+        };
+      });
+      return okResponse({
+        holders,
+        trackerBlockHeight: r.trackerBlockHeight,
+      });
     } catch (e) {
       return errorResponse(e);
     }

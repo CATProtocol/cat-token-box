@@ -318,11 +318,11 @@ export class TokenService {
     return renderedUtxos;
   }
 
-  async getTokenMintCount(
+  async getTokenMintAmount(
     tokenIdOrTokenAddr: string,
     scope: TokenTypeScope.Fungible | TokenTypeScope.NonFungible,
   ): Promise<{
-    count: string;
+    amount: string;
     trackerBlockHeight: number;
   }> {
     const lastProcessedHeight =
@@ -331,7 +331,7 @@ export class TokenService {
       tokenIdOrTokenAddr,
       scope,
     );
-    let count = '0';
+    let amount = '0';
     if (tokenInfo && tokenInfo.tokenPubKey && lastProcessedHeight) {
       const where = {
         tokenPubKey: tokenInfo.tokenPubKey,
@@ -343,14 +343,102 @@ export class TokenService {
           .select('SUM(token_amount)', 'count')
           .where(where)
           .getRawOne();
-        count = r?.count || '0';
+        amount = r?.count || '0';
       } else {
         const r = await this.tokenMintRepository.count({ where });
-        count = (r || 0).toString();
+        amount = (r || 0).toString();
       }
     }
     return {
-      count,
+      amount,
+      trackerBlockHeight: lastProcessedHeight,
+    };
+  }
+
+  async getTokenCirculation(
+    tokenIdOrTokenAddr: string,
+    scope: TokenTypeScope.Fungible | TokenTypeScope.NonFungible,
+  ): Promise<{
+    amount: string;
+    trackerBlockHeight: number;
+  }> {
+    const lastProcessedHeight =
+      await this.commonService.getLastProcessedBlockHeight();
+    const tokenInfo = await this.getTokenInfoByTokenIdOrTokenAddress(
+      tokenIdOrTokenAddr,
+      scope,
+    );
+    let amount = '0';
+    if (tokenInfo && tokenInfo.tokenPubKey && lastProcessedHeight) {
+      const where = {
+        xOnlyPubKey: tokenInfo.tokenPubKey,
+        spendTxid: IsNull(),
+      };
+      if (scope === TokenTypeScope.Fungible) {
+        const r = await this.txOutRepository
+          .createQueryBuilder()
+          .select('SUM(token_amount)', 'count')
+          .where(where)
+          .getRawOne();
+        amount = r?.count || '0';
+      } else {
+        const r = await this.txOutRepository.count({ where });
+        amount = (r || 0).toString();
+      }
+    }
+    return {
+      amount,
+      trackerBlockHeight: lastProcessedHeight,
+    };
+  }
+
+  async getTokenHolders(
+    tokenIdOrTokenAddr: string,
+    scope: TokenTypeScope.Fungible | TokenTypeScope.NonFungible,
+    offset: number | null = null,
+    limit: number | null = null,
+  ): Promise<{
+    holders: {
+      ownerPubKeyHash: string;
+      tokenAmount?: string;
+      nftAmount?: number;
+    }[];
+    trackerBlockHeight: number;
+  }> {
+    const lastProcessedHeight =
+      await this.commonService.getLastProcessedBlockHeight();
+    const tokenInfo = await this.getTokenInfoByTokenIdOrTokenAddress(
+      tokenIdOrTokenAddr,
+      scope,
+    );
+    let holders = [];
+    if (tokenInfo && tokenInfo.tokenPubKey && lastProcessedHeight) {
+      const query = this.txOutRepository
+        .createQueryBuilder()
+        .select('owner_pkh', 'ownerPubKeyHash')
+        .where('spend_txid IS NULL')
+        .andWhere('xonly_pubkey = :xonlyPubkey', {
+          xonlyPubkey: tokenInfo.tokenPubKey,
+        })
+        .groupBy('owner_pkh')
+        .limit(
+          Math.min(
+            limit || Constants.QUERY_PAGING_DEFAULT_LIMIT,
+            Constants.QUERY_PAGING_MAX_LIMIT,
+          ),
+        )
+        .offset(offset || Constants.QUERY_PAGING_DEFAULT_OFFSET);
+      if (scope === TokenTypeScope.Fungible) {
+        query
+          .addSelect('SUM(token_amount)', 'tokenAmount')
+          .orderBy('SUM(token_amount)', 'DESC');
+      } else {
+        query.addSelect('COUNT(1)', 'nftAmount').orderBy('COUNT(1)', 'DESC');
+      }
+      holders = await query.getRawMany();
+    }
+    return {
+      holders,
       trackerBlockHeight: lastProcessedHeight,
     };
   }

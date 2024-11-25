@@ -108,10 +108,10 @@ export class TokenController {
     }
   }
 
-  @Get(':tokenIdOrTokenAddr/mintCount')
+  @Get(':tokenIdOrTokenAddr/mintAmount')
   @ApiTags('token')
   @ApiOperation({
-    summary: 'Get token mint count by token id or token address',
+    summary: 'Get token total mint amount by token id or token address',
   })
   @ApiParam({
     name: 'tokenIdOrTokenAddr',
@@ -119,15 +119,90 @@ export class TokenController {
     type: String,
     description: 'token id or token address',
   })
-  async getTokenMintCount(
+  async getTokenMintAmount(
     @Param('tokenIdOrTokenAddr') tokenIdOrTokenAddr: string,
   ) {
     try {
-      const mintCount = await this.tokenService.getTokenMintCount(
+      const mintCount = await this.tokenService.getTokenMintAmount(
         tokenIdOrTokenAddr,
         TokenTypeScope.Fungible,
       );
       return okResponse(mintCount);
+    } catch (e) {
+      return errorResponse(e);
+    }
+  }
+
+  @Get(':tokenIdOrTokenAddr/circulation')
+  @ApiTags('token')
+  @ApiOperation({
+    summary: 'Get token current circulation by token id or token address',
+  })
+  @ApiParam({
+    name: 'tokenIdOrTokenAddr',
+    required: true,
+    type: String,
+    description: 'token id or token address',
+  })
+  async getTokenCirculation(
+    @Param('tokenIdOrTokenAddr') tokenIdOrTokenAddr: string,
+  ) {
+    try {
+      const circulation = await this.tokenService.getTokenCirculation(
+        tokenIdOrTokenAddr,
+        TokenTypeScope.Fungible,
+      );
+      return okResponse(circulation);
+    } catch (e) {
+      return errorResponse(e);
+    }
+  }
+
+  @Get(':tokenIdOrTokenAddr/holders')
+  @ApiTags('token')
+  @ApiOperation({
+    summary: 'Get token holders by token id or token address',
+  })
+  @ApiParam({
+    name: 'tokenIdOrTokenAddr',
+    required: true,
+    type: String,
+    description: 'token id or token address',
+  })
+  @ApiQuery({
+    name: 'offset',
+    required: false,
+    type: Number,
+    description: 'paging offset',
+  })
+  @ApiQuery({
+    name: 'limit',
+    required: false,
+    type: Number,
+    description: 'paging limit',
+  })
+  async getTokenHolders(
+    @Param('tokenIdOrTokenAddr') tokenIdOrTokenAddr: string,
+    @Query('offset') offset?: number,
+    @Query('limit') limit?: number,
+  ) {
+    try {
+      const r = await this.tokenService.getTokenHolders(
+        tokenIdOrTokenAddr,
+        TokenTypeScope.Fungible,
+        offset,
+        limit,
+      );
+      const holders = r.holders.map((holder) => {
+        return {
+          ownerPubKeyHash: holder.ownerPubKeyHash,
+          balance: holder.tokenAmount!,
+        };
+      });
+      return okResponse({
+        holders,
+        trackerBlockHeight: r.trackerBlockHeight,
+      });
     } catch (e) {
       return errorResponse(e);
     }
