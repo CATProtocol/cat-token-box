@@ -1,8 +1,7 @@
 tsconfig.json
+!dist/
 src/
 tests/
-artifacts/
-!dist/artifacts/
 static/
 .turbo/
 .vscode
