@@ -28,7 +28,7 @@ export interface AirdropProcess {
 
 
 /**
- * Airdrop CAT20 tokens to multiple receivers’ addresses in multiple transactions.
+ * Distribute CAT20 tokens to multiple recipient addresses across several transactions.
  * @param signer a signer, such as {@link DefaultSigner} or {@link UnisatSigner} 
  * @param utxoProvider a  {@link UtxoProvider}
  * @param chainProvider a  {@link ChainProvider}

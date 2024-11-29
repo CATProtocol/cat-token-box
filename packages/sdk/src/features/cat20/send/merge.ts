@@ -7,7 +7,7 @@ import { calcTotalAmount } from './pick';
 
 
 /**
- * Merge all CAT20 tokens into a single UTXO in multiple transactions.
+ * Consolidate all CAT20 tokens into a single UTXO through multiple transactions.
  * @param signer a signer, such as {@link DefaultSigner} or {@link UnisatSigner} 
  * @param utxoProvider a  {@link UtxoProvider}
  * @param chainProvider a  {@link ChainProvider}

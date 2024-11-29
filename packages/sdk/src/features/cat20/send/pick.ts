@@ -1,5 +1,12 @@
 import { UTXO } from 'scrypt-ts';
 import { Cat20Utxo } from '../../../lib/provider';
+
+/**
+ * Select CAT20 UTXOs from all available CAT20 UTXOs such that the cumulative number of tokens equals the specified amount, with priority given to those containing a number of tokens greater than or equal to the amount.
+ * @param tokens Cat20 UTXOs
+ * @param amount the minimum required number of tokens.
+ * @returns 
+ */
 export function pick(
   tokens: Array<Cat20Utxo>,
   amount: bigint,
@@ -38,6 +45,12 @@ export function pick(
 }
 
 
+/**
+ * Select CAT20 UTXOs in sequence from all CAT20 UTXOs such that the cumulative number of tokens equals the specified amount.
+ * @param tokens Cat20 UTXOs
+ * @param amount the minimum required number of tokens.
+ * @returns 
+ */
 export function pickFromStart(
   tokens: Array<Cat20Utxo>,
   amount: bigint,
@@ -57,58 +70,15 @@ export function pickFromStart(
   return [];
 }
 
+/**
+ * Pick the UTXO containing the highest satoshis
+ * @param utxos 
+ * @returns 
+ */
+export function pickLargeFeeUtxo(utxos: Array<UTXO>): UTXO {
+  let max = utxos[0];
 
-export function pick3to1(
-  tokens: Array<Cat20Utxo>,
-  amount: bigint,
-): Array<Cat20Utxo> {
-  // reverse to get ASC order.
-  tokens.reverse();
-
-  const acc: Array<Cat20Utxo> = [];
-  let accAmount: bigint = 0n;
-
-  for (let i = 0; i < tokens.length; i++) {
-    const token = tokens[i];
-
-    if (token.state.amount === amount / 3n) {
-      accAmount += token.state.amount;
-      acc.push(token);
-      if (accAmount >= amount) {
-        return acc;
-      }
-    }
-  }
-
-  return [];
-}
-
-export function pickMore(
-  tokens: Array<Cat20Utxo>,
-  amount: bigint,
-): Array<Cat20Utxo> {
-  // reverse to get amount in ASC order.
-  tokens.reverse();
-  const acc: Array<Cat20Utxo> = [];
-  let accAmount: bigint = 0n;
-
-  for (let i = 0; i < tokens.length; i++) {
-    const token = tokens[i];
-
-    accAmount += token.state.amount;
-    acc.push(token);
-    if (accAmount >= amount) {
-      return acc;
-    }
-  }
-
-  return [];
-}
-
-export function pickLargeFeeUtxo(feeUtxos: Array<UTXO>): UTXO {
-  let max = feeUtxos[0];
-
-  for (const utxo of feeUtxos) {
+  for (const utxo of utxos) {
     if (utxo.satoshis > max.satoshis) {
       max = utxo;
     }
@@ -117,6 +87,11 @@ export function pickLargeFeeUtxo(feeUtxos: Array<UTXO>): UTXO {
 }
 
 
+/**
+ * Calculate the total number of tokens contained in all CAT20 UTXOs.
+ * @param tokens Cat20Utxo
+ * @returns 
+ */
 export function calcTotalAmount(tokens: Cat20Utxo[]) {
   return tokens.reduce((acc, t) => acc + t.state.amount, 0n);
 }

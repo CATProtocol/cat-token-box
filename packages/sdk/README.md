@@ -8,7 +8,7 @@ The SDK offers three distinct layers of abstraction that developers can utilize 
 
 ### Features
 
-On a high level, this SDK offers some fundamental functionalities to interact with CAT20 and CAT721 protocol tokens, including Deploy, Mint, Transfer, and Burn. These APIs can be found in the `src/features` folder.
+On a high level, this SDK offers some fundamental functionalities to interact with CAT20 and CAT721 protocol tokens, including Deploy, Mint, Transfer, and Burn. These APIs can be found in the [src/features](https://github.com/CATProtocol/cat-token-box/tree/main/packages/sdk/src/features) folder.
 
 ### Covenants
 
@@ -16,7 +16,7 @@ On a middle level, this SDK introduces an abstraction called the `Covenant`, whi
 
 ### Contracts
 
-On a fundamental level, this SDK offers all the essential smart contracts written in the `sCrypt` DSL, which can be compiled into Bitcoin scripts and utilized in covenants. If you’re interested in learning how to create your own on-chain smart contracts, you should thoroughly examine these contracts in the `src/contracts` folder.
+On a fundamental level, this SDK offers all the essential smart contracts written in the `sCrypt` DSL, which can be compiled into Bitcoin scripts and utilized in covenants. If you’re interested in learning how to create your own on-chain smart contracts, you should thoroughly examine these contracts in the [src/contracts](https://github.com/CATProtocol/cat-token-box/tree/main/packages/sdk/src/contracts) folder.
 
 ## Installation
 
@@ -54,6 +54,6 @@ This is because the maximum byte limit for an element on the Bitcoin Virtual Mac
 
 ## CAT Protocol
 
-![](static/cat-token-protocol.svg)
+![](https://raw.githubusercontent.com/CATProtocol/cat-token-box/refs/heads/main/packages/sdk/static/cat-token-protocol.svg)
 
 

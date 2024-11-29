@@ -3,6 +3,15 @@ import { Signer } from '../../../lib/signer';
 import { Psbt } from 'bitcoinjs-lib';
 import { dummySig, sleep, } from '../../../lib/utils';
 
+/**
+ * Split all UTXOs of the current signer into count equal UTXOs.
+ * @param signer a signer, such as {@link DefaultSigner} or {@link UnisatSigner} 
+ * @param utxoProvider  a  {@link UtxoProvider}
+ * @param chainProvider a  {@link ChainProvider}
+ * @param feeRate the fee rate for constructing transactions
+ * @param count split into count equal UTXOs.
+ * @returns 
+ */
 export async function feeSplitTx(
     signer: Signer,
     utxoProvider: UtxoProvider,
@@ -101,7 +110,12 @@ export async function feeSplitTx(
 }
 
 
-
+/**
+ * Waiting for transaction confirmation.
+ * @param chainProvider a  {@link ChainProvider}
+ * @param txId transaction ID
+ * @param log if print log
+ */
 export async function waitTxConfirm(
     chainProvider: ChainProvider,
     txId: string,

@@ -12,7 +12,7 @@ import { pickLargeFeeUtxo } from "./pick";
 
 
 /**
- * Send CAT20 tokens in a single transaction
+ * Send CAT20 tokens to the list of recipients.
  * @param signer a signer, such as {@link DefaultSigner} or {@link UnisatSigner} 
  * @param utxoProvider a  {@link UtxoProvider}
  * @param chainProvider a  {@link ChainProvider}
