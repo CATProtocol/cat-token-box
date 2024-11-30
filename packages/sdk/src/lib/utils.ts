@@ -3,7 +3,7 @@ import { TxOutpoint } from "../contracts/utils/txUtil";
 import { bitcoinjs, btc } from "./btc";
 import { SupportedNetwork, TAPROOT_ONLY_SCRIPT_SPENT_KEY } from "./constants";
 import * as btcSigner from '@scure/btc-signer';
-import { payments, Psbt, TxInput } from "bitcoinjs-lib";
+import { Network, networks, payments, Psbt, TxInput } from "bitcoinjs-lib";
 import { randomBytes } from 'crypto';
 import { ByteString, hash160, Ripemd160, UTXO } from "scrypt-ts";
 import {encodingLength, encode} from 'varuint-bitcoin';
@@ -45,21 +45,24 @@ export function scriptToP2tr(script: Buffer): {
   }
 }
 
-export function toBitcoinNetwork(network: SupportedNetwork): btc.Networks.Network {
-  if (network === 'btc-signet') {
-    return btc.Networks.testnet;
-  } else if (network === 'fractal-mainnet' || network === 'fractal-testnet') {
-    return btc.Networks.mainnet;
-  } else {
-    throw new Error(`invalid network ${network}`);
-  }
+export function toBitcoinNetwork(network: SupportedNetwork): Network {
+    if (network === 'btc-signet') {
+        return networks.testnet
+    } else if (network === 'fractal-mainnet' || network === 'fractal-testnet') {
+        return networks.bitcoin
+    } else {
+        throw new Error(`invalid network ${network}`)
+    }
 }
+
 export function p2trLockingScriptToAddr(
-  p2tr: string | btc.Script,
+  p2tr: string,
   network: SupportedNetwork = 'fractal-mainnet',
 ) {
-  const script = typeof p2tr === 'string' ? btc.Script.fromHex(p2tr) : p2tr;
-  return btc.Address.fromScript(script, toBitcoinNetwork(network)).toString();
+    return payments.p2tr({
+        output: hexToUint8Array(p2tr),
+        network: toBitcoinNetwork(network),
+    }).address
 }
 
 export function addrToP2trLockingScript(address: string | btc.Address): string {
@@ -70,7 +73,7 @@ export function addrToP2trLockingScript(address: string | btc.Address): string {
     throw new Error(`address ${address} is not taproot`);
   }
 
-  return btc.Script.fromAddress(address).toHex();
+  return uint8ArrayToHex(payments.p2tr({ address: address.toString() }).output)
 }
 
 export function xPubkeyToP2trLockingScript(xPubkey: string): btc.Script {
@@ -78,7 +81,7 @@ export function xPubkeyToP2trLockingScript(xPubkey: string): btc.Script {
 }
 
 export function xPubkeyToAddr(xPubkey: string, network: SupportedNetwork = 'fractal-mainnet') {
-  return p2trLockingScriptToAddr(xPubkeyToP2trLockingScript(xPubkey), network);
+  return p2trLockingScriptToAddr(xPubkeyToP2trLockingScript(xPubkey).toHex(), network);
 }
 
 export function toPsbt(tx: btc.Transaction): bitcoinjs.Psbt {

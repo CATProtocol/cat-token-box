@@ -66,7 +66,7 @@ export abstract class Covenant<StateT = undefined> {
       this.tpubkey = tpubkey
       this.lockingScript = new btc.Script(`OP_1 32 0x${tpubkey}`)
       this.tapLeafContracts = tapLeafContracts
-      this.address = p2trLockingScriptToAddr(this.lockingScript, options.network)
+      this.address = p2trLockingScriptToAddr(this.lockingScript.toHex(), options.network)
       this.asmVersion = Covenant.calculateAsmVersion(
         subContracts.map(c => (c.contract.constructor as typeof SmartContract).getArtifact().md5)
       )
