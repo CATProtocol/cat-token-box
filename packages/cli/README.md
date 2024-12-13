@@ -134,6 +134,39 @@ Sending 1.11 CAT tokens to bc1pmc274s6lalf6afrll2e23m2qmk50dwaj6srjupe5vyu4dcy66
 in txid: 94e3254c1237ba7cd42eaeeae713c646ee5dd1cd6c4dd6ef07241d5336cd2aa7
 ```
 
+9. Airdrop
+
+```bash
+yarn cli airdrop -i [tokenId] -f airdrop.csv
+```
+You should see an output similar to:
+
+```
+start airdrop ...
+onProcess: 1/499, txid: c6bee1c9484937ba8701711247ed7fa5e5a187b83c3ff4f2795ba3df7d16e172
+onProcess: 2/499, txid: c6bee1c9484937ba8701711247ed7fa5e5a187b83c3ff4f2795ba3df7d16e172
+onProcess: 3/499, txid: c6bee1c9484937ba8701711247ed7fa5e5a187b83c3ff4f2795ba3df7d16e172
+onProcess: 4/499, txid: 5f6502b17bfaa080a6002cabc6123e1900c67dc347bcaaffe49bc3205b6feed2
+onProcess: 5/499, txid: 5f6502b17bfaa080a6002cabc6123e1900c67dc347bcaaffe49bc3205b6feed2
+onProcess: 6/499, txid: 5f6502b17bfaa080a6002cabc6123e1900c67dc347bcaaffe49bc3205b6feed2
+onProcess: 7/499, txid: abf0ecf83d2fb124b98ce27cdb16ee0ac77f2f73a9721185c7be430299b0451f
+```
+
+csv file format should be:
+
+```
+1,bc1p6evveuszz3uw727y4f7aue2xy78vxklyqv0xz67cknnzf7vp5fzs5vyy59
+11,bc1ppq6ge7fu3jx0rjmtghcex39zxxd36dv4nxk9rmjh0hpeevzhh2wsdfe8p3
+2,bc1pl423pfc5egrdr6qt8ldy8ljj5xs2mw0g06874m5c8jcgttff3j3qp8dyed
+11,bc1pga2qqcnsnuh6yn0mcchfyd3mvskgmrtkk5rzcm6vthq7yxh3cwrs270msv
+111,bc1pamudrantpxhzmfg23reechlg4utmzv9m2pur6jnz5kgawxxkwphswf8zxj
+122,bc1pfegaugmkr8k8v6hucq65z39psvgy3l0qrnuwv8z7tl6z9mhw8ydq8rzu5w
+133,bc1prqz43hf7p2jqj58qnwxc5qlc2ydx0yfq4mp5ew5r37fnvsvqzn0s6gd5s9
+```
+
+
+Each line contains an amount and an address field.
+
 
 -----------------
 

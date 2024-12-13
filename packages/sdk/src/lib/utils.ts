@@ -138,7 +138,7 @@ export function getDummyUtxo(address?: string, satoshis?: number): UTXO {
     txId: randomBytes(32).toString('hex'),
     outputIndex: 0,
     script: btc.Script.fromAddress(addr).toHex(),
-    satoshis: satoshis || 1_000_000_000,
+    satoshis: satoshis || 9007199254740991,
   }
 }
 
