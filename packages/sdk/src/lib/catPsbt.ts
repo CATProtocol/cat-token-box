@@ -63,6 +63,10 @@ export type UnlockArgsBuilder = (
 
 interface PsbtInputExtended extends PsbtInput, TransactionInput {
   finalizer?: Finalizer
+  sigRequests?: {
+    inputIndex: InputIndex
+    options: Omit<ToSignInput, 'index'>
+}[]
 }
 
 type TxStatesInfo = PreTxStatesInfo
@@ -139,6 +143,11 @@ export class CatPsbt extends Psbt {
           return finalizer(self, idx, inp)
         }
       )
+    }
+    if (inputData.sigRequests) {
+        for (const sigRequest of inputData.sigRequests) {
+            this._addSigRequest(sigRequest.inputIndex, sigRequest.options)
+        }
     }
     return this
   }

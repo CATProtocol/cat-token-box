@@ -38,8 +38,12 @@ export class DefaultSigner implements Signer {
         });
         const taprootHex = Buffer.from(output!).toString('hex');
         const xpubkey = await this.getXOnlyPublicKey();
+        const address = await this.getAddress();
         if (options) {
             options.toSignInputs.forEach((inputOpt) => {
+                if (inputOpt.address && inputOpt.address !== address) {
+                    return
+                }
                 if (isTaprootInput(psbt.data.inputs[inputOpt.index])) {
                     const witnessUtxoScript = Buffer.from(
                         psbt.data.inputs[inputOpt.index].witnessUtxo?.script,
@@ -79,7 +83,7 @@ export class DefaultSigner implements Signer {
                     const sighashTypes = inputOpt.sighashTypes || [
                         bitcoinjs.Transaction.SIGHASH_ALL,
                     ];
-                    psbt.signInput(inputOpt.index, this.getKeyPair(), sighashTypes);
+                    psbt.signInput(inputOpt.index, this.keyPair, sighashTypes);
                 }
             });
         } else {
@@ -103,7 +107,7 @@ export class DefaultSigner implements Signer {
                         );
                     }
                 } else {
-                    psbt.signInput(inputIdx, this.getKeyPair(), [
+                    psbt.signInput(inputIdx, this.keyPair, [
                         bitcoinjs.Transaction.SIGHASH_ALL,
                     ]);
                 }
