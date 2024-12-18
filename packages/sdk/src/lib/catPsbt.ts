@@ -384,6 +384,7 @@ export class CatPsbt extends Psbt {
 
     let found = false
 
+    const input = tx.inputs[tx.inputs.length - 1]
     // eslint-disable-next-line no-constant-condition
     while (true) {
       sighashList = inputTapLeafHashes.map((input) => {
@@ -402,15 +403,14 @@ export class CatPsbt extends Psbt {
         found = true
         break
       }
-
-      tx.nLockTime += 1
+      input.sequenceNumber -= 1
     }
 
     if (!found) {
       throw new Error('No valid preimage found!')
     }
 
-    this.unsignedTx.locktime = tx.nLockTime
+    this.unsignedTx.ins[tx.inputs.length - 1].sequence = input.sequenceNumber
 
     return inputTapLeafHashes.map((_, index) => {
       const eBuff = eBuffList[index]
