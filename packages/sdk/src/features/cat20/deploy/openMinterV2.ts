@@ -77,6 +77,12 @@ export async function deploy(
   sigRequests = [
     {
       psbtHex: commitPsbt.toHex(),
+      options: {
+        autoFinalized: false,
+        toSignInputs: utxos.map((value, index) => {
+          return {index: index, address: changeAddress}
+        }),
+      }
     },
     {
       psbtHex: revealPsbt.toHex(),
