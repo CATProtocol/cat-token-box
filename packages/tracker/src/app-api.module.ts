@@ -12,6 +12,7 @@ import { AddressModule } from './routes/address/address.module';
 import { CollectionModule } from './routes/collection/collection.module';
 // serivces
 import { CommonModule } from './services/common/common.module';
+import { TxModule } from './routes/tx/tx.module';
 
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 require('dotenv').config();
@@ -28,6 +29,7 @@ require('dotenv').config();
     MinterModule,
     AddressModule,
     CollectionModule,
+    TxModule,
 
     CommonModule,
   ],

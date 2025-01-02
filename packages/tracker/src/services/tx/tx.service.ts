@@ -6,13 +6,7 @@ import {
   MoreThanOrEqual,
   Repository,
 } from 'typeorm';
-import {
-  payments,
-  Transaction,
-  TxInput,
-  TxOutput,
-  crypto,
-} from 'bitcoinjs-lib';
+import { payments, Transaction, TxInput, crypto } from 'bitcoinjs-lib';
 import { TxOutEntity } from '../../entities/txOut.entity';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Constants } from '../../common/constants';
@@ -31,17 +25,10 @@ import { LRUCache } from 'lru-cache';
 import { CommonService } from '../common/common.service';
 import { TxOutArchiveEntity } from 'src/entities/txOutArchive.entity';
 import { Cron } from '@nestjs/schedule';
-import { Cat20GuardCovenant, CAT721GuardCovenant } from '@cat-protocol/cat-sdk';
 
 @Injectable()
 export class TxService {
   private readonly logger = new Logger(TxService.name);
-
-  private readonly FT_GUARD_PUBKEY: string;
-  private readonly FT_TRANSFER_GUARD_SCRIPT_HASH: string;
-
-  private readonly NFT_GUARD_PUBKEY: string;
-  private readonly NFT_TRANSFER_GUARD_SCRIPT_HASH: string;
 
   private static readonly taprootPaymentCache = new LRUCache<
     string,
@@ -67,24 +54,6 @@ export class TxService {
     private txEntityRepository: Repository<TxEntity>,
   ) {
     this.dataSource = this.txEntityRepository.manager.connection;
-
-    const tokenGuardContractInfo = new Cat20GuardCovenant();
-    this.FT_GUARD_PUBKEY = tokenGuardContractInfo.tpubkey;
-    this.FT_TRANSFER_GUARD_SCRIPT_HASH =
-      tokenGuardContractInfo.getTapLeafContract('transfer').contractScriptHash;
-    this.logger.log(`token guard xOnlyPubKey = ${this.FT_GUARD_PUBKEY}`);
-    this.logger.log(
-      `token guard transferScriptHash = ${this.FT_TRANSFER_GUARD_SCRIPT_HASH}`,
-    );
-
-    const nftGuardContractInfo = new CAT721GuardCovenant();
-    this.NFT_GUARD_PUBKEY = nftGuardContractInfo.tpubkey;
-    this.NFT_TRANSFER_GUARD_SCRIPT_HASH =
-      nftGuardContractInfo.getTapLeafContract('transfer').contractScriptHash;
-    this.logger.log(`nft guard xOnlyPubKey = ${this.NFT_GUARD_PUBKEY}`);
-    this.logger.log(
-      `nft guard transferScriptHash = ${this.NFT_TRANSFER_GUARD_SCRIPT_HASH}`,
-    );
   }
 
   /**
@@ -102,9 +71,11 @@ export class TxService {
     if (!this.isCatTx(tx)) {
       return;
     }
-    const payOuts = tx.outs.map((output) => this.parseTaprootOutput(output));
+    const payOuts = tx.outs.map((output) =>
+      this.commonService.parseTaprootOutput(output),
+    );
     // filter tx with Guard outputs
-    if (this.searchGuardOutputs(payOuts)) {
+    if (this.commonService.searchGuardOutputs(payOuts)) {
       this.logger.log(`[OK] guard builder ${tx.getId()}`);
       return;
     }
@@ -119,7 +90,7 @@ export class TxService {
       this.updateSpent(queryRunner.manager, promises, tx);
       let stateHashes: Buffer[];
       // search Guard inputs
-      const guardInputs = this.searchGuardInputs(payIns);
+      const guardInputs = this.commonService.searchGuardInputs(payIns);
       if (guardInputs.length === 0) {
         // no Guard in inputs
         // search minter in inputs
@@ -233,35 +204,6 @@ export class TxService {
       stateHashes: [rootHash, ...stateHashes]
         .map((stateHash) => stateHash.toString('hex'))
         .join(';'),
-    });
-  }
-
-  /**
-   * Search Guard in tx outputs
-   * @returns true if found Guard tx outputs, false otherwise
-   */
-  private searchGuardOutputs(payOuts: TaprootPayment[]): boolean {
-    for (const payOut of payOuts) {
-      if (
-        this.FT_GUARD_PUBKEY === payOut?.pubkey?.toString('hex') ||
-        this.NFT_GUARD_PUBKEY === payOut?.pubkey?.toString('hex')
-      ) {
-        return true;
-      }
-    }
-    return false;
-  }
-
-  /**
-   * Search Guard in tx inputs
-   * @returns array of Guard inputs
-   */
-  private searchGuardInputs(payIns: TaprootPayment[]): TaprootPayment[] {
-    return payIns.filter((payIn) => {
-      return (
-        this.FT_GUARD_PUBKEY === payIn?.pubkey?.toString('hex') ||
-        this.NFT_GUARD_PUBKEY === payIn?.pubkey?.toString('hex')
-      );
     });
   }
 
@@ -714,14 +656,9 @@ export class TxService {
     );
     this.validateStateHashes(stateHashes);
 
-    const scriptHash = Buffer.from(
-      crypto.hash160(guardInput?.redeemScript || Buffer.alloc(0)),
-    ).toString('hex');
-    if (
-      scriptHash === this.FT_TRANSFER_GUARD_SCRIPT_HASH ||
-      scriptHash === this.NFT_TRANSFER_GUARD_SCRIPT_HASH
-    ) {
-      const tokenOutputs = this.parseTokenOutputs(guardInput);
+    if (this.commonService.isTransferGuard(guardInput)) {
+      const tokenOutputs =
+        this.commonService.parseTransferTxTokenOutputs(guardInput);
       // save tx outputs
       promises.push(
         manager.save(
@@ -737,48 +674,6 @@ export class TxService {
       );
     }
     return stateHashes;
-  }
-
-  /**
-   * Parse token outputs from guard input of a transfer tx
-   */
-  private parseTokenOutputs(guardInput: TaprootPayment) {
-    const ownerPubKeyHashes = guardInput.witness.slice(
-      Constants.TRANSFER_GUARD_ADDR_OFFSET,
-      Constants.TRANSFER_GUARD_ADDR_OFFSET +
-        Constants.CONTRACT_OUTPUT_MAX_COUNT,
-    );
-    const tokenAmounts = guardInput.witness.slice(
-      Constants.TRANSFER_GUARD_AMOUNT_OFFSET,
-      Constants.TRANSFER_GUARD_AMOUNT_OFFSET +
-        Constants.CONTRACT_OUTPUT_MAX_COUNT,
-    );
-    const masks = guardInput.witness.slice(
-      Constants.TRANSFER_GUARD_MASK_OFFSET,
-      Constants.TRANSFER_GUARD_MASK_OFFSET +
-        Constants.CONTRACT_OUTPUT_MAX_COUNT,
-    );
-    const tokenOutputs = new Map<
-      number,
-      {
-        ownerPubKeyHash: string;
-        tokenAmount: bigint;
-      }
-    >();
-    for (let i = 0; i < Constants.CONTRACT_OUTPUT_MAX_COUNT; i++) {
-      if (masks[i].toString('hex') !== '') {
-        const ownerPubKeyHash = ownerPubKeyHashes[i].toString('hex');
-        const tokenAmount =
-          tokenAmounts[i].length === 0
-            ? 0n
-            : BigInt(tokenAmounts[i].readIntLE(0, tokenAmounts[i].length));
-        tokenOutputs.set(i + 1, {
-          ownerPubKeyHash,
-          tokenAmount,
-        });
-      }
-    }
-    return tokenOutputs;
   }
 
   /**
@@ -829,27 +724,6 @@ export class TxService {
       return Object.assign({}, cached, {
         witness: input.witness.map((w) => Buffer.from(w)),
       });
-    } catch {
-      return null;
-    }
-  }
-
-  /**
-   * Parse taproot output from tx output, returns null if failed
-   */
-  private parseTaprootOutput(output: TxOutput): TaprootPayment | null {
-    try {
-      if (
-        output.script.length !== Constants.TAPROOT_LOCKING_SCRIPT_LENGTH ||
-        !Buffer.from(output.script).toString('hex').startsWith('5120')
-      ) {
-        return null;
-      }
-      return {
-        pubkey: Buffer.from(output.script.subarray(2, 34)),
-        redeemScript: null,
-        witness: null,
-      };
     } catch {
       return null;
     }
