@@ -1,6 +1,6 @@
 import { hash160, int2ByteString, SmartContract } from 'scrypt-ts'
 import { Tap } from '@cmdcode/tapscript' // Requires node >= 19
-import { bitcoinjs, btc } from './btc'
+import { bitcoinjs, btc, LEAF_VERSION_TAPSCRIPT } from './btc'
 import { TAPROOT_ONLY_SCRIPT_SPENT_KEY } from './constants'
 import { unlockingScriptToWitness } from './txTools'
 import { ABICoder, Arguments } from 'scryptlib/dist/abi'
@@ -20,6 +20,7 @@ export class TapLeafSmartContract {
       const tapScript = Tap.encodeScript(contractScript.toBuffer())
       const [tpubkey, cblock] = Tap.getPubKey(TAPROOT_ONLY_SCRIPT_SPENT_KEY, {
           target: tapScript,
+          version: LEAF_VERSION_TAPSCRIPT
       })
       this.contract = contract
       this.contractScriptHash = hash160(

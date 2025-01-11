@@ -1,6 +1,6 @@
 import { Tap } from "@cmdcode/tapscript";
 import { TxOutpoint } from "../contracts/utils/txUtil";
-import { bitcoinjs, btc } from "./btc";
+import { LEAF_VERSION_TAPSCRIPT, bitcoinjs, btc } from "./btc";
 import { SupportedNetwork, TAPROOT_ONLY_SCRIPT_SPENT_KEY } from "./constants";
 import * as btcSigner from '@scure/btc-signer';
 import { Network, networks, payments, Psbt, TxInput } from "bitcoinjs-lib";
@@ -37,6 +37,7 @@ export function scriptToP2tr(script: Buffer): {
   const tapScript = Tap.encodeScript(script)
   const [tpubkey, cblock] = Tap.getPubKey(TAPROOT_ONLY_SCRIPT_SPENT_KEY, {
     target: tapScript,
+    version: LEAF_VERSION_TAPSCRIPT
   })
   return {
     p2trLockingScript: xPubkeyToP2trLockingScript(tpubkey).toHex(),

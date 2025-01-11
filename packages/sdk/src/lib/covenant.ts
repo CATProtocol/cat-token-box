@@ -1,6 +1,6 @@
 import { ByteString, FixedArray, hash160, SmartContract, UTXO } from 'scrypt-ts'
 import { Tap } from '@cmdcode/tapscript' // Requires node >= 19
-import { btc } from './btc'
+import { btc, LEAF_VERSION_TAPSCRIPT } from './btc'
 import { SupportedNetwork, TAPROOT_ONLY_SCRIPT_SPENT_KEY } from './constants'
 import { TapLeafSmartContract } from './tapLeafSmartContract'
 import { Optional, p2trLockingScriptToAddr } from './utils'
@@ -51,6 +51,7 @@ export abstract class Covenant<StateT = undefined> {
       }
       const [tpubkey] = Tap.getPubKey(TAPROOT_ONLY_SCRIPT_SPENT_KEY, {
           tree: tapTree,
+          version: LEAF_VERSION_TAPSCRIPT
       })
 
       for (const cK of subContracts.map(c => c.alias || 'default')) {
@@ -58,6 +59,7 @@ export abstract class Covenant<StateT = undefined> {
           const [, cblock] = Tap.getPubKey(TAPROOT_ONLY_SCRIPT_SPENT_KEY, {
               target: taprootContract.tapScript,
               tree: tapTree,
+              version: LEAF_VERSION_TAPSCRIPT
           })
           taprootContract.tpubkey = tpubkey
           taprootContract.cblock = cblock
