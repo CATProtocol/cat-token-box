@@ -558,7 +558,7 @@ export class CatPsbt extends Psbt {
       return {
         script: Buffer.from(changeOutput.script).toString('hex'),
         satoshis: Number(changeOutput.value),
-        txId: this.extractTransaction(false).getId(),
+        txId: this.unsignedTx.getId(),
         outputIndex: this.changeOutputIndex
       }
     } else {
