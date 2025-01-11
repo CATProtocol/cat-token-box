@@ -240,15 +240,12 @@ export class CAT20Covenant extends Covenant<CAT20State> {
         const prevTxId = getTxId(input);
         const prevTxHex = await getRawTx(prevTxId)
         const prevTx = Transaction.fromHex(prevTxHex)
-        const prevTokenTxo = prevTx.outs.find(out => {
-          const outScript = Buffer.from(out.script).toString('hex')
-          return outScript === cat20Utxo.utxo.script
-            || outScript === token.minterScriptHex
-        })
-        if (prevTokenTxo) {
-          tokenPrevTxHex = prevTxHex
-          tokenTxInputIndex = idx
-          break
+        const out = prevTx.outs[input.index]
+        const outScript = Buffer.from(out.script).toString('hex')
+        if (outScript === cat20Utxo.utxo.script || outScript === token.minterScriptHex) {
+            tokenPrevTxHex = prevTxHex;
+            tokenTxInputIndex = idx;
+            break;
         }
       }
 
