@@ -21,7 +21,10 @@ export class Constants {
 
   static readonly CONTRACT_INPUT_WITNESS_STATE_HASHES_OFFSET = 0;
 
+  // tx max 6 outputs but with 1 OP_RETURN output
   static readonly CONTRACT_OUTPUT_MAX_COUNT = 5;
+  // tx max 6 inputs
+  static readonly CONTRACT_INPUT_MAX_COUNT = 6;
 
   static readonly COMMIT_INPUT_WITNESS_MIN_SIZE =
     this.CONTRACT_INPUT_WITNESS_MIN_SIZE;
@@ -51,7 +54,8 @@ export class Constants {
 
   static readonly TRANSFER_GUARD_INPUT_TOKEN_SCRIPT_OFFSET = 26;
   static readonly TRANSFER_GUARD_INPUT_AMOUNT_OFFSET = 27;
-  static readonly TOKEN_INPUT_MAX_COUNT = 6;
+  static readonly TRANSFER_GUARD_INPUT_WITNESS_MIN_SIZE =
+    this.TRANSFER_GUARD_INPUT_AMOUNT_OFFSET + this.CONTRACT_INPUT_MAX_COUNT;
 
   static readonly QUERY_PAGING_DEFAULT_OFFSET = 0;
   static readonly QUERY_PAGING_DEFAULT_LIMIT = 100;

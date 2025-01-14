@@ -693,6 +693,14 @@ export class TxService {
     guardInput: TaprootPayment,
     tx: Transaction,
   ) {
+    if (
+      guardInput.witness.length <
+      Constants.TRANSFER_GUARD_INPUT_WITNESS_MIN_SIZE
+    ) {
+      throw new TransferTxError(
+        'invalid transfer tx, invalid transfer guard witness field',
+      );
+    }
     const timeBefore = Date.now();
     const tokenScript =
       guardInput.witness[
@@ -701,7 +709,7 @@ export class TxService {
     const tokenAmounts = guardInput.witness.slice(
       Constants.TRANSFER_GUARD_INPUT_AMOUNT_OFFSET,
       Constants.TRANSFER_GUARD_INPUT_AMOUNT_OFFSET +
-        Constants.TOKEN_INPUT_MAX_COUNT,
+        Constants.CONTRACT_INPUT_MAX_COUNT,
     );
     await Promise.all(
       tokenAmounts.map(async (amount, i) => {
