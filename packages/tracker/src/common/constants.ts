@@ -49,6 +49,10 @@ export class Constants {
   static readonly TRANSFER_GUARD_MASK_OFFSET =
     this.TRANSFER_GUARD_AMOUNT_OFFSET + this.CONTRACT_OUTPUT_MAX_COUNT;
 
+  static readonly TRANSFER_GUARD_INPUT_TOKEN_SCRIPT_OFFSET = 26;
+  static readonly TRANSFER_GUARD_INPUT_AMOUNT_OFFSET = 27;
+  static readonly TOKEN_INPUT_MAX_COUNT = 6;
+
   static readonly QUERY_PAGING_DEFAULT_OFFSET = 0;
   static readonly QUERY_PAGING_DEFAULT_LIMIT = 100;
   static readonly QUERY_PAGING_MAX_LIMIT = 500;

@@ -12,7 +12,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Constants } from '../../common/constants';
 import { TokenInfoEntity } from '../../entities/tokenInfo.entity';
 import { NftInfoEntity } from '../../entities/nftInfo.entity';
-import { CatTxError } from '../../common/exceptions';
+import { CatTxError, TransferTxError } from '../../common/exceptions';
 import { parseTokenInfoEnvelope } from '../../common/utils';
 import {
   BlockHeader,
@@ -52,6 +52,8 @@ export class TxService {
     private tokenInfoEntityRepository: Repository<TokenInfoEntity>,
     @InjectRepository(TxEntity)
     private txEntityRepository: Repository<TxEntity>,
+    @InjectRepository(TxOutEntity)
+    private txOutEntityRepository: Repository<TxOutEntity>,
   ) {
     this.dataSource = this.txEntityRepository.manager.connection;
   }
@@ -141,12 +143,19 @@ export class TxService {
       await queryRunner.commitTransaction();
       return Math.ceil(Date.now() - startTs);
     } catch (e) {
-      if (e instanceof CatTxError) {
-        this.logger.log(`skip tx ${tx.getId()}, ${e.message}`);
+      if (e instanceof TransferTxError) {
+        // do not rollback for TransferTxError
+        this.logger.error(
+          `[502750] invalid transfer tx ${tx.getId()}, ${e.message}`,
+        );
       } else {
-        this.logger.error(`process tx ${tx.getId()} error, ${e.message}`);
+        if (e instanceof CatTxError) {
+          this.logger.log(`skip tx ${tx.getId()}, ${e.message}`);
+        } else {
+          this.logger.error(`process tx ${tx.getId()} error, ${e.message}`);
+        }
+        await queryRunner.rollbackTransaction();
       }
-      await queryRunner.rollbackTransaction();
     } finally {
       await queryRunner.release();
     }
@@ -659,6 +668,10 @@ export class TxService {
     if (this.commonService.isTransferGuard(guardInput)) {
       const tokenOutputs =
         this.commonService.parseTransferTxTokenOutputs(guardInput);
+
+      // verify the token amount in guard witness equals to it in token input
+      await this.verifyGuardTokenAmount(guardInput, tx);
+
       // save tx outputs
       promises.push(
         manager.save(
@@ -674,6 +687,65 @@ export class TxService {
       );
     }
     return stateHashes;
+  }
+
+  public async verifyGuardTokenAmount(
+    guardInput: TaprootPayment,
+    tx: Transaction,
+  ) {
+    const timeBefore = Date.now();
+    const tokenScript =
+      guardInput.witness[
+        Constants.TRANSFER_GUARD_INPUT_TOKEN_SCRIPT_OFFSET
+      ].toString('hex');
+    const tokenAmounts = guardInput.witness.slice(
+      Constants.TRANSFER_GUARD_INPUT_AMOUNT_OFFSET,
+      Constants.TRANSFER_GUARD_INPUT_AMOUNT_OFFSET +
+        Constants.TOKEN_INPUT_MAX_COUNT,
+    );
+    await Promise.all(
+      tokenAmounts.map(async (amount, i) => {
+        const tokenAmount =
+          amount.length === 0 ? 0n : BigInt(amount.readIntLE(0, amount.length));
+        if (tokenAmount === 0n) {
+          return Promise.resolve();
+        }
+        const input = tx.ins[i];
+        const prevTxid = Buffer.from(input.hash).reverse().toString('hex');
+        const prevOutputIndex = input.index;
+        const prevout = `${prevTxid}:${prevOutputIndex}`;
+        return this.txOutEntityRepository
+          .findOne({
+            where: {
+              txid: prevTxid,
+              outputIndex: prevOutputIndex,
+            },
+          })
+          .then((prevOutput) => {
+            if (!prevOutput) {
+              this.logger.error(`prevout ${prevout} not found`);
+              throw new TransferTxError(
+                'invalid transfer tx, token input prevout is missing',
+              );
+            }
+            if (prevOutput.lockingScript !== tokenScript) {
+              this.logger.error(`prevout ${prevout} token script mismatches`);
+              throw new TransferTxError(
+                'invalid transfer tx, token script in guard not equal to it in token input',
+              );
+            }
+            if (BigInt(prevOutput.tokenAmount) !== tokenAmount) {
+              this.logger.error(
+                `prevout ${prevout} token amount mismatches, ${prevOutput.tokenAmount} !== ${tokenAmount}`,
+              );
+              throw new TransferTxError(
+                'invalid transfer tx, token amount in guard not equal to it in token input',
+              );
+            }
+          });
+      }),
+    );
+    this.logger.debug(`verifyGuardTokenAmount: ${Date.now() - timeBefore} ms`);
   }
 
   /**

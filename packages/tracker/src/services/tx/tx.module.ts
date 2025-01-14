@@ -5,10 +5,11 @@ import { TxEntity } from '../../entities/tx.entity';
 import { TokenInfoEntity } from '../../entities/tokenInfo.entity';
 import { CommonModule } from '../common/common.module';
 import { ScheduleModule } from '@nestjs/schedule';
+import { TxOutEntity } from '../../entities/txOut.entity';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([TxEntity, TokenInfoEntity]),
+    TypeOrmModule.forFeature([TxEntity, TokenInfoEntity, TxOutEntity]),
     CommonModule,
     ScheduleModule.forRoot(),
   ],
