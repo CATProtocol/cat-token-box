@@ -83,7 +83,12 @@ export class DefaultSigner implements Signer {
                     const sighashTypes = inputOpt.sighashTypes || [
                         bitcoinjs.Transaction.SIGHASH_ALL,
                     ];
-                    psbt.signInput(inputOpt.index, this.keyPair, sighashTypes);
+                    if (inputOpt.useTweakedSigner) {
+                        psbt.signInput(inputOpt.index, this.getKeyPair(), sighashTypes);
+
+                    } else {
+                        psbt.signInput(inputOpt.index, this.keyPair, sighashTypes);
+                    }
                 }
             });
         } else {

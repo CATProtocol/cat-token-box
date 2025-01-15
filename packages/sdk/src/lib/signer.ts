@@ -10,6 +10,7 @@ export interface ToSignInput {
   tapLeafHashToSign?: string
   sighashTypes?: number[]
   disableTweakSigner?: boolean
+  useTweakedSigner?: boolean
 }
 
 type HexString = string;
