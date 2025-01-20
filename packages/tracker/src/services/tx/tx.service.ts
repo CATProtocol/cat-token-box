@@ -669,8 +669,10 @@ export class TxService {
       const tokenOutputs =
         this.commonService.parseTransferTxTokenOutputs(guardInput);
 
-      // verify the token amount in guard witness equals to it in token input
-      await this.verifyGuardTokenAmount(guardInput, tx);
+      if (blockHeader.height >= 365400) {
+        // verify the token amount in guard witness equals to it in token input
+        await this.verifyGuardTokenAmount(guardInput, tx);
+      }
 
       // save tx outputs
       promises.push(
