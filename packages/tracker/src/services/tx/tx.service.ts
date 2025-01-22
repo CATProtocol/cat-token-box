@@ -91,38 +91,10 @@ export class TxService {
       const promises: Promise<any>[] = [];
       this.updateSpent(queryRunner.manager, promises, tx);
       let stateHashes: Buffer[];
+
       // search Guard inputs
       const guardInputs = this.commonService.searchGuardInputs(payIns);
-      if (guardInputs.length === 0) {
-        // no Guard in inputs
-        // search minter in inputs
-        const { minterInput, tokenInfo } = await this.searchMinterInput(payIns);
-        if (!tokenInfo) {
-          // no minter in inputs, this is a token reveal tx
-          stateHashes = await this.processRevealTx(
-            queryRunner.manager,
-            promises,
-            tx,
-            payIns,
-            payOuts,
-            blockHeader,
-          );
-          this.logger.log(`[OK] reveal tx ${tx.getId()}`);
-        } else {
-          // found minter in inputs, this is a token mint tx
-          stateHashes = await this.processMintTx(
-            queryRunner.manager,
-            promises,
-            tx,
-            payIns,
-            payOuts,
-            minterInput,
-            tokenInfo,
-            blockHeader,
-          );
-          this.logger.log(`[OK] mint tx ${tx.getId()}`);
-        }
-      } else {
+      if (guardInputs.length > 0) {
         // found Guard in inputs, this is a token transfer tx
         for (const guardInput of guardInputs) {
           stateHashes = await this.processTransferTx(
@@ -136,6 +108,35 @@ export class TxService {
         }
         this.logger.log(`[OK] transfer tx ${tx.getId()}`);
       }
+
+      // search minter in inputs
+      const { minterInput, tokenInfo } = await this.searchMinterInput(payIns);
+      if (tokenInfo) {
+        // found minter in inputs, this is a token mint tx
+        stateHashes = await this.processMintTx(
+          queryRunner.manager,
+          promises,
+          tx,
+          payIns,
+          payOuts,
+          minterInput,
+          tokenInfo,
+          blockHeader,
+        );
+        this.logger.log(`[OK] mint tx ${tx.getId()}`);
+      } else if (guardInputs.length === 0) {
+        // no minter and Guard in inputs, this is a token reveal tx
+        stateHashes = await this.processRevealTx(
+          queryRunner.manager,
+          promises,
+          tx,
+          payIns,
+          payOuts,
+          blockHeader,
+        );
+        this.logger.log(`[OK] reveal tx ${tx.getId()}`);
+      }
+
       await Promise.all([
         ...promises,
         this.saveTx(queryRunner.manager, tx, txIndex, blockHeader, stateHashes),
