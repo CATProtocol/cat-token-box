@@ -1,38 +1,33 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { UTXO } from "scrypt-ts";
-import { UtxoProvider } from "../lib/provider";
+import { UTXO } from 'scrypt-ts';
+import { UtxoProvider } from '../lib/provider';
 import fetch from 'cross-fetch';
-import { RPCChainProvider } from "./rpcChainProvider";
-import Decimal from "decimal.js";
-
+import { RPCChainProvider } from './rpcChainProvider';
+import Decimal from 'decimal.js';
 
 function getUtxoKey(utxo: UTXO) {
     return `${utxo.txId}:${utxo.outputIndex}`;
 }
 
 export class RPCUtxoProvider extends RPCChainProvider implements UtxoProvider {
-
     private spentUTXOs = new Set<string>();
 
     private newUTXOs = new Map<string, UTXO>();
 
-    constructor(public readonly url: string,
+    constructor(
+        public readonly url: string,
         public readonly walletName: string,
         public readonly username: string,
-        public readonly password: string) {
+        public readonly password: string,
+    ) {
         super(url, walletName, username, password);
     }
 
-
-    async getUtxos(
-        address: string,
-        options?: { total?: number; maxCnt?: number },
-    ): Promise<UTXO[]> {
-
-        const Authorization = `Basic ${Buffer.from(
-            `${this.getRpcUser()}:${this.getRpcPassword()}`,
-        ).toString('base64')}`;
+    async getUtxos(address: string, options?: { total?: number; maxCnt?: number }): Promise<UTXO[]> {
+        const Authorization = `Basic ${Buffer.from(`${this.getRpcUser()}:${this.getRpcPassword()}`).toString(
+            'base64',
+        )}`;
 
         const utxos = await fetch(this.getRpcUrl(this.walletName), {
             method: 'POST',
@@ -63,9 +58,7 @@ export class RPCUtxoProvider extends RPCChainProvider implements UtxoProvider {
                         txId: item.txid,
                         outputIndex: item.vout,
                         script: item.scriptPubKey,
-                        satoshis: new Decimal(item.amount)
-                            .mul(new Decimal(100000000))
-                            .toNumber(),
+                        satoshis: new Decimal(item.amount).mul(new Decimal(100000000)).toNumber(),
                     } as UTXO;
                 });
 
@@ -78,10 +71,9 @@ export class RPCUtxoProvider extends RPCChainProvider implements UtxoProvider {
 
         return utxos
             .concat(Array.from(this.newUTXOs.values()))
-            .filter((utxo) => this.isUnSpent(utxo.txId, utxo.outputIndex)).sort((a, b) => a.satoshi - b.satoshi);
-
+            .filter((utxo) => this.isUnSpent(utxo.txId, utxo.outputIndex))
+            .sort((a, b) => a.satoshi - b.satoshi);
     }
-
 
     private isUnSpent(txId: string, vout: number) {
         const key = `${txId}:${vout}`;

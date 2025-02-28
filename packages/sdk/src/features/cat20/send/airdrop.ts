@@ -1,35 +1,31 @@
-
 import { Cat20Utxo, ChainProvider, UtxoProvider } from '../../../lib/provider';
 import { Signer } from '../../../lib/signer';
 import { pickFromStart } from './pick';
 import { mergeCat20Utxo } from './merge';
 import { singleSend } from './singleSend';
 import { toTokenAddress, validteSupportedAddress } from '../../../lib/utils';
-import { int32 } from '../../../contracts/utils/txUtil';
 import { waitTxConfirm } from './split';
+import { int32 } from '../../../contracts/types';
 
 export interface AirdropProcess {
-    onStart: () => void,
-    onProcess: (receiver: {
-        address: string;
-        amount: int32;
-        txId: string;
-    }) => void,
+    onStart: () => void;
+    onProcess: (receiver: { address: string; amount: int32; txId: string }) => void;
 
-    onSuccess: (success: Array<{
-        address: string,
-        amount: int32,
-        txId: string,
-    }>) => void,
+    onSuccess: (
+        success: Array<{
+            address: string;
+            amount: int32;
+            txId: string;
+        }>,
+    ) => void;
 
-    onWaitTxConfirm: (txId: string) => void,
-    onError: (err: Error) => void,
+    onWaitTxConfirm: (txId: string) => void;
+    onError: (err: Error) => void;
 }
-
 
 /**
  * Distribute CAT20 tokens to multiple recipient addresses across several transactions.
- * @param signer a signer, such as {@link DefaultSigner} or {@link UnisatSigner} 
+ * @param signer a signer, such as {@link DefaultSigner} or {@link UnisatSigner}
  * @param utxoProvider a  {@link UtxoProvider}
  * @param chainProvider a  {@link ChainProvider}
  * @param minterAddr the minter address of the CAT20 token
@@ -46,23 +42,22 @@ export async function airdrop(
     minterAddr: string,
     inputTokenUtxos: Cat20Utxo[],
     receivers: Array<{
-        address: string,
-        amount: int32,
+        address: string;
+        amount: int32;
     }>,
     feeRate: number,
     cb?: AirdropProcess,
 ): Promise<{
-    cat20Utxos: Cat20Utxo[],
+    cat20Utxos: Cat20Utxo[];
     success: Array<{
-        address: string,
-        amount: int32,
-        txId: string,
-    }>,
+        address: string;
+        amount: int32;
+        txId: string;
+    }>;
 }> {
-
-    receivers.forEach(receiver => {
+    receivers.forEach((receiver) => {
         validteSupportedAddress(receiver.address);
-    })
+    });
 
     const totalInputAmount = inputTokenUtxos.reduce((acc, inputTokenUtxo) => acc + inputTokenUtxo.state.amount, 0n);
     const totalOutputAmount = receivers.reduce((acc, receiver) => acc + receiver.amount, 0n);
@@ -78,21 +73,19 @@ export async function airdrop(
     const count = Math.ceil(receivers.length / nOneSplit);
 
     const success: Array<{
-        address: string,
-        amount: int32,
-        txId: string,
+        address: string;
+        amount: int32;
+        txId: string;
     }> = [];
 
-    const airdropCat20Utxos: Cat20Utxo[] = []
+    const airdropCat20Utxos: Cat20Utxo[] = [];
     let sendCount = 0;
 
     try {
-
         if (cb) {
             cb.onStart();
         }
         for (let i = 0; i < count; i++) {
-
             const pendings = receivers.slice(i * 3, (i + 1) * 3);
 
             const amount = pendings.reduce((acc, receiver) => acc + receiver.amount, 0n);
@@ -113,38 +106,44 @@ export async function airdrop(
                 cat20Utxos = newCat20Utxos;
             }
 
-            const result = await singleSend(signer,
+            const result = await singleSend(
+                signer,
                 utxoProvider,
                 chainProvider,
                 minterAddr,
                 cat20Utxos,
-                pendings.map(receiver => ({
+                pendings.map((receiver) => ({
                     address: toTokenAddress(receiver.address),
                     amount: receiver.amount,
                 })),
                 toTokenAddress(address),
-                feeRate);
-            const txId = result.sendTxId
-            success.push(...pendings.map(receiver => ({
-                ...receiver,
-                txId,
-            })))
-
+                feeRate,
+            );
+            const txId = result.sendTxId;
+            success.push(
+                ...pendings.map((receiver) => ({
+                    ...receiver,
+                    txId,
+                })),
+            );
 
             if (cb) {
-                pendings.forEach(receiver => {
+                pendings.forEach((receiver) => {
                     cb.onProcess({
                         ...receiver,
                         txId,
                     });
-                })
+                });
             }
 
-            const newCat20Utxos = result.newCat20Utxos.slice(0, (result.changeTokenOutputIndex > -1 ? result.newCat20Utxos.length - 1 : result.newCat20Utxos.length));
-            airdropCat20Utxos.push(...newCat20Utxos)
+            const newCat20Utxos = result.newCat20Utxos.slice(
+                0,
+                result.changeTokenOutputIndex > -1 ? result.newCat20Utxos.length - 1 : result.newCat20Utxos.length,
+            );
+            airdropCat20Utxos.push(...newCat20Utxos);
             if (result.changeTokenOutputIndex > -1) {
                 const changeCat20Utxo = result.newCat20Utxos[result.changeTokenOutputIndex - 1];
-                inputTokenUtxos.push(changeCat20Utxo)
+                inputTokenUtxos.push(changeCat20Utxo);
             }
 
             sendCount++;
@@ -162,17 +161,14 @@ export async function airdrop(
         if (cb) {
             cb.onSuccess(success);
         }
-
     } catch (error) {
         if (cb) {
             cb.onError(error);
         }
     }
 
-
     return {
         cat20Utxos: airdropCat20Utxos,
         success,
-    }
-
+    };
 }

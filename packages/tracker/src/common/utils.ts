@@ -1,6 +1,5 @@
-import { payments, script } from 'bitcoinjs-lib';
+import { address, payments, script } from 'bitcoinjs-lib';
 import { Constants, network } from './constants';
-import { crypto } from 'bitcoinjs-lib';
 import { decode as cborDecode } from 'cbor';
 import { EnvelopeMarker, EnvelopeData, TokenInfoEnvelope } from './types';
 
@@ -45,17 +44,9 @@ export function addressToXOnlyPubKey(addr: string) {
 
 export function ownerAddressToPubKeyHash(ownerAddr: string) {
   try {
-    const pubKey = addressToXOnlyPubKey(ownerAddr);
-    if (pubKey) {
-      return Buffer.from(crypto.hash160(Buffer.from(pubKey, 'hex'))).toString(
-        'hex',
-      );
-    }
-    const pkhash = payments.p2wpkh({
-      address: ownerAddr,
-      network,
-    })?.hash;
-    return pkhash ? Buffer.from(pkhash).toString('hex') : null;
+    return ownerAddr?.length === Constants.CONTRACT_OWNER_ADDR_BYTES * 2
+      ? ownerAddr
+      : Buffer.from(address.toOutputScript(ownerAddr, network)).toString('hex');
   } catch {
     return null;
   }
@@ -111,13 +102,14 @@ export function parseTokenInfoEnvelope(
   return null;
 }
 
-function parseEnvelope(envelope: string): EnvelopeData | null {
+export function parseEnvelope(envelope: string): EnvelopeData | null {
   const items = envelope.split(' ');
   let i = 0;
   let contentRaw: Buffer | undefined = undefined;
   let contentType: string | undefined = undefined;
   let contentEncoding: string | undefined = undefined;
   let metadataHex: string = '';
+  let delegate: Buffer | undefined = undefined;
   while (i < items.length - 1) {
     if (items[i] === '00' || items[i] === 'OP_0') {
       // content raw
@@ -135,6 +127,10 @@ function parseEnvelope(envelope: string): EnvelopeData | null {
       // content encoding
       contentEncoding = Buffer.from(items[i + 1], 'hex').toString('utf8');
       i += 2;
+    } else if (items[i] === '0b' || items[i] === '0B' || items[i] === 'OP_11') {
+      // delegate
+      delegate = Buffer.from(items[i + 1], 'hex');
+      i += 2;
     } else {
       i++;
     }
@@ -144,7 +140,12 @@ function parseEnvelope(envelope: string): EnvelopeData | null {
       ? undefined
       : cborDecode(Buffer.from(metadataHex, 'hex'));
   let content = undefined;
-  if (contentRaw || contentType || contentEncoding) {
+  if (delegate && delegate.length >= 32 && delegate.length <= 36) {
+    content = {
+      raw: delegate,
+      type: Constants.CONTENT_TYPE_CAT721_DELEGATE_V1,
+    };
+  } else if (contentRaw || contentType || contentEncoding) {
     content = {
       raw: contentRaw,
       type: contentType,

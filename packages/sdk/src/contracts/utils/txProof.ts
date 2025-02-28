@@ -1,167 +1,129 @@
+import { ByteString, SmartContractLib, assert, hash256, int2ByteString, len, method } from 'scrypt-ts';
+import { TxUtils } from './txUtils';
 import {
-    ByteString,
-    FixedArray,
-    SmartContractLib,
-    assert,
-    hash256,
-    int2ByteString,
-    len,
-    method,
-    toByteString,
-} from 'scrypt-ts'
-import {
-    MAX_INPUT,
-    MAX_OUTPUT,
-    XRAYED_TXID_PREIMG2_PREVLIST_LEN,
-    XRAYED_TXID_PREIMG3_OUTPUT_NUMBER,
-    int32,
-} from './txUtil'
-
-export type TxInput = {
-    txhash: ByteString
-    outputIndex: ByteString
-    outputIndexVal: int32
-    sequence: ByteString
-}
-
-export type TxIdPreimg = {
-    version: ByteString
-    inputCount: ByteString
-    inputTxhashList: FixedArray<ByteString, typeof MAX_INPUT>
-    inputOutputIndexList: FixedArray<ByteString, typeof MAX_INPUT>
-    inputScriptList: FixedArray<ByteString, typeof MAX_INPUT>
-    inputSequenceList: FixedArray<ByteString, typeof MAX_INPUT>
-    outputCount: ByteString
-    outputSatoshisList: FixedArray<ByteString, typeof MAX_OUTPUT>
-    outputScriptLenList: FixedArray<ByteString, typeof MAX_OUTPUT>
-    outputScriptList: FixedArray<ByteString, typeof MAX_OUTPUT>
-    nLocktime: ByteString
-}
-
-// btc tx v2 calc txid data
-// for preTx, check
-export type XrayedTxIdPreimg1 = {
-    //
-    version: ByteString
-    // input
-    inputCount: ByteString
-    inputs: FixedArray<ByteString, typeof MAX_INPUT>
-    // outputs
-    outputCountVal: int32
-    outputCount: ByteString
-    outputSatoshisList: FixedArray<ByteString, typeof MAX_OUTPUT>
-    outputScriptList: FixedArray<ByteString, typeof MAX_OUTPUT>
-    //
-    nLocktime: ByteString
-}
-
-// for prePreTx, only check output script
-export type XrayedTxIdPreimg2 = {
-    // version + inputNumberBytes + inputs / 80
-    prevList: FixedArray<ByteString, typeof XRAYED_TXID_PREIMG2_PREVLIST_LEN>
-    // outputs
-    outputCountVal: int32
-    outputCount: ByteString
-    outputSatoshisList: FixedArray<ByteString, typeof MAX_OUTPUT>
-    outputScriptList: FixedArray<ByteString, typeof MAX_OUTPUT>
-    nLocktime: ByteString
-}
-
-// for amountCheckTx
-export type XrayedTxIdPreimg3 = {
-    /*
-        (version inputNumberBytes inputs outputNumberBytes) = pre
-        element size less than 80, so only support 1 input
-        len() = 47
-    */
-    prev: ByteString
-    outputCountVal: int32
-    outputCount: ByteString
-    outputSatoshisList: FixedArray<
-        ByteString,
-        typeof XRAYED_TXID_PREIMG3_OUTPUT_NUMBER
-    >
-    outputScriptList: FixedArray<
-        ByteString,
-        typeof XRAYED_TXID_PREIMG3_OUTPUT_NUMBER
-    >
-    nLocktime: ByteString
-}
+    TX_INPUT_COUNT_BYTE_LEN,
+    TX_LOCKTIME_BYTE_LEN,
+    TX_OUTPUT_COUNT_BYTE_LEN,
+    TX_OUTPUT_COUNT_MAX,
+    TX_SEGWIT_INPUT_BYTE_LEN,
+    TX_VERSION_BYTE_LEN,
+    TX_INPUT_COUNT_MAX,
+} from '../constants';
+import { TxHashPreimage1, TxHashPreimage2, TxHashPreimage3 } from '../types';
 
 export class TxProof extends SmartContractLib {
+    /**
+     * Calculate tx hash from TxHashPreimage1
+     * @param preimage TxHashPreimage1
+     * @returns tx hash
+     */
     @method()
-    static getTxIdFromPreimg1(preimage: XrayedTxIdPreimg1): ByteString {
-        let txHex = preimage.version + preimage.inputCount
-        for (let i = 0; i < MAX_INPUT; i++) {
-            txHex += preimage.inputs[i]
-        }
-        txHex += preimage.outputCount
-        assert(int2ByteString(preimage.outputCountVal) == preimage.outputCount)
-        for (let i = 0; i < MAX_OUTPUT; i++) {
-            const outputSatoshi = preimage.outputSatoshisList[i]
-            const outputScript = preimage.outputScriptList[i]
-            const outputScriptLen = int2ByteString(len(outputScript))
-            if (i < preimage.outputCountVal) {
-                txHex += outputSatoshi + outputScriptLen + outputScript
+    static getTxHashFromPreimage1(preimage: TxHashPreimage1): ByteString {
+        // append version, the number of inputs, inputs, and the number of outputs
+        assert(len(preimage.version) == TX_VERSION_BYTE_LEN);
+        let txRaw =
+            preimage.version +
+            int2ByteString(preimage.inputCountVal) +
+            preimage.inputList[0] +
+            preimage.inputList[1] +
+            preimage.inputList[2] +
+            preimage.inputList[3] +
+            preimage.inputList[4] +
+            preimage.inputList[5] +
+            int2ByteString(preimage.outputCountVal);
+        let expectedLen = TX_VERSION_BYTE_LEN + TX_INPUT_COUNT_BYTE_LEN + TX_OUTPUT_COUNT_BYTE_LEN;
+        for (let i = 0; i < TX_INPUT_COUNT_MAX; i++) {
+            // there must be no empty element between inputs in the array
+            if (i < preimage.inputCountVal) {
+                expectedLen += TX_SEGWIT_INPUT_BYTE_LEN;
+                assert(len(preimage.inputList[i]) == TX_SEGWIT_INPUT_BYTE_LEN);
+            } else {
+                assert(len(preimage.inputList[i]) == 0n);
             }
         }
-        return hash256(txHex + preimage.nLocktime)
-    }
-
-    @method()
-    static getTxIdFromPreimg2(preimage: XrayedTxIdPreimg2): ByteString {
-        let txHex = toByteString('')
-        for (let i = 0; i < XRAYED_TXID_PREIMG2_PREVLIST_LEN; i++) {
-            txHex += preimage.prevList[i]
-        }
-        assert(int2ByteString(preimage.outputCountVal) == preimage.outputCount)
-        for (let i = 0; i < MAX_OUTPUT; i++) {
-            const outputSatoshi = preimage.outputSatoshisList[i]
-            const outputScript = preimage.outputScriptList[i]
-            const outputScriptLen = int2ByteString(len(outputScript))
+        assert(len(txRaw) == expectedLen);
+        // append outputs
+        for (let i = 0; i < TX_OUTPUT_COUNT_MAX; i++) {
+            const script = preimage.outputScriptList[i];
+            const satoshis = preimage.outputSatoshisList[i];
             if (i < preimage.outputCountVal) {
-                txHex += outputSatoshi + outputScriptLen + outputScript
+                txRaw += TxUtils.buildOutput(script, satoshis);
+            } else {
+                assert(len(script) == 0n);
+                assert(len(satoshis) == 0n);
             }
         }
-        return hash256(txHex + preimage.nLocktime)
+        // append locktime and return the tx hash
+        assert(len(preimage.locktime) == TX_LOCKTIME_BYTE_LEN);
+        return hash256(txRaw + preimage.locktime);
     }
 
+    /**
+     * Calculate tx hash from TxHashPreimage2
+     * @param preimage TxHashPreimage2
+     * @returns tx hash
+     */
     @method()
-    static getTxIdFromPreimg3(preimage: XrayedTxIdPreimg3): ByteString {
-        assert(int2ByteString(preimage.outputCountVal) == preimage.outputCount)
-        let outputs = toByteString('')
-        for (let i = 0; i < XRAYED_TXID_PREIMG3_OUTPUT_NUMBER; i++) {
-            const outputSatoshis = preimage.outputSatoshisList[i]
-            const outputScript = preimage.outputScriptList[i]
-            const outputScriptLen = int2ByteString(len(outputScript))
-            if (i < preimage.outputCountVal) {
-                outputs += outputSatoshis + outputScriptLen + outputScript
+    static getTxHashFromPreimage2(preimage: TxHashPreimage2): ByteString {
+        // build suffix, including outputs except for the first output, and lock time
+        const suffix = preimage.suffixList[0] + preimage.suffixList[1] + preimage.suffixList[2];
+        // build prefix, including version, the number of inputs, inputs, and the number of outputs
+        assert(len(preimage.version) == TX_VERSION_BYTE_LEN);
+        const prefix =
+            preimage.version +
+            int2ByteString(preimage.inputCountVal) +
+            preimage.inputList[0] +
+            preimage.inputList[1] +
+            preimage.inputList[2] +
+            preimage.inputList[3] +
+            preimage.inputList[4] +
+            preimage.inputList[5] +
+            int2ByteString(preimage.outputCountVal);
+        let expectedLen = TX_VERSION_BYTE_LEN + TX_INPUT_COUNT_BYTE_LEN + TX_OUTPUT_COUNT_BYTE_LEN;
+        for (let i = 0; i < TX_INPUT_COUNT_MAX; i++) {
+            if (i < preimage.inputCountVal) {
+                expectedLen += TX_SEGWIT_INPUT_BYTE_LEN;
+                assert(len(preimage.inputList[i]) == TX_SEGWIT_INPUT_BYTE_LEN);
+            } else {
+                assert(len(preimage.inputList[i]) == 0n);
             }
         }
-        return hash256(preimage.prev + outputs + preimage.nLocktime)
+        assert(len(prefix) == expectedLen);
+        // build state hash root output
+        const hashRootOutput = TxUtils.buildStateHashRootOutput(preimage.hashRoot);
+        // build raw tx and return the tx hash
+        return hash256(prefix + hashRootOutput + suffix);
     }
 
+    /**
+     * Calculate tx hash from TxHashPreimage3
+     * @param preimage TxHashPreimage3
+     * @returns tx hash
+     */
     @method()
-    static mergeInput(txInput: TxInput): ByteString {
-        return (
-            txInput.txhash +
-            txInput.outputIndex +
-            toByteString('00') +
-            txInput.sequence
-        )
-    }
-
-    @method()
-    static verifyOutput(
-        preimage: XrayedTxIdPreimg2,
-        txhash: ByteString,
-        outputIndexVal: int32,
-        outputScript: ByteString
-    ): boolean {
-        assert(TxProof.getTxIdFromPreimg2(preimage) == txhash)
-        assert(
-            preimage.outputScriptList[Number(outputIndexVal)] == outputScript
-        )
-        return true
+    static getTxHashFromPreimage3(preimage: TxHashPreimage3): ByteString {
+        // build suffix, including outputs except for the first output, and lock time
+        const suffix = preimage.suffixList[0] + preimage.suffixList[1] + preimage.suffixList[2];
+        // build prefix, including version, the number of inputs, inputs, and the number of outputs
+        assert(len(preimage.version) == TX_VERSION_BYTE_LEN);
+        const prefix =
+            preimage.version +
+            int2ByteString(preimage.inputCountVal) +
+            preimage.inputList[0] +
+            preimage.inputList[1] +
+            preimage.inputList[2] +
+            preimage.inputList[3] +
+            int2ByteString(preimage.outputCountVal);
+        let expectedLen = TX_VERSION_BYTE_LEN + TX_INPUT_COUNT_BYTE_LEN + TX_OUTPUT_COUNT_BYTE_LEN;
+        for (let i = 0; i < TX_INPUT_COUNT_MAX; i++) {
+            if (i < preimage.inputCountVal) {
+                expectedLen += TX_SEGWIT_INPUT_BYTE_LEN;
+            }
+        }
+        assert(len(prefix) == expectedLen);
+        // build state hash root output
+        const hashRootOutput = TxUtils.buildStateHashRootOutput(preimage.hashRoot);
+        // build raw tx and return the tx hash
+        return hash256(prefix + hashRootOutput + suffix);
     }
 }

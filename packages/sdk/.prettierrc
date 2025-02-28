@@ -4,12 +4,12 @@
     {
       "files": "*.ts",
       "options": {
-        "semi": false,
-        "printWidth": 80,
+        "semi": true,
+        "printWidth": 120,
         "tabWidth": 4,
         "useTabs": false,
         "singleQuote": true,
-        "trailingComma": "es5",
+        "trailingComma": "all",
         "bracketSpacing": true
       }
     }

@@ -441,7 +441,7 @@ export class TxService {
 
     // ownerPubKeyHash
     const pkh = minterInput.witness[Constants.MINTER_INPUT_WITNESS_ADDR_OFFSET];
-    if (pkh.length !== Constants.PUBKEY_HASH_BYTES) {
+    if (!Constants.OWNER_ADDR_BYTES.includes(pkh.length)) {
       throw new CatTxError(
         'invalid mint tx, invalid byte length of owner pubkey hash',
       );
@@ -763,7 +763,7 @@ export class TxService {
    * Parse state root hash from tx
    */
   private parseStateRootHash(tx: Transaction) {
-    return tx.outs[0].script.subarray(
+    return Buffer.from(tx.outs[0].script).subarray(
       Constants.STATE_ROOT_HASH_OFFSET,
       Constants.STATE_ROOT_HASH_OFFSET + Constants.STATE_ROOT_HASH_BYTES,
     );

@@ -34,6 +34,8 @@ export interface Content {
   raw?: Buffer;
 }
 
+export type CachedContent = Content & { lastModified?: Date };
+
 export interface EnvelopeData {
   metadata?: object;
   content?: Content;

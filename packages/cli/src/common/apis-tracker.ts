@@ -3,14 +3,13 @@ import {
   OpenMinterCat20Meta,
   OpenMinterState,
   ChainProvider,
-  OpenMinterV2State,
   Cat20Utxo,
   Cat20MinterUtxo,
   addrToP2trLockingScript,
   p2trLockingScriptToAddr,
   btc,
   scriptToP2tr,
-} from '@cat-protocol/cat-sdk';
+} from '@cat-protocol/cat-sdk-v2';
 import { isOpenMinter } from './minterFinder';
 import { getTokenContractP2TR } from './utils';
 import { byteString2Int } from 'scrypt-ts';
@@ -18,7 +17,6 @@ import { findTokenInfoById, scaleMetadata } from 'src/token';
 import { logerror } from './log';
 import { ConfigService, SpendService } from 'src/providers';
 import fetch from 'node-fetch-cjs';
-import { MinterType } from './minter';
 
 export const getTokenInfo = async function (
   config: ConfigService,
@@ -101,22 +99,14 @@ const fetchCat20MinterState = async function (
   tokenInfo: Cat20TokenInfo<OpenMinterCat20Meta>,
   txId: string,
   vout: number,
-): Promise<OpenMinterState | OpenMinterV2State | null> {
+): Promise<OpenMinterState | null> {
   const minterP2TR = addrToP2trLockingScript(tokenInfo.minterAddr);
   const tokenP2TR = addrToP2trLockingScript(tokenInfo.tokenAddr);
   const scaledMetadata = scaleMetadata(tokenInfo.metadata);
   if (txId === tokenInfo.revealTxid) {
-    if (tokenInfo.metadata.minterMd5 == MinterType.OPEN_MINTER_V2) {
-      return {
-        isPremined: false,
-        remainingSupplyCount:
-          (scaledMetadata.max - scaledMetadata.premine) / scaledMetadata.limit,
-        tokenScript: tokenP2TR,
-      };
-    }
     return {
-      isPremined: false,
-      remainingSupply: scaledMetadata.max - scaledMetadata.premine,
+      hasMintedBefore: false,
+      remainingCount: BigInt(scaledMetadata.max - scaledMetadata.premine),
       tokenScript: tokenP2TR,
     };
   }
@@ -134,25 +124,12 @@ const fetchCat20MinterState = async function (
       const lockingScriptBuffer = witnesses[witnesses.length - 2];
       const { p2trLockingScript: p2tr } = scriptToP2tr(lockingScriptBuffer);
       if (p2tr === minterP2TR) {
-        if (tokenInfo.metadata.minterMd5 == MinterType.OPEN_MINTER_V2) {
-          const preState: OpenMinterV2State = {
-            tokenScript:
-              witnesses[REMAININGSUPPLY_WITNESS_INDEX - 2].toString('hex'),
-            isPremined: true,
-            remainingSupplyCount: byteString2Int(
-              witnesses[6 + vout].toString('hex'),
-            ),
-          };
-
-          return preState;
-        }
         const preState: OpenMinterState = {
           tokenScript:
             witnesses[REMAININGSUPPLY_WITNESS_INDEX - 2].toString('hex'),
-          isPremined: true,
-          remainingSupply: byteString2Int(witnesses[6 + vout].toString('hex')),
+          hasMintedBefore: true,
+          remainingCount: byteString2Int(witnesses[6 + vout].toString('hex')),
         };
-
         return preState;
       }
     }

@@ -4,7 +4,7 @@ import { ConfigService } from './configService';
 import { join } from 'path';
 import { existsSync, readFileSync, writeFileSync } from 'fs';
 import { logerror } from 'src/common';
-import { bitcoinjs, getTxId } from '@cat-protocol/cat-sdk';
+import { bitcoinjs, getTxId } from '@cat-protocol/cat-sdk-v2';
 
 @Injectable()
 export class SpendService {

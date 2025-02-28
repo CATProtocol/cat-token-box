@@ -15,3 +15,14 @@ index b6b28e6..77ffb06 100644
      .map(tapLeaf => {
        const hash = (0, bip341_js_1.tapleafHash)({
          output: tapLeaf.script,
+diff --git a/node_modules/bitcoinjs-lib/src/cjs/transaction.d.ts b/node_modules/bitcoinjs-lib/src/cjs/transaction.d.ts
+index 6f9d615..c0a37a6 100644
+--- a/node_modules/bitcoinjs-lib/src/cjs/transaction.d.ts
++++ b/node_modules/bitcoinjs-lib/src/cjs/transaction.d.ts
+@@ -55,5 +55,5 @@ export declare class Transaction {
+     toHex(): string;
+     setInputScript(index: number, scriptSig: Uint8Array): void;
+     setWitness(index: number, witness: Uint8Array[]): void;
+-    private __toBuffer;
++    public __toBuffer;
+ }

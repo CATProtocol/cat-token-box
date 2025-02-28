@@ -7,9 +7,7 @@
     // Todo remove below
     "noImplicitAny": false,
     "resolveJsonModule": true,
-    "strict": false /* Enable all strict type-checking options. */,
+    "strict": false /* Enable all strict type-checking options. */
   },
-  "include": [
-    "./src/**/*"
-  ]
+  "include": ["./src/**/*"]
 }

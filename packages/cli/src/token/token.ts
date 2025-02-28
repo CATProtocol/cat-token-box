@@ -1,4 +1,4 @@
-import { Cat20TokenInfo, OpenMinterCat20Meta } from '@cat-protocol/cat-sdk';
+import { Cat20TokenInfo, OpenMinterCat20Meta } from '@cat-protocol/cat-sdk-v2';
 import { existsSync, readFileSync, writeFileSync } from 'fs';
 import { join } from 'path';
 import { scaleByDecimals, getTokenInfo, logerror } from 'src/common';

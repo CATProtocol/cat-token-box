@@ -3,13 +3,11 @@
   "compilerOptions": {
     "outDir": "./dist",
     "declarationDir": "./dist",
-    "rootDir": "./src",
+    "rootDir": "./",
     // Todo remove below
     "noImplicitAny": false,
     "resolveJsonModule": true,
-    "strict": false /* Enable all strict type-checking options. */,
+    "strict": false /* Enable all strict type-checking options. */
   },
-  "include": [
-    "./src/**/*", "tests/utils/privateKeySigner.ts",
-  ]
+  "include": ["./src/**/*", "./tests/**/*"]
 }

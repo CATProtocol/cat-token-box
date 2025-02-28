@@ -4,7 +4,7 @@ import { isTaprootInput, toXOnly } from '../lib/utils';
 import { PSBTOptions, Signer } from '../lib/signer';
 import { bitcoinjs } from '../lib/btc';
 const ECPair = ECPairFactory(ecc);
-bitcoinjs.initEccLib(ecc)
+bitcoinjs.initEccLib(ecc);
 
 export enum AddressType {
     P2WPKH = 'p2wpkh',
@@ -12,10 +12,10 @@ export enum AddressType {
 }
 
 export class DefaultSigner implements Signer {
-    constructor(private readonly keyPair: ECPairInterface = ECPair.makeRandom(),
-        private readonly addressType: AddressType = AddressType.P2TR) {
-
-    }
+    constructor(
+        private readonly keyPair: ECPairInterface = ECPair.makeRandom(),
+        private readonly addressType: AddressType = AddressType.P2TR,
+    ) {}
 
     async getAddress(): Promise<string> {
         if (this.addressType === AddressType.P2TR) {
@@ -34,7 +34,7 @@ export class DefaultSigner implements Signer {
     async signPsbt(psbtHex: string, options?: PSBTOptions): Promise<string> {
         const psbt = bitcoinjs.Psbt.fromHex(psbtHex);
         const { output } = bitcoinjs.payments.p2tr({
-            address: this.getP2TRAddress()
+            address: this.getP2TRAddress(),
         });
         const taprootHex = Buffer.from(output!).toString('hex');
         const xpubkey = await this.getXOnlyPublicKey();
@@ -42,50 +42,40 @@ export class DefaultSigner implements Signer {
         if (options) {
             options.toSignInputs.forEach((inputOpt) => {
                 if (inputOpt.address && inputOpt.address !== address) {
-                    return
+                    return;
                 }
                 if (isTaprootInput(psbt.data.inputs[inputOpt.index])) {
                     const witnessUtxoScript = Buffer.from(
                         psbt.data.inputs[inputOpt.index].witnessUtxo?.script,
                     ).toString('hex');
 
-                    if (witnessUtxoScript === taprootHex) { // fee utxos
+                    if (witnessUtxoScript === taprootHex) {
+                        // fee utxos
                         psbt.updateInput(inputOpt.index, {
                             tapInternalKey: Buffer.from(xpubkey, 'hex'),
                         });
 
-                        const sighashTypes = inputOpt.sighashTypes || [
-                            bitcoinjs.Transaction.SIGHASH_DEFAULT,
-                        ];
+                        const sighashTypes = inputOpt.sighashTypes || [bitcoinjs.Transaction.SIGHASH_DEFAULT];
                         psbt.signTaprootInput(
                             inputOpt.index,
                             this.getKeyPair(),
-                            inputOpt.tapLeafHashToSign
-                                ? Buffer.from(inputOpt.tapLeafHashToSign, 'hex')
-                                : undefined,
+                            inputOpt.tapLeafHashToSign ? Buffer.from(inputOpt.tapLeafHashToSign, 'hex') : undefined,
                             sighashTypes,
                         );
                     } else {
                         // taproot Covenant
-                        const sighashTypes = inputOpt.sighashTypes || [
-                            bitcoinjs.Transaction.SIGHASH_DEFAULT,
-                        ];
+                        const sighashTypes = inputOpt.sighashTypes || [bitcoinjs.Transaction.SIGHASH_DEFAULT];
                         psbt.signTaprootInput(
                             inputOpt.index,
                             this.getKeyPair(),
-                            inputOpt.tapLeafHashToSign
-                                ? Buffer.from(inputOpt.tapLeafHashToSign, 'hex')
-                                : undefined,
+                            inputOpt.tapLeafHashToSign ? Buffer.from(inputOpt.tapLeafHashToSign, 'hex') : undefined,
                             sighashTypes,
                         );
                     }
                 } else {
-                    const sighashTypes = inputOpt.sighashTypes || [
-                        bitcoinjs.Transaction.SIGHASH_ALL,
-                    ];
+                    const sighashTypes = inputOpt.sighashTypes || [bitcoinjs.Transaction.SIGHASH_ALL];
                     if (inputOpt.useTweakedSigner) {
                         psbt.signInput(inputOpt.index, this.getKeyPair(), sighashTypes);
-
                     } else {
                         psbt.signInput(inputOpt.index, this.keyPair, sighashTypes);
                     }
@@ -94,9 +84,9 @@ export class DefaultSigner implements Signer {
         } else {
             psbt.data.inputs.forEach((input, inputIdx) => {
                 if (isTaprootInput(input)) {
-                    const witnessUtxoScript = Buffer.from(
-                        psbt.data.inputs[inputIdx].witnessUtxo?.script,
-                    ).toString('hex');
+                    const witnessUtxoScript = Buffer.from(psbt.data.inputs[inputIdx].witnessUtxo?.script).toString(
+                        'hex',
+                    );
 
                     if (witnessUtxoScript === taprootHex) {
                         psbt.updateInput(inputIdx, {
@@ -104,28 +94,17 @@ export class DefaultSigner implements Signer {
                         });
 
                         const sighashTypes = [bitcoinjs.Transaction.SIGHASH_DEFAULT];
-                        psbt.signTaprootInput(
-                            inputIdx,
-                            this.getKeyPair(),
-                            undefined,
-                            sighashTypes,
-                        );
+                        psbt.signTaprootInput(inputIdx, this.getKeyPair(), undefined, sighashTypes);
                     }
                 } else {
-                    psbt.signInput(inputIdx, this.keyPair, [
-                        bitcoinjs.Transaction.SIGHASH_ALL,
-                    ]);
+                    psbt.signInput(inputIdx, this.keyPair, [bitcoinjs.Transaction.SIGHASH_ALL]);
                 }
             });
         }
         return Promise.resolve(psbt.toHex());
     }
-    signPsbts(
-        reqs: { psbtHex: string; options?: PSBTOptions }[],
-    ): Promise<string[]> {
-        return Promise.all(
-            reqs.map((req) => this.signPsbt(req.psbtHex, req.options)),
-        );
+    signPsbts(reqs: { psbtHex: string; options?: PSBTOptions }[]): Promise<string[]> {
+        return Promise.all(reqs.map((req) => this.signPsbt(req.psbtHex, req.options)));
     }
 
     private getKeyPair() {
@@ -138,14 +117,13 @@ export class DefaultSigner implements Signer {
         }
     }
 
-
     private getP2TRAddress(): string {
         const ketPair = ECPair.fromPrivateKey(this.getPrivateKey());
         const internalPubkey = ketPair.publicKey.subarray(1, 33);
         const { address } = bitcoinjs.payments.p2tr({
-            internalPubkey: internalPubkey
+            internalPubkey: internalPubkey,
         });
-        return address!
+        return address!;
     }
 
     private getP2WPKHAddress(): string {
@@ -153,7 +131,7 @@ export class DefaultSigner implements Signer {
         const { address } = bitcoinjs.payments.p2wpkh({
             pubkey: pubkey,
         });
-        return address!
+        return address!;
     }
 
     private async getXOnlyPublicKey(): Promise<string> {
@@ -162,30 +140,20 @@ export class DefaultSigner implements Signer {
     }
 
     private getPrivateKey(): Buffer {
-        return this.keyPair.privateKey
+        return this.keyPair.privateKey;
     }
 
     private getTweakedPrivateKey(): Buffer {
-
         // Order of the curve (N) - 1
-        const N_LESS_1 = Buffer.from(
-            'fffffffffffffffffffffffffffffffebaaedce6af48a03bbfd25e8cd0364140',
-            'hex'
-        );
+        const N_LESS_1 = Buffer.from('fffffffffffffffffffffffffffffffebaaedce6af48a03bbfd25e8cd0364140', 'hex');
         // 1 represented as 32 bytes BE
-        const ONE = Buffer.from(
-            '0000000000000000000000000000000000000000000000000000000000000001',
-            'hex'
-        );
+        const ONE = Buffer.from('0000000000000000000000000000000000000000000000000000000000000001', 'hex');
 
         const privateKey =
             this.keyPair.publicKey[0] === 2
                 ? this.keyPair.privateKey
                 : ecc.privateAdd(ecc.privateSub(N_LESS_1, this.keyPair.privateKey), ONE);
-        const tweakHash = bitcoinjs.crypto.taggedHash(
-            'TapTweak',
-            this.keyPair.publicKey.subarray(1, 33)
-        );
+        const tweakHash = bitcoinjs.crypto.taggedHash('TapTweak', this.keyPair.publicKey.subarray(1, 33));
         return Buffer.from(ecc.privateAdd(privateKey, tweakHash));
     }
 }

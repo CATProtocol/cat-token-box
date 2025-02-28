@@ -191,10 +191,7 @@ export class TokenService {
     offset: number | null = null,
     limit: number | null = null,
   ) {
-    const ownerPubKeyHash =
-      ownerAddrOrPkh.length === Constants.PUBKEY_HASH_BYTES * 2
-        ? ownerAddrOrPkh
-        : ownerAddressToPubKeyHash(ownerAddrOrPkh);
+    const ownerPubKeyHash = ownerAddressToPubKeyHash(ownerAddrOrPkh);
     if (
       lastProcessedHeight === null ||
       (tokenInfo && !tokenInfo.tokenPubKey) ||
@@ -224,10 +221,7 @@ export class TokenService {
     scope: TokenTypeScope.Fungible | TokenTypeScope.NonFungible,
     tokenInfo: TokenInfoEntity | null = null,
   ) {
-    const ownerPubKeyHash =
-      ownerAddrOrPkh.length === Constants.PUBKEY_HASH_BYTES * 2
-        ? ownerAddrOrPkh
-        : ownerAddressToPubKeyHash(ownerAddrOrPkh);
+    const ownerPubKeyHash = ownerAddressToPubKeyHash(ownerAddrOrPkh);
     if (
       lastProcessedHeight === null ||
       (tokenInfo && !tokenInfo.tokenPubKey) ||

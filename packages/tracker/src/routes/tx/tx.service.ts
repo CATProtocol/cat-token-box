@@ -1,25 +1,32 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { TokenService } from '../token/token.service';
-import { network as _network } from '../../common/constants';
-import { ChainProvider, MempolChainProvider } from '@cat-protocol/cat-sdk';
-import { networks, TxInput, payments, Transaction } from 'bitcoinjs-lib';
-import { TaprootPayment, TokenTypeScope } from '../../common/types';
+import { TxInput, payments, Transaction, script } from 'bitcoinjs-lib';
+import {
+  CachedContent,
+  TaprootPayment,
+  TokenTypeScope,
+} from '../../common/types';
 import { CommonService } from '../../services/common/common.service';
+import { RpcService } from '../../services/rpc/rpc.service';
+import { Constants } from '../../common/constants';
+import { parseEnvelope } from '../../common/utils';
+import { LRUCache } from 'lru-cache';
 
 @Injectable()
 export class TxService {
-  private readonly provider: ChainProvider;
+  private readonly logger = new Logger(TxService.name);
+
+  private static readonly contentCache = new LRUCache<string, CachedContent>({
+    max: Constants.CACHE_MAX_SIZE,
+  });
 
   constructor(
     private readonly commonService: CommonService,
     private readonly tokenService: TokenService,
-  ) {
-    this.provider = new MempolChainProvider(
-      _network === networks.bitcoin ? 'fractal-mainnet' : 'fractal-testnet',
-    );
-  }
+    private readonly rpcService: RpcService,
+  ) {}
 
-  async getTx(txid: string) {
+  async parseTransferTxTokenOutputs(txid: string) {
     const raw = await this.getRawTx(txid);
     const tx = Transaction.fromHex(raw);
     const payIns = tx.ins.map((input) => this.parseTaprootInput(input));
@@ -71,12 +78,12 @@ export class TxService {
     return { outputs };
   }
 
-  async getRawTx(txid: string): Promise<string> {
-    try {
-      return this.provider.getRawTransaction(txid);
-    } catch (e) {
-      throw new Error(`error getting raw tx, ${e.message}`);
-    }
+  async getRawTx(
+    txid: string,
+    verbose: boolean = false,
+  ): Promise<string | undefined> {
+    const resp = await this.rpcService.getRawTx(txid, verbose);
+    return resp?.data?.result;
   }
 
   /**
@@ -95,5 +102,66 @@ export class TxService {
     } catch {
       return null;
     }
+  }
+
+  decodeDelegate(
+    delegate: Buffer,
+  ): { txId: string; inputIndex: number } | undefined {
+    try {
+      const buf = Buffer.concat([
+        delegate,
+        Buffer.from([0x00, 0x00, 0x00, 0x00]),
+      ]);
+      const txId = buf.subarray(0, 32).reverse().toString('hex');
+      const inputIndex = buf.subarray(32, 36).readUInt32LE();
+      return { txId, inputIndex };
+    } catch (e) {
+      this.logger.error(`decode delegate error: ${e.message}`);
+    }
+    return undefined;
+  }
+
+  public async getDelegateContent(
+    delegate: Buffer,
+  ): Promise<CachedContent | null> {
+    const { txId, inputIndex } = this.decodeDelegate(delegate) || {};
+    const key = `${txId}_${inputIndex}`;
+    let cached = TxService.contentCache.get(key);
+    if (!cached) {
+      const raw = await this.getRawTx(txId, true);
+      const tx = Transaction.fromHex(raw['hex']);
+      if (inputIndex < tx.ins.length) {
+        const payIn = this.parseTaprootInput(tx.ins[inputIndex]);
+        const content = await this.parseContentEnvelope(payIn?.redeemScript);
+        if (content) {
+          cached = content;
+          if (Number(raw['confirmations']) >= Constants.CACHE_AFTER_N_BLOCKS) {
+            TxService.contentCache.set(key, cached);
+          }
+        }
+      }
+    }
+    return cached;
+  }
+
+  async parseContentEnvelope(
+    redeemScript: Buffer,
+  ): Promise<CachedContent | null> {
+    try {
+      const asm = script.toASM(redeemScript || Buffer.alloc(0));
+      const match = asm.match(Constants.CONTENT_ENVELOPE);
+      if (match && match[1]) {
+        const data = parseEnvelope(match[1]);
+        if (data && data.content) {
+          if (data.content.type === Constants.CONTENT_TYPE_CAT721_DELEGATE_V1) {
+            return this.getDelegateContent(data.content.raw);
+          }
+          return data.content;
+        }
+      }
+    } catch (e) {
+      this.logger.error(`parse content envelope error, ${e.message}`);
+    }
+    return null;
   }
 }

@@ -1,4 +1,4 @@
-import { CAT20Covenant } from '@cat-protocol/cat-sdk';
+import { CAT20Covenant } from '@cat-protocol/cat-sdk-v2';
 
 import Decimal from 'decimal.js';
 

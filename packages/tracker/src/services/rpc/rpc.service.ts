@@ -111,4 +111,15 @@ export class RpcService {
     };
     return this.rpc(rpcData, logException, throwException);
   }
+
+  public async getRawTx(txId: string, verbose: boolean = false) {
+    const now = Date.now();
+    const rpcData = {
+      jsonrpc: '1.0',
+      id: now,
+      method: 'getrawtransaction',
+      params: [txId, verbose],
+    };
+    return this.rpc(rpcData);
+  }
 }

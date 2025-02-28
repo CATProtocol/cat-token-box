@@ -1,17 +1,16 @@
-import { ProtocolState } from '../../../lib/state'
-import { NftParallelClosedMinterCovenant } from '../../../covenants/nftParallelClosedMinterCovenant'
-import { CatPsbt } from '../../../lib/catPsbt'
-import { NftParallelClosedMinterCat721Meta } from '../../../lib/metadata'
-import { ByteString, Ripemd160 } from 'scrypt-ts'
-import { Signer } from '../../../lib/signer'
-import { UtxoProvider, ChainProvider, Cat721MinterUtxo } from '../../../lib/provider'
-import { Psbt, Transaction } from 'bitcoinjs-lib'
-import { createNft } from './nft'
-
+import { ProtocolState } from '../../../lib/state';
+import { NftParallelClosedMinterCovenant } from '../../../covenants/nftParallelClosedMinterCovenant';
+import { CatPsbt } from '../../../lib/catPsbt';
+import { NftParallelClosedMinterCat721Meta } from '../../../lib/metadata';
+import { ByteString, Ripemd160 } from 'scrypt-ts';
+import { Signer } from '../../../lib/signer';
+import { UtxoProvider, ChainProvider, Cat721MinterUtxo } from '../../../lib/provider';
+import { Psbt, Transaction } from 'bitcoinjs-lib';
+import { createNft } from './nft';
 
 /**
  * Mint a CAT721 NFT in a single transaction.
- * @param signer a signer, such as {@link DefaultSigner} or {@link UnisatSigner} 
+ * @param signer a signer, such as {@link DefaultSigner} or {@link UnisatSigner}
  * @param utxoProvider a  {@link UtxoProvider}
  * @param chainProvider a  {@link ChainProvider}
  * @param ownerAddress the issuer address of the nft minter
@@ -43,29 +42,35 @@ export async function mintNft(
     nftTx: Psbt;
     estMintTxVSize: number;
 }> {
-    const address = await signer.getAddress()
-    const pubKey = await signer.getPublicKey()
+    const address = await signer.getAddress();
+    const pubKey = await signer.getPublicKey();
 
     const minter = new NftParallelClosedMinterCovenant(
         ownerAddress,
         collectionId,
         metadata,
         cat721MinterUtxo.state,
-    ).bindToUtxo(cat721MinterUtxo.utxo)
+    ).bindToUtxo(cat721MinterUtxo.utxo);
 
     // fetch minter preTx
-    const minterInputIndex = 0
+    const minterInputIndex = 0;
     const spentMinterTxHex = await chainProvider.getRawTransaction(cat721MinterUtxo.utxo.txId);
-    const spentMinterTx = Transaction.fromHex(spentMinterTxHex)
+    const spentMinterTx = Transaction.fromHex(spentMinterTxHex);
     const minterPreTxHex = await chainProvider.getRawTransaction(
-        Buffer.from(
-            spentMinterTx.ins[minterInputIndex].hash.reverse()
-        ).toString('hex')
-    )
+        Buffer.from(spentMinterTx.ins[minterInputIndex].hash.reverse()).toString('hex'),
+    );
 
-    const utxos = await utxoProvider.getUtxos(address, { maxCnt: 5 })
+    const utxos = await utxoProvider.getUtxos(address, { maxCnt: 5 });
 
-    const {feeUTXO, nftScript, nftUTXO, commitTxPsbt} = createNft(pubKey, address, feeRate, utxos, contentType, contentBody, nftMetadata);
+    const { feeUTXO, nftScript, nftUTXO, commitTxPsbt } = createNft(
+        pubKey,
+        address,
+        feeRate,
+        utxos,
+        contentType,
+        contentBody,
+        nftMetadata,
+    );
 
     const estimatedVSize = NftParallelClosedMinterCovenant.buildMintTx(
         minterPreTxHex,
@@ -79,8 +84,8 @@ export async function mintNft(
         [feeUTXO],
         feeRate,
         address,
-        undefined
-    ).estimateVSize()
+        undefined,
+    ).estimateVSize();
 
     const mintPsbt = NftParallelClosedMinterCovenant.buildMintTx(
         minterPreTxHex,
@@ -94,32 +99,30 @@ export async function mintNft(
         [feeUTXO],
         feeRate,
         address,
-        estimatedVSize
-    )
+        estimatedVSize,
+    );
 
-    const [signedCommitPsbt, signedMintPsbt]  = await signer.signPsbts([
+    const [signedCommitPsbt, signedMintPsbt] = await signer.signPsbts([
         {
             psbtHex: commitTxPsbt.toHex(),
         },
         {
             psbtHex: mintPsbt.toHex(),
-            options: mintPsbt.psbtOptions()
-        }
-    ])
+            options: mintPsbt.psbtOptions(),
+        },
+    ]);
 
-    const nftPsbt = Psbt.fromHex(signedCommitPsbt).finalizeAllInputs()
+    const nftPsbt = Psbt.fromHex(signedCommitPsbt).finalizeAllInputs();
 
-    await mintPsbt
-        .combine(Psbt.fromHex(signedMintPsbt))
-        .finalizeAllInputsAsync()
+    await mintPsbt.combine(Psbt.fromHex(signedMintPsbt)).finalizeAllInputsAsync();
 
-    await chainProvider.broadcast(nftPsbt.extractTransaction().toHex())
+    await chainProvider.broadcast(nftPsbt.extractTransaction().toHex());
 
-    await chainProvider.broadcast(mintPsbt.extractTransaction().toHex())
+    await chainProvider.broadcast(mintPsbt.extractTransaction().toHex());
 
     return {
         nftTx: nftPsbt,
         mintTx: mintPsbt,
         estMintTxVSize: estimatedVSize,
-    }
+    };
 }

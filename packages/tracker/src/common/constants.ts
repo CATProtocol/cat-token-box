@@ -9,7 +9,17 @@ export class Constants {
 
   static readonly TAPROOT_LOCKING_SCRIPT_LENGTH = 34;
 
-  static readonly PUBKEY_HASH_BYTES = 20;
+  // owned by contract
+  static readonly CONTRACT_OWNER_ADDR_BYTES = 20;
+  // owned by user
+  static readonly P2WPKH_OWNER_ADDR_BYTES = 22;
+  static readonly P2TR_OWNER_ADDR_BYTES = 34;
+  // owner addr length in bytes
+  static readonly OWNER_ADDR_BYTES = [
+    this.CONTRACT_OWNER_ADDR_BYTES,
+    this.P2WPKH_OWNER_ADDR_BYTES,
+    this.P2TR_OWNER_ADDR_BYTES,
+  ];
 
   static readonly STATE_HASH_BYTES = 20;
 
@@ -60,6 +70,11 @@ export class Constants {
   static readonly QUERY_PAGING_DEFAULT_OFFSET = 0;
   static readonly QUERY_PAGING_DEFAULT_LIMIT = 100;
   static readonly QUERY_PAGING_MAX_LIMIT = 500;
+
+  static readonly CONTENT_TYPE_CAT721_DELEGATE_V1 =
+    'application/vnd.cat721.delegate.v1+text';
+
+  static readonly CONTENT_ENVELOPE = /OP_0 OP_IF 636174 (.+?) OP_ENDIF/;
 }
 
 const _network = process.env.NETWORK || 'mainnet';

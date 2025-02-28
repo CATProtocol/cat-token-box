@@ -27,14 +27,13 @@ import {
   mint,
   OpenMinterCat20Meta,
   Cat20MinterUtxo,
-  getRemainSupply,
   Cat20TokenInfo,
   mergeCat20Utxo,
   UtxoProvider,
   ChainProvider,
   toTokenAddress,
   btc,
-} from '@cat-protocol/cat-sdk';
+} from '@cat-protocol/cat-sdk-v2';
 
 interface MintCommandOptions extends BoardcastCommandOptions {
   id: string;
@@ -65,14 +64,14 @@ export class MintCommand extends BoardcastCommand {
     amount?: bigint,
   ) => {
     const minterState = minter.state;
-    if (minterState.isPremined && amount > scaledMetadata.limit) {
+    if (minterState.hasMintedBefore && amount > scaledMetadata.limit) {
       console.error('The number of minted tokens exceeds the limit!');
       return null;
     }
 
     const limit = scaledMetadata.limit;
 
-    if (!minter.state.isPremined && scaledMetadata.premine > 0n) {
+    if (!minter.state.hasMintedBefore && scaledMetadata.premine > 0n) {
       if (typeof amount === 'bigint') {
         if (amount !== scaledMetadata.premine) {
           throw new Error(
@@ -85,7 +84,7 @@ export class MintCommand extends BoardcastCommand {
     } else {
       amount = amount || limit;
       if (scaledMetadata.minterMd5 === MinterType.OPEN_MINTER_V1) {
-        if (getRemainSupply(minter.state, scaledMetadata.minterMd5) < limit) {
+        if (minter.state.remainingCount < limit) {
           console.warn(
             `small limit of ${unScaleByDecimals(limit, scaledMetadata.decimals)} in the minter UTXO!`,
           );
@@ -93,8 +92,8 @@ export class MintCommand extends BoardcastCommand {
           return null;
         }
         amount =
-          amount > getRemainSupply(minter.state, scaledMetadata.minterMd5)
-            ? getRemainSupply(minter.state, scaledMetadata.minterMd5)
+          amount > minter.state.remainingCount
+            ? minter.state.remainingCount
             : amount;
       } else if (
         scaledMetadata.minterMd5 == MinterType.OPEN_MINTER_V2 &&

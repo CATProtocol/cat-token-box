@@ -1,174 +1,124 @@
+import { ByteString, SmartContract, prop, method, assert, hash160, len } from 'scrypt-ts';
+import { CAT721Proto } from './cat721Proto';
+import { NftGuardProto } from './nftGuardProto';
 import {
-    ByteString,
-    SmartContract,
-    prop,
-    method,
-    assert,
-    PubKey,
-    Sig,
-    hash160,
-    FixedArray,
-} from 'scrypt-ts'
-import {
+    BacktraceInfo,
+    ContractUnlockArgs,
+    int32,
+    Prevouts,
     PrevoutsCtx,
     SHPreimage,
-    SigHashUtils,
     SpentScriptsCtx,
-} from '../utils/sigHashUtils'
-import { MAX_INPUT, STATE_OUTPUT_INDEX, int32 } from '../utils/txUtil'
-import { TxProof, XrayedTxIdPreimg3 } from '../utils/txProof'
-import { PreTxStatesInfo, StateUtils } from '../utils/stateUtils'
-import { CAT721State, CAT721Proto } from './cat721Proto'
-import { NftGuardConstState, NftGuardProto } from './nftGuardProto'
-import { Backtrace, BacktraceInfo } from '../utils/backtrace'
-
-export type NftGuardInfo = {
-    tx: XrayedTxIdPreimg3
-    inputIndexVal: int32
-    outputIndex: ByteString
-    guardState: NftGuardConstState
-}
-
-export type NftUnlockArgs = {
-    // `true`: spend by user, `false`: spend by contract
-    isUserSpend: boolean
-
-    // user spend args
-    userPubKeyPrefix: ByteString
-    userPubKey: PubKey
-    userSig: Sig
-
-    // contract spend arg
-    contractInputIndex: int32
-}
+    StateHashes,
+} from '../types';
+import { ContextUtils } from '../utils/contextUtils';
+import { StateUtils } from '../utils/stateUtils';
+import { Backtrace } from '../utils/backtrace';
+import { OWNER_ADDR_CONTRACT_HASH_BYTE_LEN } from '../constants';
+import { CAT721State, NftGuardInfo } from './types';
+import { TxUtils } from '../utils/txUtils';
+import { OwnerUtils } from '../utils/ownerUtils';
 
 export class CAT721 extends SmartContract {
     @prop()
-    minterScript: ByteString
+    minterScript: ByteString;
 
     @prop()
-    guardScript: ByteString
+    guardScript: ByteString;
 
     constructor(minterScript: ByteString, guardScript: ByteString) {
-        super(...arguments)
-        this.minterScript = minterScript
-        this.guardScript = guardScript
+        super(...arguments);
+        this.minterScript = minterScript;
+        this.guardScript = guardScript;
     }
 
     @method()
     public unlock(
-        nftUnlockArgs: NftUnlockArgs,
-
-        // verify preTx data part
-        preState: CAT721State,
-        preTxStatesInfo: PreTxStatesInfo,
-
-        // amount check guard
+        unlockArgs: ContractUnlockArgs,
+        // state of current spending UTXO, comes from prevTx
+        curState: CAT721State,
+        curStateHashes: StateHashes,
+        // guard
         guardInfo: NftGuardInfo,
         // backtrace
         backtraceInfo: BacktraceInfo,
-        // common args
-        // current tx info
+        // curTx context
         shPreimage: SHPreimage,
         prevoutsCtx: PrevoutsCtx,
-        spentScriptsCtx: SpentScriptsCtx
+        spentScriptsCtx: SpentScriptsCtx,
     ) {
-        // Check sighash preimage.
-        assert(
-            this.checkSig(
-                SigHashUtils.checkSHPreimage(shPreimage),
-                SigHashUtils.Gx
-            ),
-            'preimage check error'
-        )
-        // check ctx
-        SigHashUtils.checkPrevoutsCtx(
-            prevoutsCtx,
-            shPreimage.hashPrevouts,
-            shPreimage.inputIndex
-        )
-        SigHashUtils.checkSpentScriptsCtx(
-            spentScriptsCtx,
-            shPreimage.hashSpentScripts
-        )
-        // verify state
-        StateUtils.verifyPreStateHash(
-            preTxStatesInfo,
-            CAT721Proto.stateHash(preState),
-            backtraceInfo.preTx.outputScriptList[STATE_OUTPUT_INDEX],
-            prevoutsCtx.outputIndexVal
-        )
+        // ctx
+        // check sighash preimage
+        assert(this.checkSig(ContextUtils.checkSHPreimage(shPreimage), ContextUtils.Gx), 'preimage check error');
+        // check prevouts
+        const inputCount = ContextUtils.checkPrevoutsCtx(prevoutsCtx, shPreimage.shaPrevouts, shPreimage.inputIndex);
+        // check spent scripts
+        ContextUtils.checkSpentScriptsCtx(spentScriptsCtx, shPreimage.shaSpentScripts, inputCount);
 
-        const preScript = spentScriptsCtx[Number(prevoutsCtx.inputIndexVal)]
-        Backtrace.verifyToken(
-            prevoutsCtx.spentTxhash,
-            backtraceInfo,
-            this.minterScript,
-            preScript
-        )
+        // back to genesis
+        const nftScript = spentScriptsCtx[Number(prevoutsCtx.inputIndexVal)];
+        Backtrace.verifyToken(backtraceInfo, prevoutsCtx.prevTxHash, this.minterScript, nftScript);
 
-        // make sure the token is spent with a valid guard
-        this.valitateNftGuard(
+        // check state of prevTx
+        const curStateHash = CAT721Proto.stateHash(curState);
+        StateUtils.checkStateHash(
+            curStateHashes,
+            curStateHash,
+            backtraceInfo.prevTxPreimage.hashRoot,
+            prevoutsCtx.prevOutputIndexVal,
+        );
+
+        // make sure tx inputs contain a valid guard
+        this.checkGuard(
             guardInfo,
-            preScript,
-            preState,
+            nftScript,
+            curStateHash,
             prevoutsCtx.inputIndexVal,
             prevoutsCtx.prevouts,
-            spentScriptsCtx
-        )
+            spentScriptsCtx,
+        );
 
-        if (nftUnlockArgs.isUserSpend) {
-            // unlock token owned by user key
-            assert(
-                hash160(
-                    nftUnlockArgs.userPubKeyPrefix + nftUnlockArgs.userPubKey
-                ) == preState.ownerAddr
-            )
-            assert(
-                this.checkSig(nftUnlockArgs.userSig, nftUnlockArgs.userPubKey)
-            )
+        if (len(curState.ownerAddr) == OWNER_ADDR_CONTRACT_HASH_BYTE_LEN) {
+            // unlock nft owned by contract script
+            assert(curState.ownerAddr == hash160(spentScriptsCtx[Number(unlockArgs.contractInputIndexVal)]));
         } else {
-            // unlock token owned by contract script
-            assert(
-                preState.ownerAddr ==
-                    hash160(
-                        spentScriptsCtx[
-                            Number(nftUnlockArgs.contractInputIndex)
-                        ]
-                    )
-            )
+            // unlock nft owned by user key
+            OwnerUtils.checkUserOwner(unlockArgs.userPubKeyPrefix, unlockArgs.userXOnlyPubKey, curState.ownerAddr);
+            assert(this.checkSig(unlockArgs.userSig, unlockArgs.userXOnlyPubKey));
         }
     }
 
     @method()
-    valitateNftGuard(
+    checkGuard(
         guardInfo: NftGuardInfo,
-        preScript: ByteString,
-        preState: CAT721State,
-        inputIndexVal: int32,
-        prevouts: FixedArray<ByteString, typeof MAX_INPUT>,
-        spentScripts: SpentScriptsCtx
-    ): boolean {
-        // check amount script
-        const guardHashRoot = NftGuardProto.stateHash(guardInfo.guardState)
-        assert(
-            StateUtils.getStateScript(guardHashRoot, 1n) ==
-                guardInfo.tx.outputScriptList[STATE_OUTPUT_INDEX]
-        )
-        assert(guardInfo.guardState.collectionScript == preScript)
-        assert(preState.localId >= 0n)
-        assert(
-            guardInfo.guardState.localIdArray[Number(inputIndexVal)] ==
-                preState.localId
-        )
-        const guardTxid = TxProof.getTxIdFromPreimg3(guardInfo.tx)
-        assert(
-            prevouts[Number(guardInfo.inputIndexVal)] ==
-                guardTxid + guardInfo.outputIndex
-        )
-        assert(
-            spentScripts[Number(guardInfo.inputIndexVal)] == this.guardScript
-        )
-        return true
+        // below params are all trustable
+        nftScript: ByteString,
+        nftStateHash: ByteString,
+        nftInputIndexVal: int32,
+        prevouts: Prevouts,
+        spentScriptsCtx: SpentScriptsCtx,
+    ): void {
+        // check guardInfo
+        TxUtils.checkIndex(guardInfo.prevOutputIndexVal, guardInfo.prevOutputIndex);
+        StateUtils.checkInputState(
+            {
+                prevTxPreimage: guardInfo.prevTxPreimage,
+                prevOutputIndexVal: guardInfo.prevOutputIndexVal,
+                stateHashes: guardInfo.curStateHashes,
+            },
+            NftGuardProto.stateHash(guardInfo.curState),
+            prevouts[Number(guardInfo.inputIndexVal)],
+        );
+
+        // guard script in curTx matches the pre-saved guard script property in the nft contract
+        assert(spentScriptsCtx[Number(guardInfo.inputIndexVal)] == this.guardScript);
+
+        // guard state contains current nft state hash
+        assert(guardInfo.curState.inputStateHashes[Number(nftInputIndexVal)] == nftStateHash);
+
+        // guard state contains current nft script
+        // and the corresponding value of array nftScripts and nftScriptIndexes is correct
+        const nftScriptIndex = guardInfo.curState.nftScriptIndexes[Number(nftInputIndexVal)];
+        assert(guardInfo.curState.nftScripts[Number(nftScriptIndex)] == nftScript);
     }
 }

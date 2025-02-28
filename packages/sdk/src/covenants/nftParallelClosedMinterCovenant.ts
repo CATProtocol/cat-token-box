@@ -1,12 +1,6 @@
-import {
-    ByteString,
-    int2ByteString,
-    Ripemd160,
-    Sig,
-    UTXO,
-} from 'scrypt-ts'
-import { Covenant } from '../lib/covenant'
-import { NftParallelClosedMinterCat721Meta } from '../lib/metadata'
+import { ByteString, int2ByteString, Ripemd160, Sig, UTXO } from 'scrypt-ts';
+import { Covenant } from '../lib/covenant';
+import { NftParallelClosedMinterCat721Meta } from '../lib/metadata';
 import {
     isP2TR,
     outpoint2ByteString,
@@ -16,54 +10,45 @@ import {
     toPsbt,
     toXOnly,
     uint8ArrayToHex,
-} from '../lib/utils'
-import { btc, LEAF_VERSION_TAPSCRIPT } from '../lib/btc'
-import { Postage, SupportedNetwork } from '../lib/constants'
-import { getCatCollectionCommitScript } from '../lib/commit'
-import { CatPsbt } from '../lib/catPsbt'
+} from '../lib/utils';
+import { btc, LEAF_VERSION_TAPSCRIPT } from '../lib/btc';
+import { Postage, SupportedNetwork } from '../lib/constants';
+import { getCatCollectionCommitScript } from '../lib/commit';
+import { CatPsbt } from '../lib/catPsbt';
+import { Psbt, Transaction } from 'bitcoinjs-lib';
+import { ProtocolState } from '../lib/state';
+import { getBackTraceInfo_ } from '../lib/proof';
+import { NftParallelClosedMinterProto } from '../contracts/nft/minters/nftParallelClosedMinterProto';
+import { NftParallelClosedMinter } from '../contracts/nft/minters/nftParallelClosedMinter';
+import { CAT721Covenant } from './cat721Covenant';
+import { CAT721Proto } from '../contracts/nft/cat721Proto';
+import { NftParallelClosedMinterState } from '../contracts/nft/types';
 
-import { Psbt, Transaction } from 'bitcoinjs-lib'
-import { ProtocolState } from '../lib/state'
-import { getBackTraceInfo_ } from '../lib/proof'
-import {
-    NftParallelClosedMinterProto,
-    NftParallelClosedMinterState,
-} from '../contracts/nft/nftParallelClosedMinterProto'
-import { NftParallelClosedMinter } from '../contracts/nft/nftParallelClosedMinter'
-import { CAT721Covenant } from './cat721Covenant'
-import { CAT721Proto } from '../contracts/nft/cat721Proto'
 export class NftParallelClosedMinterCovenant extends Covenant<NftParallelClosedMinterState> {
     // locked NftParallelClosedMinter artifact md5
-    static readonly LOCKED_ASM_VERSION = '12afc68fd84cddd24bc866da2955fb57'
+    static readonly LOCKED_ASM_VERSION = '5300a4199c4939f8723e219ecb583a73';
 
-    readonly nftScript: ByteString
+    readonly nftScript: ByteString;
 
     constructor(
         readonly ownerAddress: ByteString,
         readonly collectionId: string,
         metadata: NftParallelClosedMinterCat721Meta,
         state?: NftParallelClosedMinterState,
-        network?: SupportedNetwork
+        network?: SupportedNetwork,
     ) {
-        const contract = new NftParallelClosedMinter(
-            ownerAddress,
-            outpoint2ByteString(collectionId),
-            metadata.max
-        )
+        const contract = new NftParallelClosedMinter(ownerAddress, outpoint2ByteString(collectionId), metadata.max);
         super([{ contract }], {
-            lockedAsmVersion:
-                NftParallelClosedMinterCovenant.LOCKED_ASM_VERSION,
+            lockedAsmVersion: NftParallelClosedMinterCovenant.LOCKED_ASM_VERSION,
             network,
-        })
-        this.state = state
-        this.nftScript = new CAT721Covenant(this.address).lockingScriptHex
-        this.ownerAddress = ownerAddress
+        });
+        this.state = state;
+        this.nftScript = new CAT721Covenant(this.address).lockingScriptHex;
+        this.ownerAddress = ownerAddress;
     }
 
     serializedState(): ByteString {
-        return this.state
-            ? NftParallelClosedMinterProto.toByteString(this.state)
-            : ''
+        return this.state ? NftParallelClosedMinterProto.propHashes(this.state) : '';
     }
 
     static buildCommitTx(
@@ -73,22 +58,21 @@ export class NftParallelClosedMinterCovenant extends Covenant<NftParallelClosedM
         feeUtxos: UTXO[],
         changeAddress: string,
         feeRate: number,
-        icon: {
-            type: string,
-            body: string,
-        } | undefined,
-        revealTxOutputAmount: number = 0
+        icon:
+            | {
+                  type: string;
+                  body: string;
+              }
+            | undefined,
+        revealTxOutputAmount: number = 0,
     ): {
-        commitTxPsbt: Psbt,
-        commitScript: string
+        commitTxPsbt: Psbt;
+        commitScript: string;
     } {
-
-        const commitScript = getCatCollectionCommitScript(toXOnly(pubkey, isP2TR(address)), info, icon)
-        const { p2trLockingScript } = scriptToP2tr(
-            Buffer.from(commitScript, 'hex')
-        )
-        const changeAddr = btc.Address.fromString(changeAddress)
-        const changeScript = btc.Script.fromAddress(changeAddr)
+        const commitScript = getCatCollectionCommitScript(toXOnly(pubkey, isP2TR(address)), info, icon);
+        const { p2trLockingScript } = scriptToP2tr(Buffer.from(commitScript, 'hex'));
+        const changeAddr = btc.Address.fromString(changeAddress);
+        const changeScript = btc.Script.fromAddress(changeAddr);
 
         const commitTx = new btc.Transaction()
             .from(feeUtxos)
@@ -97,33 +81,33 @@ export class NftParallelClosedMinterCovenant extends Covenant<NftParallelClosedM
                 new btc.Transaction.Output({
                     satoshis: Postage.METADATA_POSTAGE,
                     script: p2trLockingScript,
-                })
+                }),
             )
             .addOutput(
                 /** the second utxo spent in reveal tx */
                 new btc.Transaction.Output({
                     satoshis: revealTxOutputAmount,
                     script: changeScript,
-                })
+                }),
             )
             .feePerByte(feeRate)
-            .change(changeAddr)
+            .change(changeAddr);
 
         // if (commitTx.getChangeOutput() === null) {
         //   throw new Error('Insufficient satoshi balance!');
         // }
 
-        const commitTxPsbt = toPsbt(commitTx)
+        const commitTxPsbt = toPsbt(commitTx);
         feeUtxos.forEach((utxo, index) => {
             commitTxPsbt.updateInput(index, {
                 witnessUtxo: {
                     script: Buffer.from(utxo.script, 'hex'),
                     value: BigInt(utxo.satoshis),
                 },
-            })
-        })
+            });
+        });
 
-        return {commitScript, commitTxPsbt}
+        return { commitScript, commitTxPsbt };
     }
 
     static buildRevealTx(
@@ -133,32 +117,27 @@ export class NftParallelClosedMinterCovenant extends Covenant<NftParallelClosedM
         commitScript: string,
         address: string,
         pubkey: string,
-        feeUtxos: UTXO[]
+        feeUtxos: UTXO[],
     ): {
-        collectionId: string
-        minterAddr: string
-        collectionAddr: string
-        revealPsbt: CatPsbt
+        collectionId: string;
+        minterAddr: string;
+        collectionAddr: string;
+        revealPsbt: CatPsbt;
     } {
-
         // metadata: NftParallelClosedMinterCat721Meta,
         // state?: NftParallelClosedMinterState,
         // network?: SupportedNetwork
-        const minter = new NftParallelClosedMinterCovenant(
-            ownerAddress,
-            `${commitUtxo.txId}_0`,
-            metadata
-        )
+        const minter = new NftParallelClosedMinterCovenant(ownerAddress, `${commitUtxo.txId}_0`, metadata);
 
-        const nft = new CAT721Covenant(minter.address)
+        const nft = new CAT721Covenant(minter.address);
 
         minter.state = {
             nftScript: nft.lockingScriptHex,
             nextLocalId: 0n,
-        }
+        };
 
-        const commitLockingScript = Buffer.from(commitScript, 'hex')
-        const { cblock } = scriptToP2tr(commitLockingScript)
+        const commitLockingScript = Buffer.from(commitScript, 'hex');
+        const { cblock } = scriptToP2tr(commitLockingScript);
 
         const revealTx = CatPsbt.create()
             .addCovenantOutput(minter, Postage.MINTER_POSTAGE)
@@ -178,20 +157,21 @@ export class NftParallelClosedMinterCovenant extends Covenant<NftParallelClosedM
                 ],
                 finalizer: (self, inputIdx) => {
                     const witness = [
-                        ...self.txState.stateHashList.map((hash) =>
-                            Buffer.from(hash, 'hex')
-                        ),
+                        ...self.txState.stateHashList.map((hash) => Buffer.from(hash, 'hex')),
                         Buffer.from(
-                            self.getSig(inputIdx, { publicKey: pubkey, disableTweakSigner: isP2TR(address) ? false : true }),
-                            'hex'
+                            self.getSig(inputIdx, {
+                                publicKey: pubkey,
+                                disableTweakSigner: isP2TR(address) ? false : true,
+                            }),
+                            'hex',
                         ),
                         commitLockingScript,
                         Buffer.from(cblock, 'hex'),
-                    ]
-                    return witness
+                    ];
+                    return witness;
                 },
             })
-            .addFeeInputs(feeUtxos)
+            .addFeeInputs(feeUtxos);
         // NOTE: can not have a fee change output here due to the protocol
 
         return {
@@ -199,7 +179,7 @@ export class NftParallelClosedMinterCovenant extends Covenant<NftParallelClosedM
             minterAddr: minter.address,
             collectionAddr: nft.address,
             revealPsbt: revealTx,
-        }
+        };
     }
 
     static buildMintTx(
@@ -214,22 +194,22 @@ export class NftParallelClosedMinterCovenant extends Covenant<NftParallelClosedM
         feeUtxos: UTXO[],
         feeRate: number,
         changeAddress: string,
-        estimatedVSize?: number
+        estimatedVSize?: number,
     ) {
         if (!spentMinter.state) {
-            throw new Error('Minter state is not available')
+            throw new Error('Minter state is not available');
         }
 
-        const mintTx = new CatPsbt()
+        const mintTx = new CatPsbt();
 
-        const { nextMinters } = spentMinter.createNextMinters()
+        const { nextMinters } = spentMinter.createNextMinters();
 
         // add next minters outputs
         for (const nextMinter of nextMinters) {
-            mintTx.addCovenantOutput(nextMinter, Postage.MINTER_POSTAGE)
+            mintTx.addCovenantOutput(nextMinter, Postage.MINTER_POSTAGE);
         }
 
-        const nft = spentMinter.createNft(nftReceiver)
+        const nft = spentMinter.createNft(nftReceiver);
         const { cblock } = scriptToP2tr(nftScript);
 
         mintTx
@@ -245,81 +225,84 @@ export class NftParallelClosedMinterCovenant extends Covenant<NftParallelClosedM
                     value: BigInt(commitUtxo.satoshis),
                 },
                 // tapInternalKey: Buffer.from(TAPROOT_ONLY_SCRIPT_SPENT_KEY, 'hex'),
-                tapLeafScript: [{
-                    leafVersion: LEAF_VERSION_TAPSCRIPT,
-                    script: nftScript,
-                    controlBlock: Buffer.from(cblock, 'hex'),
-                }],
+                tapLeafScript: [
+                    {
+                        leafVersion: LEAF_VERSION_TAPSCRIPT,
+                        script: nftScript,
+                        controlBlock: Buffer.from(cblock, 'hex'),
+                    },
+                ],
                 finalizer: (self, inputIdx) => {
                     const witness = [
-                        Buffer.from(self.getSig(inputIdx, { publicKey: issuerPubKey, disableTweakSigner: isP2TR(changeAddress) ? false : true }), 'hex'),
+                        Buffer.from(
+                            self.getSig(inputIdx, {
+                                publicKey: issuerPubKey,
+                                disableTweakSigner: isP2TR(changeAddress) ? false : true,
+                            }),
+                            'hex',
+                        ),
                         nftScript,
                         Buffer.from(cblock, 'hex'),
                     ];
-                    return witness
-                }
+                    return witness;
+                },
             })
             // add fees
             .addFeeInputs(feeUtxos)
             // add change output
-            .change(changeAddress, feeRate, estimatedVSize)
+            .change(changeAddress, feeRate, estimatedVSize);
 
-        const inputCtxs = mintTx.calculateInputCtxs()
+        const inputCtxs = mintTx.calculateInputCtxs();
 
-        const minterInputIndex = 0
+        const minterInputIndex = 0;
 
-        const nftState = nft.state!
-        const preState = spentMinter.state!
+        const nftState = nft.state!;
+        const preState = spentMinter.state!;
         // console.log('preState', preState)
 
         const preTxStatesInfo = {
-            statesHashRoot: spentMinterTxState.hashRoot,
-            txoStateHashes: spentMinterTxState.stateHashList,
-        }
+            hashRoot: spentMinterTxState.hashRoot,
+            stateHashes: spentMinterTxState.stateHashList,
+        };
         // console.log('preTxStatesInfo', preTxStatesInfo)
 
-        const backTraceInfo = getBackTraceInfo_(
-            spentMinterTxHex,
-            spentMinterPreTxHex,
-            minterInputIndex
-        )
-
+        const backTraceInfo = getBackTraceInfo_(spentMinterTxHex, spentMinterPreTxHex, minterInputIndex);
 
         mintTx.updateCovenantInput(minterInputIndex, spentMinter, {
             method: 'mint',
             argsBuilder: (curPsbt) => {
-                const inputCtx = inputCtxs.get(minterInputIndex)
+                const inputCtx = inputCtxs.get(minterInputIndex);
                 if (!inputCtx) {
-                    throw new Error('Input context is not available')
+                    throw new Error('Input context is not available');
                 }
-                const { shPreimage, prevoutsCtx, spentScriptsCtx } = inputCtx
-                const args = []
-                args.push(curPsbt.txState.stateHashList) // curTxoStateHashes
-                args.push(nftState) // nftMint
-                args.push(isP2TR(changeAddress) ? '' : pubKeyPrefix(issuerPubKey)) // issuerPubKeyPrefix
-                args.push(toXOnly(issuerPubKey, isP2TR(changeAddress))) // issuerPubKey
+                const { shPreimage, prevoutsCtx, spentScriptsCtx } = inputCtx;
+                const args = [];
+                args.push(curPsbt.txState.stateHashList); // curTxoStateHashes
+                args.push(nftState); // nftMint
+                args.push(isP2TR(changeAddress) ? '' : pubKeyPrefix(issuerPubKey)); // issuerPubKeyPrefix
+                args.push(toXOnly(issuerPubKey, isP2TR(changeAddress))); // issuerPubKey
                 args.push(() =>
                     Sig(
                         curPsbt.getSig(0, {
                             publicKey: issuerPubKey,
-                        })
-                    )
-                ) // issuerSig
-                args.push(int2ByteString(BigInt(Postage.MINTER_POSTAGE), 8n)) // minterSatoshis
-                args.push(int2ByteString(BigInt(Postage.TOKEN_POSTAGE), 8n)) // nftSatoshis
-                args.push(preState) // preState
-                args.push(preTxStatesInfo) // preTxStatesInfo
-                args.push(backTraceInfo) // backtraceInfo
-                args.push(shPreimage) // shPreimage
-                args.push(prevoutsCtx) // prevoutsCtx
-                args.push(spentScriptsCtx) // spentScriptsCtx
-                args.push(curPsbt.getChangeInfo()) // changeInfo
+                        }),
+                    ),
+                ); // issuerSig
+                args.push(int2ByteString(BigInt(Postage.MINTER_POSTAGE), 8n)); // minterSatoshis
+                args.push(int2ByteString(BigInt(Postage.TOKEN_POSTAGE), 8n)); // nftSatoshis
+                args.push(preState); // preState
+                args.push(preTxStatesInfo.stateHashes); // preTxStatesInfo
+                args.push(backTraceInfo); // backtraceInfo
+                args.push(shPreimage); // shPreimage
+                args.push(prevoutsCtx); // prevoutsCtx
+                args.push(spentScriptsCtx); // spentScriptsCtx
+                args.push(curPsbt.getChangeInfo()); // changeInfo
 
-                return args
+                return args;
             },
-        })
+        });
 
-        return mintTx
+        return mintTx;
     }
 
     static fromMintTx(
@@ -327,103 +310,89 @@ export class NftParallelClosedMinterCovenant extends Covenant<NftParallelClosedM
         ownerAddr: ByteString,
         info: NftParallelClosedMinterCat721Meta,
         txHex: string,
-        outputIndex?: number
+        outputIndex?: number,
     ): NftParallelClosedMinterCovenant {
-        const tx = Transaction.fromHex(txHex)
+        const tx = Transaction.fromHex(txHex);
 
-        const minterOutputIndex = outputIndex || 1
-        const minterOutput = tx.outs[minterOutputIndex]
+        const minterOutputIndex = outputIndex || 1;
+        const minterOutput = tx.outs[minterOutputIndex];
         if (!minterOutput) {
-            throw new Error(
-                `Output[${minterOutputIndex}] not found in transaction`
-            )
+            throw new Error(`Output[${minterOutputIndex}] not found in transaction`);
         }
-        const minter = new NftParallelClosedMinterCovenant(
-            ownerAddr,
-            collectionId,
-            info
-        ).bindToUtxo({
+        const minter = new NftParallelClosedMinterCovenant(ownerAddr, collectionId, info).bindToUtxo({
             txId: tx.getId(),
             outputIndex: minterOutputIndex,
             satoshis: Postage.MINTER_POSTAGE,
-        })
+        });
 
-        if (
-            Buffer.from(minterOutput.script).toString('hex') !==
-            minter.lockingScriptHex
-        ) {
-            throw new Error(`Invalid minter script in outputs[${outputIndex}]`)
+        if (Buffer.from(minterOutput.script).toString('hex') !== minter.lockingScriptHex) {
+            throw new Error(`Invalid minter script in outputs[${outputIndex}]`);
         }
 
-        const minterInputIndex = 0
-        const minterInput = tx.ins[minterInputIndex]
+        const minterInputIndex = 0;
+        const minterInput = tx.ins[minterInputIndex];
 
         try {
             // console.log(minterInput)
             const preState = minter.getSubContractCallArg(
                 minterInput.witness.map((w) => Buffer.from(w)),
                 'mint',
-                'preState'
-            ) as NftParallelClosedMinterState
+                'curState',
+            ) as NftParallelClosedMinterState;
             if (minterOutputIndex === 1) {
-                minter.state = NftParallelClosedMinterProto.create(
-                    minter.nftScript,
-                    preState.nextLocalId + preState.nextLocalId + 1n
-                )
+                minter.state = {
+                    nftScript: minter.nftScript,
+                    nextLocalId: preState.nextLocalId + preState.nextLocalId + 1n,
+                };
             } else if (minterOutputIndex === 2) {
-                minter.state = NftParallelClosedMinterProto.create(
-                    minter.nftScript,
-                    preState.nextLocalId + preState.nextLocalId + 2n
-                )
+                minter.state = {
+                    nftScript: minter.nftScript,
+                    nextLocalId: preState.nextLocalId + preState.nextLocalId + 2n,
+                };
             } else {
-                throw new Error()
+                throw new Error();
             }
         } catch (error) {
-            const genesisOutput = outpoint2TxOutpoint(collectionId)
-            if (genesisOutput.txhash === uint8ArrayToHex(minterInput.hash)) {
-                minter.state = NftParallelClosedMinterProto.create(
-                    minter.nftScript,
-                    0n
-                )
+            const genesisOutput = outpoint2TxOutpoint(collectionId);
+            if (genesisOutput.txHash === uint8ArrayToHex(minterInput.hash)) {
+                minter.state = {
+                    nftScript: minter.nftScript,
+                    nextLocalId: 0n,
+                };
             } else {
                 throw new Error(
-                    `Input[${minterInputIndex}] is not a valid minter input, or the transaction is not a mint transaction`
-                )
+                    `Input[${minterInputIndex}] is not a valid minter input, or the transaction is not a mint transaction`,
+                );
             }
         }
 
-        return minter
+        return minter;
     }
 
     private createNextMinters(): {
-        nextMinters: NftParallelClosedMinterCovenant[]
+        nextMinters: NftParallelClosedMinterCovenant[];
     } {
-        const contract = this.getSubContract() as NftParallelClosedMinter
-        const nextMinters: NftParallelClosedMinterCovenant[] = []
+        const contract = this.getSubContract() as NftParallelClosedMinter;
+        const nextMinters: NftParallelClosedMinterCovenant[] = [];
         const nextLocalIds = [
             this.state.nextLocalId + this.state.nextLocalId + 1n,
             this.state.nextLocalId + this.state.nextLocalId + 2n,
-        ]
+        ];
         nextLocalIds.forEach((nextLocalId) => {
             if (nextLocalId < contract.max) {
-                const newState = NftParallelClosedMinterProto.create(
-                    this.nftScript,
-                    nextLocalId
-                )
-                nextMinters.push(
-                    this.next(newState) as NftParallelClosedMinterCovenant
-                )
+                const newState = {
+                    nftScript: this.nftScript,
+                    nextLocalId: nextLocalId,
+                };
+                nextMinters.push(this.next(newState) as NftParallelClosedMinterCovenant);
             }
-        })
+        });
         return {
             nextMinters,
-        }
+        };
     }
 
     private createNft(toAddr: Ripemd160): CAT721Covenant {
-        return new CAT721Covenant(
-            this.address,
-            CAT721Proto.create(toAddr, this.state.nextLocalId)
-        )
+        return new CAT721Covenant(this.address, CAT721Proto.create(this.state.nextLocalId, toAddr));
     }
 }

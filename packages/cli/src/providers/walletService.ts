@@ -12,7 +12,12 @@ import {
 } from 'src/common';
 import { ConfigService } from './configService';
 import { join } from 'path';
-import { DefaultSigner, btc, Signer, PSBTOptions } from '@cat-protocol/cat-sdk';
+import {
+  DefaultSigner,
+  btc,
+  Signer,
+  PSBTOptions,
+} from '@cat-protocol/cat-sdk-v2';
 import ECPairFactory from 'ecpair';
 const bip32 = BIP32Factory(ecc);
 const ECPair = ECPairFactory(ecc);

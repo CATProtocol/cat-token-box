@@ -1,3 +1,3 @@
-import { DefaultSigner } from "../../src/signers";
+import { DefaultSigner } from '../../src/signers';
 
-export const testSigner = new DefaultSigner()
+export const testSigner = new DefaultSigner();

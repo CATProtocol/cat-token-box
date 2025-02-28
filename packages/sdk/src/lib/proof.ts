@@ -1,266 +1,262 @@
-import { btc } from '../lib/btc'
+import { ByteString, FixedArray, byteString2Int, fill, hash160, int2ByteString, toByteString, toHex } from 'scrypt-ts';
+import * as varuint from 'varuint-bitcoin';
+import {
+    TX_INPUT_COUNT_MAX,
+    TX_OUTPUT_COUNT_MAX,
+    STATE_OUTPUT_COUNT_MAX,
+    TX_HASH_PREIMAGE2_SUFFIX_ARRAY_SIZE,
+    TX_HASH_PREIMAGE3_INPUT_ARRAY_SIZE,
+    TX_HASH_PREIMAGE3_SUFFIX_ARRAY_SIZE,
+} from '../contracts/constants';
+import { InputStateProof, TxIn, TxHashPreimage1, TxHashPreimage2, TxHashPreimage3 } from '../contracts/types';
+import { TxUtils } from '../contracts/utils/txUtils';
+import { bitcoinjs } from './btc';
+import { uint8ArrayToHex } from './utils';
+import { BufferReader } from './bufferReader';
 
-import {
-    FixedArray,
-    byteString2Int,
-    fill,
-    int2ByteString,
-    toByteString,
-    toHex,
-} from 'scrypt-ts'
-import * as varuint from 'varuint-bitcoin'
-import {
-    MAX_INPUT,
-    MAX_STATE,
-    MAX_TOKEN_OUTPUT,
-    XRAYED_TXID_PREIMG3_OUTPUT_NUMBER,
-} from '../contracts/utils/txUtil'
-import {
-    TxIdPreimg,
-    TxInput,
-    XrayedTxIdPreimg1,
-    XrayedTxIdPreimg2,
-    XrayedTxIdPreimg3,
-} from '../contracts/utils/txProof'
+export type TxHashPreimage = {
+    version: ByteString;
+    inputCount: ByteString;
+    inputPrevTxHashList: FixedArray<ByteString, typeof TX_INPUT_COUNT_MAX>;
+    inputPrevOutputIndexList: FixedArray<ByteString, typeof TX_INPUT_COUNT_MAX>;
+    inputScriptList: FixedArray<ByteString, typeof TX_INPUT_COUNT_MAX>;
+    inputSequenceList: FixedArray<ByteString, typeof TX_INPUT_COUNT_MAX>;
+    outputCount: ByteString;
+    outputSatoshisList: FixedArray<ByteString, typeof TX_OUTPUT_COUNT_MAX>;
+    outputScriptLenList: FixedArray<ByteString, typeof TX_OUTPUT_COUNT_MAX>;
+    outputScriptList: FixedArray<ByteString, typeof TX_OUTPUT_COUNT_MAX>;
+    locktime: ByteString;
+};
 
-export const emptyString = toByteString('')
+export const emptyString = toByteString('');
 
 export const emptyFixedArray = function () {
-    return fill(emptyString, MAX_INPUT)
-}
+    return fill(emptyString, TX_INPUT_COUNT_MAX);
+};
 
 export const emptyTokenArray = function () {
-    return fill(emptyString, MAX_TOKEN_OUTPUT)
-}
+    return fill(emptyString, STATE_OUTPUT_COUNT_MAX);
+};
 
 export const emptyOutputByteStrings = function () {
-    return fill(emptyString, MAX_STATE)
-}
+    return fill(emptyString, STATE_OUTPUT_COUNT_MAX);
+};
 
 export const emptyBigIntArray = function () {
-    return fill(0n, MAX_INPUT)
-}
+    return fill(0n, TX_INPUT_COUNT_MAX);
+};
 
 export const emptyTokenAmountArray = function () {
-    return fill(0n, MAX_TOKEN_OUTPUT)
-}
+    return fill(0n, STATE_OUTPUT_COUNT_MAX);
+};
 
-export const intArrayToByteString = function (
-    array: FixedArray<bigint, typeof MAX_INPUT>
-) {
-    const rList = emptyFixedArray()
+export const intArrayToByteString = function (array: FixedArray<bigint, typeof TX_INPUT_COUNT_MAX>) {
+    const rList = emptyFixedArray();
     for (let index = 0; index < array.length; index++) {
-        const element = array[index]
-        rList[index] = int2ByteString(element)
+        const element = array[index];
+        rList[index] = hash160(int2ByteString(element));
     }
-    return rList
-}
+    return rList;
+};
 
-export const tokenAmountToByteString = function (
-    array: FixedArray<bigint, typeof MAX_TOKEN_OUTPUT>
-) {
-    const rList = emptyTokenArray()
+export const tokenAmountToByteString = function (array: FixedArray<bigint, typeof STATE_OUTPUT_COUNT_MAX>) {
+    const rList = emptyTokenArray();
     for (let index = 0; index < array.length; index++) {
-        const element = array[index]
-        rList[index] = int2ByteString(element)
+        const element = array[index];
+        rList[index] = int2ByteString(element);
     }
-    return rList
-}
+    return rList;
+};
 
-export const txToTxHeader = function (txBuf: Buffer): TxIdPreimg {
-    const headerReader = btc.encoding.BufferReader(txBuf)
-    const version = headerReader.read(4)
-    const inputNumber = headerReader.readVarintNum()
-    const inputTxhashList = emptyFixedArray()
-    const inputOutputIndexList = emptyFixedArray()
-    const inputScriptList = emptyFixedArray()
-    const inputSequenceList = emptyFixedArray()
+export const txToTxHeader = function (txBuf: Buffer): TxHashPreimage {
+    const headerReader = new BufferReader(txBuf);
+    const version = uint8ArrayToHex(headerReader.readSlice(4));
+    const inputNumber = headerReader.readVarInt();
+    const inputTxhashList = emptyFixedArray();
+    const inputOutputIndexList = emptyFixedArray();
+    const inputScriptList = emptyFixedArray();
+    const inputSequenceList = emptyFixedArray();
     for (let index = 0; index < inputNumber; index++) {
-        const txhash = headerReader.read(32)
-        const outputIndex = headerReader.read(4)
-        const unlockScript = headerReader.readVarLengthBuffer()
+        const txhash = uint8ArrayToHex(headerReader.readSlice(32));
+        const outputIndex = uint8ArrayToHex(headerReader.readSlice(4));
+        const unlockScript = uint8ArrayToHex(headerReader.readVarSlice());
         if (unlockScript.length > 0) {
-            throw Error(`input ${index} unlocking script need eq 0`)
+            throw Error(`input ${index} unlocking script need eq 0`);
         }
-        const sequence = headerReader.read(4)
-        inputTxhashList[index] = toHex(txhash)
-        inputOutputIndexList[index] = toHex(outputIndex)
-        inputScriptList[index] = toByteString('00')
-        inputSequenceList[index] = toHex(sequence)
+        const sequence = uint8ArrayToHex(headerReader.readSlice(4));
+        inputTxhashList[index] = toHex(txhash);
+        inputOutputIndexList[index] = toHex(outputIndex);
+        inputScriptList[index] = toByteString('00');
+        inputSequenceList[index] = toHex(sequence);
     }
-    const outputNumber = headerReader.readVarintNum()
-    const outputSatoshisList = emptyFixedArray()
-    const outputScriptLenList = emptyFixedArray()
-    const outputScriptList = emptyFixedArray()
+    const outputNumber = headerReader.readVarInt();
+    const outputSatoshisList = emptyFixedArray();
+    const outputScriptLenList = emptyFixedArray();
+    const outputScriptList = emptyFixedArray();
     for (let index = 0; index < outputNumber; index++) {
-        const satoshiBytes = headerReader.read(8)
-        const scriptLen = headerReader.readVarintNum()
-        const script = headerReader.read(scriptLen)
-        outputSatoshisList[index] = toHex(satoshiBytes)
-        outputScriptLenList[index] = toHex(varuint.encode(scriptLen))
-        outputScriptList[index] = toHex(script)
+        const satoshiBytes = uint8ArrayToHex(headerReader.readSlice(8));
+        const scriptLen = headerReader.readVarInt();
+        const script = uint8ArrayToHex(headerReader.readSlice(scriptLen));
+        outputSatoshisList[index] = toHex(satoshiBytes);
+        outputScriptLenList[index] = toHex(varuint.encode(scriptLen));
+        outputScriptList[index] = toHex(script);
     }
 
     const inputCount = toHex(Buffer.from(varuint.encode(inputNumber).buffer));
     const outputCount = toHex(Buffer.from(varuint.encode(outputNumber).buffer));
-    const nLocktime = headerReader.read(4)
+    const nLocktime = uint8ArrayToHex(headerReader.readSlice(4));
     return {
         version: toHex(version),
         inputCount,
-        inputTxhashList: inputTxhashList,
-        inputOutputIndexList: inputOutputIndexList,
+        inputPrevTxHashList: inputTxhashList,
+        inputPrevOutputIndexList: inputOutputIndexList,
         inputScriptList: inputScriptList,
         inputSequenceList: inputSequenceList,
         outputCount,
         outputSatoshisList: outputSatoshisList,
         outputScriptLenList: outputScriptLenList,
         outputScriptList: outputScriptList,
-        nLocktime: toHex(nLocktime),
-    }
-}
+        locktime: toHex(nLocktime),
+    };
+};
 
-export const txToTxHeaderPartial = function (
-    txHeader: TxIdPreimg
-): XrayedTxIdPreimg1 {
-    const inputs = emptyFixedArray()
+export const txToTxHeaderPartial = function (txHeader: TxHashPreimage): TxHashPreimage1 {
+    const inputs = emptyFixedArray();
     for (let index = 0; index < inputs.length; index++) {
         inputs[index] =
-            txHeader.inputTxhashList[index] +
-            txHeader.inputOutputIndexList[index] +
+            txHeader.inputPrevTxHashList[index] +
+            txHeader.inputPrevOutputIndexList[index] +
             txHeader.inputScriptList[index] +
-            txHeader.inputSequenceList[index]
+            txHeader.inputSequenceList[index];
     }
-    const outputSatoshisList = emptyFixedArray()
-    const outputScriptList = emptyFixedArray()
+    const outputSatoshisList = emptyFixedArray();
+    const outputScriptList = emptyFixedArray();
     for (let index = 0; index < outputSatoshisList.length; index++) {
-        outputSatoshisList[index] = txHeader.outputSatoshisList[index]
-        outputScriptList[index] = txHeader.outputScriptList[index]
+        outputSatoshisList[index] = txHeader.outputSatoshisList[index];
+        outputScriptList[index] = txHeader.outputScriptList[index];
     }
     return {
         version: txHeader.version,
-        inputCount: txHeader.inputCount,
-        inputs: inputs,
+        inputCountVal: byteString2Int(txHeader.inputCount),
+        inputList: inputs,
         outputCountVal: byteString2Int(txHeader.outputCount),
-        outputCount: txHeader.outputCount,
         outputSatoshisList: outputSatoshisList,
         outputScriptList: outputScriptList,
-        nLocktime: txHeader.nLocktime,
-    }
-}
+        locktime: txHeader.locktime,
+    };
+};
 
-export const txToTxHeaderTiny = function (
-    txHeader: TxIdPreimg
-): XrayedTxIdPreimg2 {
-    let inputString = toByteString('')
-    const inputs = emptyFixedArray()
+export const txToTxHeaderTiny = function (txHeader: TxHashPreimage): TxHashPreimage2 {
+    const inputs = emptyFixedArray();
     for (let index = 0; index < inputs.length; index++) {
         // inputs[index] =
-        inputString +=
-            txHeader.inputTxhashList[index] +
-            txHeader.inputOutputIndexList[index] +
+        inputs[index] =
+            txHeader.inputPrevTxHashList[index] +
+            txHeader.inputPrevOutputIndexList[index] +
             txHeader.inputScriptList[index] +
-            txHeader.inputSequenceList[index]
+            txHeader.inputSequenceList[index];
     }
-    const prevList = fill(emptyString, 4)
-    const _prevList =
-        txHeader.version +
-        txHeader.inputCount +
-        inputString +
-        txHeader.outputCount
-    for (let index = 0; index < 4; index++) {
-        const start = index * 80 * 2
-        const end = start + 80 * 2
-        prevList[index] = _prevList.slice(start, end)
+    let otherOutputString = toByteString('');
+    for (let index = 1; index < TX_OUTPUT_COUNT_MAX; index++) {
+        if (txHeader.outputScriptList[index].length > 0) {
+            otherOutputString += TxUtils.buildOutput(
+                txHeader.outputScriptList[index],
+                txHeader.outputSatoshisList[index],
+            );
+        }
     }
-    const outputSatoshisList = emptyFixedArray()
-    const outputScriptList = emptyFixedArray()
-    for (let index = 0; index < outputSatoshisList.length; index++) {
-        outputSatoshisList[index] = txHeader.outputSatoshisList[index]
-        outputScriptList[index] = txHeader.outputScriptList[index]
+    otherOutputString += txHeader.locktime;
+    const suffixList = fill(emptyString, TX_HASH_PREIMAGE2_SUFFIX_ARRAY_SIZE);
+    for (let index = 0; index < TX_HASH_PREIMAGE2_SUFFIX_ARRAY_SIZE; index++) {
+        const start = index * 80 * 2;
+        const end = start + 80 * 2;
+        suffixList[index] = otherOutputString.slice(start, end);
     }
     return {
-        prevList: prevList,
+        version: txHeader.version,
+        inputCountVal: byteString2Int(txHeader.inputCount),
+        inputList: inputs,
         outputCountVal: byteString2Int(txHeader.outputCount),
-        outputCount: txHeader.outputCount,
-        outputSatoshisList,
-        outputScriptList,
-        nLocktime: txHeader.nLocktime,
-    }
-}
+        hashRoot: txHeader.outputScriptList[0].slice(12),
+        suffixList: suffixList,
+    };
+};
 
-export const txToTxHeaderCheck = function (
-    txHeader: TxIdPreimg
-): XrayedTxIdPreimg3 {
-    let inputString = toByteString('')
-    const inputs = emptyFixedArray()
-    for (let index = 0; index < inputs.length; index++) {
-        inputString +=
-            txHeader.inputTxhashList[index] +
-            txHeader.inputOutputIndexList[index] +
-            txHeader.inputScriptList[index] +
-            txHeader.inputSequenceList[index]
+export const txToXrayedTxIdPreimg4 = function (txHeader: TxHashPreimage): TxHashPreimage3 {
+    const img2 = txToTxHeaderTiny(txHeader);
+    let inputString = toByteString('');
+    for (const input of img2.inputList) {
+        inputString += input;
     }
-    const outputSatoshisList = fill(
-        emptyString,
-        XRAYED_TXID_PREIMG3_OUTPUT_NUMBER
-    )
-    const outputScriptList = fill(
-        emptyString,
-        XRAYED_TXID_PREIMG3_OUTPUT_NUMBER
-    )
-    for (let index = 0; index < outputSatoshisList.length; index++) {
-        outputSatoshisList[index] = txHeader.outputSatoshisList[index]
-        outputScriptList[index] = txHeader.outputScriptList[index]
+    const prefixList = fill(emptyString, TX_HASH_PREIMAGE3_INPUT_ARRAY_SIZE);
+    for (let index = 0; index < TX_HASH_PREIMAGE3_INPUT_ARRAY_SIZE; index++) {
+        const start = index * 80 * 2;
+        const end = start + 80 * 2;
+        prefixList[index] = inputString.slice(start, end);
     }
     return {
-        prev:
-            txHeader.version +
-            txHeader.inputCount +
-            inputString +
-            txHeader.outputCount,
-        outputCountVal: byteString2Int(txHeader.outputCount),
-        outputCount: txHeader.outputCount,
-        outputSatoshisList,
-        outputScriptList: outputScriptList,
-        nLocktime: txHeader.nLocktime,
-    }
-}
+        version: img2.version,
+        inputCountVal: img2.inputCountVal,
+        inputList: prefixList,
+        outputCountVal: img2.outputCountVal,
+        hashRoot: img2.hashRoot,
+        suffixList: img2.suffixList,
+    };
+};
+
+export const createEmptyXrayedTxIdPreimg4 = function (): TxHashPreimage3 {
+    return {
+        version: emptyString,
+        inputCountVal: 0n,
+        inputList: fill(emptyString, TX_HASH_PREIMAGE3_INPUT_ARRAY_SIZE),
+        outputCountVal: 0n,
+        hashRoot: emptyString,
+        suffixList: fill(emptyString, TX_HASH_PREIMAGE3_SUFFIX_ARRAY_SIZE),
+    };
+};
+
+export const createInputStateProofArray = function (): FixedArray<InputStateProof, typeof TX_INPUT_COUNT_MAX> {
+    const item: InputStateProof = {
+        prevTxPreimage: createEmptyXrayedTxIdPreimg4(),
+        prevOutputIndexVal: 0n,
+        stateHashes: fill(emptyString, STATE_OUTPUT_COUNT_MAX),
+    };
+    return fill(item, TX_INPUT_COUNT_MAX);
+};
 
 export const getTxHeaderCheck = function (tx, outputIndex: number) {
-    const txHeader = txToTxHeader(tx.toBuffer(true))
-    const outputBuf = Buffer.alloc(4, 0)
-    outputBuf.writeUInt32LE(outputIndex)
+    const txHeader = txToTxHeader(tx.toBuffer(true));
+    const outputBuf = Buffer.alloc(4, 0);
+    outputBuf.writeUInt32LE(outputIndex);
     return {
-        tx: txToTxHeaderCheck(txHeader),
+        tx: txToXrayedTxIdPreimg4(txHeader),
         outputBytes: outputBuf.toString('hex'),
         outputIndex: BigInt(outputIndex),
-        outputPre:
-            txHeader.outputSatoshisList[outputIndex] +
-            txHeader.outputScriptLenList[outputIndex],
-    }
-}
+        outputPre: txHeader.outputSatoshisList[outputIndex] + txHeader.outputScriptLenList[outputIndex],
+    };
+};
 
-export const getBackTraceInfo_ = function (
-    preTxHex: string,
-    prePreTxHex: string,
-    preTxInputIndex: number
-) {
-    const preTxHeader = txToTxHeader(new btc.Transaction(preTxHex).toBuffer(true))
-    const prePreTxHeader = txToTxHeader(new btc.Transaction(prePreTxHex).toBuffer(true))
-    const preTxHeaderPartial = txToTxHeaderPartial(preTxHeader)
-    const prePreTxHeaderTiny = txToTxHeaderTiny(prePreTxHeader)
-    const preTxInput: TxInput = {
-        txhash: preTxHeader.inputTxhashList[preTxInputIndex],
-        outputIndex: preTxHeader.inputOutputIndexList[preTxInputIndex],
-        outputIndexVal: byteString2Int(
-            preTxHeader.inputOutputIndexList[preTxInputIndex]
-        ),
-        sequence: preTxHeader.inputSequenceList[preTxInputIndex],
-    }
+export const txHexToXrayedTxIdPreimg4 = function (txHex: string) {
+    const tx = bitcoinjs.Transaction.fromHex(txHex);
+    const txHeader = txToTxHeader(tx.__toBuffer());
+    return txToXrayedTxIdPreimg4(txHeader);
+};
+
+export const getBackTraceInfo_ = function (prevTxHex: string, prevPrevTxHex: string, prevTxInputIndex: number) {
+    const prevTxHeader = txToTxHeader(bitcoinjs.Transaction.fromHex(prevTxHex).__toBuffer());
+    const prevPrevTxHeader = txToTxHeader(bitcoinjs.Transaction.fromHex(prevPrevTxHex).__toBuffer());
+    const prevTxHeaderTiny = txToTxHeaderTiny(prevTxHeader);
+    const prevPrevTxHeaderPartial = txToTxHeaderPartial(prevPrevTxHeader);
+    const prevTxInput: TxIn = {
+        prevTxHash: prevTxHeader.inputPrevTxHashList[prevTxInputIndex],
+        prevOutputIndex: prevTxHeader.inputPrevOutputIndexList[prevTxInputIndex],
+        prevOutputIndexVal: byteString2Int(prevTxHeader.inputPrevOutputIndexList[prevTxInputIndex]),
+        sequence: prevTxHeader.inputSequenceList[prevTxInputIndex],
+    };
     return {
-        preTx: preTxHeaderPartial,
-        preTxInput: preTxInput,
-        preTxInputIndex: BigInt(preTxInputIndex),
-        prePreTx: prePreTxHeaderTiny,
-    }
-}
+        prevTxPreimage: prevTxHeaderTiny,
+        prevTxInput: prevTxInput,
+        prevTxInputIndexVal: BigInt(prevTxInputIndex),
+        prevPrevTxPreimage: prevPrevTxHeaderPartial,
+    };
+};

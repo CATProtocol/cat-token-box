@@ -12,9 +12,9 @@ import {
 } from '../boardcast.command';
 import {
   OpenMinterCat20Meta,
-  OpenMinterV2,
+  OpenMinter,
   deploy,
-} from '@cat-protocol/cat-sdk';
+} from '@cat-protocol/cat-sdk-v2';
 
 interface DeployCommandOptions extends BoardcastCommandOptions {
   config?: string;
@@ -67,7 +67,7 @@ export class DeployCommand extends BoardcastCommand {
         const content = readFileSync(options.metadata).toString();
         cat20Meta = JSON.parse(content);
         Object.assign(cat20Meta, {
-          minterMd5: OpenMinterV2.getArtifact().md5,
+          minterMd5: OpenMinter.getArtifact().md5,
         });
       } else {
         const { name, symbol, decimals, premine, max, limit } = options;
@@ -78,7 +78,7 @@ export class DeployCommand extends BoardcastCommand {
           premine,
           max,
           limit,
-          minterMd5: OpenMinterV2.getArtifact().md5,
+          minterMd5: OpenMinter.getArtifact().md5,
         };
       }
 

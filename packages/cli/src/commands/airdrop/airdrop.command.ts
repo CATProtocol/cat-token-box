@@ -19,7 +19,7 @@ import {
   airdrop,
   AirdropProcess,
   validteSupportedAddress,
-} from '@cat-protocol/cat-sdk';
+} from '@cat-protocol/cat-sdk-v2';
 import { dirname, isAbsolute, join } from 'path';
 import { accessSync, appendFileSync, constants, readFileSync } from 'fs';
 interface AirdropCommandOptions extends BoardcastCommandOptions {

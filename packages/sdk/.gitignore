@@ -11,3 +11,5 @@ tsconfig-scryptTS.json
 !.vscode/settings.json
 .eslintcache
 .DS_Store
+.nyc_output/
+coverage/

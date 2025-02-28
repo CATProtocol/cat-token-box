@@ -6,7 +6,10 @@ import { Repository } from 'typeorm';
 import { Constants } from '../../common/constants';
 import { TaprootPayment } from '../../common/types';
 import { TxOutput, crypto } from 'bitcoinjs-lib';
-import { Cat20GuardCovenant, CAT721GuardCovenant } from '@cat-protocol/cat-sdk';
+import {
+  Cat20GuardCovenant,
+  CAT721GuardCovenant,
+} from '@cat-protocol/cat-sdk-v2';
 
 @Injectable()
 export class CommonService {
@@ -26,7 +29,7 @@ export class CommonService {
     const tokenGuardContractInfo = new Cat20GuardCovenant();
     this.FT_GUARD_PUBKEY = tokenGuardContractInfo.tpubkey;
     this.FT_TRANSFER_GUARD_SCRIPT_HASH =
-      tokenGuardContractInfo.getTapLeafContract('transfer').contractScriptHash;
+      tokenGuardContractInfo.getTapLeafContract().contractScriptHash;
     this.logger.log(`token guard xOnlyPubKey = ${this.FT_GUARD_PUBKEY}`);
     this.logger.log(
       `token guard transferScriptHash = ${this.FT_TRANSFER_GUARD_SCRIPT_HASH}`,
@@ -35,7 +38,7 @@ export class CommonService {
     const nftGuardContractInfo = new CAT721GuardCovenant();
     this.NFT_GUARD_PUBKEY = nftGuardContractInfo.tpubkey;
     this.NFT_TRANSFER_GUARD_SCRIPT_HASH =
-      nftGuardContractInfo.getTapLeafContract('transfer').contractScriptHash;
+      nftGuardContractInfo.getTapLeafContract().contractScriptHash;
     this.logger.log(`nft guard xOnlyPubKey = ${this.NFT_GUARD_PUBKEY}`);
     this.logger.log(
       `nft guard transferScriptHash = ${this.NFT_TRANSFER_GUARD_SCRIPT_HASH}`,

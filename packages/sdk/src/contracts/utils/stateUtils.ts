@@ -1,112 +1,104 @@
-import {
-    ByteString,
-    FixedArray,
-    SmartContractLib,
-    hash160,
-    method,
-    toByteString,
-    assert,
-} from 'scrypt-ts'
-import { MAX_STATE, STATE_OUTPUT_INDEX, TxUtil, int32 } from './txUtil'
-import { TxProof, XrayedTxIdPreimg3 } from './txProof'
-
-export type TxoStateHashes = FixedArray<ByteString, typeof MAX_STATE>
-
-export type PreTxStatesInfo = {
-    statesHashRoot: ByteString
-    txoStateHashes: TxoStateHashes
-}
+import { ByteString, SmartContractLib, hash160, method, toByteString, assert, len } from 'scrypt-ts';
+import { int32, StateHashes, InputStateProof } from '../types';
+import { STATE_OUTPUT_COUNT_MAX, STATE_HASH_BYTE_LEN } from '../constants';
+import { TxUtils } from './txUtils';
+import { TxProof } from './txProof';
 
 export class StateUtils extends SmartContractLib {
+    /**
+     * Check if stateHashes match hashRoot
+     * @param stateHashes state hash array of tx outputs
+     * @param hashRoot trustable state hash root
+     */
     @method()
-    static verifyStateRoot(
-        txoStateHashes: FixedArray<ByteString, typeof MAX_STATE>,
-        statesHashRoot: ByteString
-    ): boolean {
-        let rawString = toByteString('')
-        for (let i = 0; i < MAX_STATE; i++) {
-            rawString += hash160(txoStateHashes[i])
+    static checkStateHashRoot(stateHashes: StateHashes, hashRoot: ByteString): void {
+        let stateRoots = toByteString('');
+        for (let i = 0; i < STATE_OUTPUT_COUNT_MAX; i++) {
+            const stateHash = stateHashes[i];
+            const stateHashLen = len(stateHash);
+            assert(stateHashLen == 0n || stateHashLen == STATE_HASH_BYTE_LEN);
+            stateRoots += hash160(stateHash);
         }
-        return hash160(rawString) == statesHashRoot
+        assert(hash160(stateRoots) == hashRoot, 'stateHashes and hashRoot mismatch');
     }
 
+    /**
+     * Pad empty state roots to fill the state root array
+     * @param stateCount the number of states
+     * @returns padding state roots
+     */
     @method()
-    static getPadding(stateNumber: int32): ByteString {
-        const number = BigInt(MAX_STATE) - stateNumber
-        let padding = toByteString('')
-        for (let index = 0; index < MAX_STATE; index++) {
-            if (index < number) {
-                padding += hash160(toByteString(''))
+    static padEmptyStateRoots(stateCount: int32): ByteString {
+        const emptySlots = BigInt(STATE_OUTPUT_COUNT_MAX) - stateCount;
+        assert(emptySlots >= 0n);
+        let padding = toByteString('');
+        for (let i = 0; i < STATE_OUTPUT_COUNT_MAX; i++) {
+            if (i < emptySlots) {
+                padding += hash160(toByteString(''));
             }
         }
-        return padding
+        return padding;
     }
 
+    /**
+     * Build state hash root output with leading state roots, and verify the user pass-in stateHashes as well
+     * @param leadingStateRoots leading state roots of curTx outputs
+     * @param stateCount the number of states
+     * @param stateHashes user passed-in stateHashes to verify
+     * @returns serialized state hash root output in format ByteString
+     */
     @method()
-    static getStateScript(
-        hashString: ByteString,
-        stateNumber: int32
+    static buildStateHashRootOutput(
+        leadingStateRoots: ByteString,
+        stateCount: int32,
+        stateHashes: StateHashes,
     ): ByteString {
-        return TxUtil.getStateScript(
-            hash160(hash160(hashString) + StateUtils.getPadding(stateNumber))
-        )
+        const hashRoot = hash160(leadingStateRoots + StateUtils.padEmptyStateRoots(stateCount));
+        StateUtils.checkStateHashRoot(stateHashes, hashRoot);
+        return TxUtils.buildStateHashRootOutput(hashRoot);
     }
 
+    /**
+     * Use trustable hashRoot and outputIndex to check passed-in stateHashes and stateHash
+     * @param stateHashes passed-in stateHashes
+     * @param stateHash passed-in stateHash
+     * @param hashRoot trustable hashRoot
+     * @param outputIndex trustable outputIndex
+     */
     @method()
-    static getCurrentStateOutput(
-        hashString: ByteString,
-        stateNumber: int32,
-        stateHashList: FixedArray<ByteString, typeof MAX_STATE>
-    ): ByteString {
-        const hashRoot = hash160(
-            hashString + StateUtils.getPadding(stateNumber)
-        )
-        assert(StateUtils.verifyStateRoot(stateHashList, hashRoot))
-        return TxUtil.buildOpReturnRoot(TxUtil.getStateScript(hashRoot))
+    static checkStateHash(
+        stateHashes: StateHashes,
+        stateHash: ByteString,
+        hashRoot: ByteString,
+        outputIndex: int32,
+    ): void {
+        // hashRoot -> stateHashes
+        StateUtils.checkStateHashRoot(stateHashes, hashRoot);
+        // stateHashes + outputIndex -> stateHash
+        assert(stateHash == stateHashes[Number(outputIndex - 1n)], 'stateHash and stateHashes mismatch');
     }
 
+    /**
+     * Check if state of prev output corresponding to an input
+     * @param proof input state proof
+     * @param stateHash state hash of prev output corresponding to this input
+     * @param prevout prevout of this input which is trustable
+     */
     @method()
-    static verifyPreStateHash(
-        statesInfo: PreTxStatesInfo,
-        preStateHash: ByteString,
-        preTxStateScript: ByteString,
-        outputIndex: int32
-    ): boolean {
-        // verify preState
-        assert(
-            TxUtil.getStateScript(statesInfo.statesHashRoot) ==
-                preTxStateScript,
-            'preStateHashRoot mismatch'
-        )
-        assert(
-            StateUtils.verifyStateRoot(
-                statesInfo.txoStateHashes,
-                statesInfo.statesHashRoot
-            ),
-            'preData error'
-        )
-        assert(
-            preStateHash == statesInfo.txoStateHashes[Number(outputIndex - 1n)],
-            'preState hash mismatch'
-        )
-        return true
-    }
+    static checkInputState(proof: InputStateProof, stateHash: ByteString, prevout: ByteString): void {
+        // prevout -> prevTxPreimage + prevOutputIndexVal
+        const prevTxHash = TxProof.getTxHashFromPreimage3(proof.prevTxPreimage);
+        const prevOutputIndex = TxUtils.indexValueToBytes(proof.prevOutputIndexVal);
+        assert(prevTxHash + prevOutputIndex == prevout);
 
-    @method()
-    static verifyGuardStateHash(
-        preTx: XrayedTxIdPreimg3,
-        preTxhash: ByteString,
-        preStateHash: ByteString
-    ): boolean {
-        assert(
-            TxProof.getTxIdFromPreimg3(preTx) == preTxhash,
-            'preTxHeader error'
-        )
-        assert(
-            StateUtils.getStateScript(preStateHash, 1n) ==
-                preTx.outputScriptList[STATE_OUTPUT_INDEX],
-            'preStateHashRoot mismatch'
-        )
-        return true
+        // prevTxPreimage.hashRoot + prevOutputIndexVal -> proof.stateHashes + stateHash
+        StateUtils.checkStateHash(
+            proof.stateHashes,
+            stateHash,
+            proof.prevTxPreimage.hashRoot,
+            proof.prevOutputIndexVal,
+        );
+
+        // both proof and stateHash have been verified
     }
 }

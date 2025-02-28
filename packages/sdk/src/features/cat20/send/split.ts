@@ -1,16 +1,16 @@
 import { ChainProvider, markSpent, UtxoProvider } from '../../../lib/provider';
 import { Signer } from '../../../lib/signer';
 import { Psbt } from 'bitcoinjs-lib';
-import { dummySig, sleep, } from '../../../lib/utils';
+import { dummySig, sleep } from '../../../lib/utils';
 
 /**
  * Split all UTXOs of the current signer into count equal UTXOs.
- * @param signer a signer, such as {@link DefaultSigner} or {@link UnisatSigner} 
+ * @param signer a signer, such as {@link DefaultSigner} or {@link UnisatSigner}
  * @param utxoProvider  a  {@link UtxoProvider}
  * @param chainProvider a  {@link ChainProvider}
  * @param feeRate the fee rate for constructing transactions
  * @param count split into count equal UTXOs.
- * @returns 
+ * @returns
  */
 export async function feeSplitTx(
     signer: Signer,
@@ -18,15 +18,14 @@ export async function feeSplitTx(
     chainProvider: ChainProvider,
     feeRate: number,
     count: number,
-) : Promise<void> {
-
+): Promise<void> {
     const address = await signer.getAddress();
     const feeUtxos = await utxoProvider.getUtxos(address);
     if (count === 1) {
         return;
     }
 
-    const splitTxPsbt = new Psbt()
+    const splitTxPsbt = new Psbt();
 
     for (const utxo of feeUtxos) {
         splitTxPsbt.addInput({
@@ -40,11 +39,9 @@ export async function feeSplitTx(
     }
 
     function calcVsize(address: string): number {
-
-        const splitTxPsbt = new Psbt()
+        const splitTxPsbt = new Psbt();
 
         for (const utxo of feeUtxos) {
-
             splitTxPsbt.addInput({
                 hash: utxo.txId,
                 index: utxo.outputIndex,
@@ -54,8 +51,6 @@ export async function feeSplitTx(
                 },
             });
         }
-
-        
 
         for (let i = 0; i < count; i++) {
             splitTxPsbt.addOutput({
@@ -84,15 +79,15 @@ export async function feeSplitTx(
         });
     }
 
-    const signedSplitTxPsbt = await signer.signPsbt(splitTxPsbt.toHex())
+    const signedSplitTxPsbt = await signer.signPsbt(splitTxPsbt.toHex());
 
-    const splitFeeTx = Psbt.fromHex(signedSplitTxPsbt).finalizeAllInputs().extractTransaction()
+    const splitFeeTx = Psbt.fromHex(signedSplitTxPsbt).finalizeAllInputs().extractTransaction();
 
-    await chainProvider.broadcast(splitFeeTx.toHex())
+    await chainProvider.broadcast(splitFeeTx.toHex());
 
     markSpent(utxoProvider, splitFeeTx);
 
-    const txId = splitFeeTx.getId()
+    const txId = splitFeeTx.getId();
     for (let i = 0; i < splitFeeTx.outs.length; i++) {
         const out = splitFeeTx.outs[i];
         utxoProvider.addNewUTXO({
@@ -100,7 +95,7 @@ export async function feeSplitTx(
             outputIndex: i,
             script: Buffer.from(out.script).toString('hex'),
             satoshis: Number(out.value),
-        })
+        });
     }
 
     console.log(`Spliting fee in txid: ${txId}`);
@@ -109,20 +104,14 @@ export async function feeSplitTx(
     }
 }
 
-
 /**
  * Waiting for transaction confirmation.
  * @param chainProvider a  {@link ChainProvider}
  * @param txId transaction ID
  * @param log if print log
  */
-export async function waitTxConfirm(
-    chainProvider: ChainProvider,
-    txId: string,
-    log: boolean = true,
-) {
-
-    if(log) {
+export async function waitTxConfirm(chainProvider: ChainProvider, txId: string, log: boolean = true) {
+    if (log) {
         console.log(`Waiting tx: ${txId} to be confirmed ...`);
     }
 

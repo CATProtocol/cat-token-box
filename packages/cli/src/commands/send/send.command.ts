@@ -22,7 +22,7 @@ import {
   pick,
   toTokenAddress,
   btc,
-} from '@cat-protocol/cat-sdk';
+} from '@cat-protocol/cat-sdk-v2';
 
 interface SendCommandOptions extends BoardcastCommandOptions {
   id: string;

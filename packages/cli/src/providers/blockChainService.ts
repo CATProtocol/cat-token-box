@@ -6,7 +6,7 @@ import {
   RPCChainProvider,
   RPCUtxoProvider,
   UtxoProvider,
-} from '@cat-protocol/cat-sdk';
+} from '@cat-protocol/cat-sdk-v2';
 import { ConfigService } from './configService';
 import { WalletService } from './walletService';
 export class FractalChainProvider implements ChainProvider {

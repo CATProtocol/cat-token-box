@@ -7,10 +7,9 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { LRUCache } from 'lru-cache';
 import { NftInfoEntity } from '../../entities/nftInfo.entity';
 import { Constants } from '../../common/constants';
-import { Content, TokenTypeScope } from '../../common/types';
+import { CachedContent, TokenTypeScope } from '../../common/types';
 import { TokenInfoEntity } from '../../entities/tokenInfo.entity';
-
-type CachedContent = Content & { lastModified?: Date };
+import { TxService } from '../tx/tx.service';
 
 @Injectable()
 export class CollectionService {
@@ -27,6 +26,7 @@ export class CollectionService {
   constructor(
     private readonly commonService: CommonService,
     private readonly tokenService: TokenService,
+    private readonly txService: TxService,
     @InjectRepository(TxOutEntity)
     private readonly txOutRepository: Repository<TxOutEntity>,
     @InjectRepository(NftInfoEntity)
@@ -64,6 +64,10 @@ export class CollectionService {
             raw: collectionContent.contentRaw,
             lastModified: collectionContent.createdAt,
           };
+          if (this.isDelegateContent(cached)) {
+            // parse delegate content, no need to cache here
+            return this.txService.getDelegateContent(cached.raw);
+          }
           const lastProcessedHeight =
             await this.commonService.getLastProcessedBlockHeight();
           if (
@@ -147,6 +151,10 @@ export class CollectionService {
             raw: nftContent.contentRaw,
             lastModified: nftContent.createdAt,
           };
+          if (this.isDelegateContent(cached)) {
+            // parse delegate content, no need to cache here
+            return this.txService.getDelegateContent(cached.raw);
+          }
           const lastProcessedHeight =
             await this.commonService.getLastProcessedBlockHeight();
           if (
@@ -192,5 +200,9 @@ export class CollectionService {
       utxo,
       trackerBlockHeight: lastProcessedHeight,
     };
+  }
+
+  isDelegateContent(content: CachedContent | null): boolean {
+    return content?.type === Constants.CONTENT_TYPE_CAT721_DELEGATE_V1;
   }
 }

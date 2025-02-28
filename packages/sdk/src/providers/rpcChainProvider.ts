@@ -1,14 +1,15 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { ChainProvider } from "../lib/provider";
+import { ChainProvider } from '../lib/provider';
 
 export class RPCChainProvider implements ChainProvider {
     private broadcastedTxs: Map<string, string> = new Map();
 
-    constructor(public readonly url: string,
+    constructor(
+        public readonly url: string,
         public readonly walletName: string,
         public readonly username: string,
-        public readonly password: string) { }
-
+        public readonly password: string,
+    ) {}
 
     getRpcUser = () => {
         return this.username;
@@ -17,11 +18,8 @@ export class RPCChainProvider implements ChainProvider {
         return this.password;
     };
     getRpcUrl = (walletName: string) => {
-        return walletName === null
-            ? this.url
-            : `${this.url}/wallet/${walletName}`;
+        return walletName === null ? this.url : `${this.url}/wallet/${walletName}`;
     };
-
 
     async getConfirmations(txId: string): Promise<number> {
         const res = await this._getConfirmations(txId);
@@ -32,14 +30,10 @@ export class RPCChainProvider implements ChainProvider {
         return res.confirmations;
     }
 
-
-    private async _broadcast(
-        txHex: string,
-    ): Promise<string | Error> {
-
-        const Authorization = `Basic ${Buffer.from(
-            `${this.getRpcUser()}:${this.getRpcPassword()}`,
-        ).toString('base64')}`;
+    private async _broadcast(txHex: string): Promise<string | Error> {
+        const Authorization = `Basic ${Buffer.from(`${this.getRpcUser()}:${this.getRpcPassword()}`).toString(
+            'base64',
+        )}`;
 
         return fetch(this.getRpcUrl(null), {
             method: 'POST',
@@ -59,9 +53,7 @@ export class RPCChainProvider implements ChainProvider {
                 if (contentType.includes('json')) {
                     return res.json();
                 } else {
-                    throw new Error(
-                        `invalid http content type : ${contentType}, status: ${res.status}`,
-                    );
+                    throw new Error(`invalid http content type : ${contentType}, status: ${res.status}`);
                 }
             })
             .then((res: any) => {
@@ -76,20 +68,16 @@ export class RPCChainProvider implements ChainProvider {
             });
     }
 
-
-
-    private async _getConfirmations(
-        txid: string,
-    ): Promise<
+    private async _getConfirmations(txid: string): Promise<
         | {
-            blockhash: string;
-            confirmations: number;
-        }
+              blockhash: string;
+              confirmations: number;
+          }
         | Error
     > {
-        const Authorization = `Basic ${Buffer.from(
-            `${this.getRpcUser()}:${this.getRpcPassword()}`,
-        ).toString('base64')}`;
+        const Authorization = `Basic ${Buffer.from(`${this.getRpcUser()}:${this.getRpcPassword()}`).toString(
+            'base64',
+        )}`;
 
         return fetch(this.getRpcUrl(null), {
             method: 'POST',
@@ -109,9 +97,7 @@ export class RPCChainProvider implements ChainProvider {
                 if (contentType.includes('json')) {
                     return res.json();
                 } else {
-                    throw new Error(
-                        `invalid http content type : ${contentType}, status: ${res.status}`,
-                    );
+                    throw new Error(`invalid http content type : ${contentType}, status: ${res.status}`);
                 }
             })
             .then((res: any) => {
@@ -130,8 +116,6 @@ export class RPCChainProvider implements ChainProvider {
             });
     }
 
-
-
     async broadcast(txHex: string): Promise<string> {
         const res = await this._broadcast(txHex);
         if (res instanceof Error) {
@@ -147,22 +131,17 @@ export class RPCChainProvider implements ChainProvider {
             const res = await this._getRawTransaction(txId);
 
             if (res instanceof Error) {
-                throw new Error(
-                    `Can not find the tx with id ${txId}, please broadcast it first`,
-                );
+                throw new Error(`Can not find the tx with id ${txId}, please broadcast it first`);
             }
             txHex = res;
         }
         return txHex;
     }
 
-
-    private async _getRawTransaction(
-        txid: string,
-    ): Promise<string | Error> {
-        const Authorization = `Basic ${Buffer.from(
-            `${this.getRpcUser()}:${this.getRpcPassword()}`,
-        ).toString('base64')}`;
+    private async _getRawTransaction(txid: string): Promise<string | Error> {
+        const Authorization = `Basic ${Buffer.from(`${this.getRpcUser()}:${this.getRpcPassword()}`).toString(
+            'base64',
+        )}`;
 
         return fetch(this.getRpcUrl(null), {
             method: 'POST',
@@ -182,9 +161,7 @@ export class RPCChainProvider implements ChainProvider {
                 if (contentType.includes('json')) {
                     return res.json();
                 } else {
-                    throw new Error(
-                        `invalid http content type : ${contentType}, status: ${res.status}`,
-                    );
+                    throw new Error(`invalid http content type : ${contentType}, status: ${res.status}`);
                 }
             })
             .then((res: any) => {

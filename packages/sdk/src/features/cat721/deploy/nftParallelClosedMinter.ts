@@ -1,20 +1,16 @@
-import { ByteString, UTXO } from 'scrypt-ts'
-import {
-    Cat721NftInfo,
-    NftParallelClosedMinterCat721Meta,
-} from '../../../lib/metadata'
-import { Signer } from '../../../lib/signer'
-import { NftParallelClosedMinterCovenant } from '../../../covenants/nftParallelClosedMinterCovenant'
-import { dummySig, getUnfinalizedTxId } from '../../../lib/utils'
-import { Psbt } from 'bitcoinjs-lib'
-import { Postage } from '../../../lib/constants'
-import { ChainProvider, UtxoProvider } from '../../../lib/provider'
-import { CatPsbt } from '../../../lib/catPsbt'
-
+import { ByteString, UTXO } from 'scrypt-ts';
+import { Cat721NftInfo, NftParallelClosedMinterCat721Meta } from '../../../lib/metadata';
+import { Signer } from '../../../lib/signer';
+import { NftParallelClosedMinterCovenant } from '../../../covenants/nftParallelClosedMinterCovenant';
+import { dummySig, getUnfinalizedTxId } from '../../../lib/utils';
+import { Psbt } from 'bitcoinjs-lib';
+import { Postage } from '../../../lib/constants';
+import { ChainProvider, UtxoProvider } from '../../../lib/provider';
+import { CatPsbt } from '../../../lib/catPsbt';
 
 /**
  * Deploy a parallel-closed-mint CAT721 NFT minter.
- * @param signer a signer, such as {@link DefaultSigner} or {@link UnisatSigner} 
+ * @param signer a signer, such as {@link DefaultSigner} or {@link UnisatSigner}
  * @param utxoProvider a  {@link UtxoProvider}
  * @param chainProvider a  {@link ChainProvider}
  * @param ownerAddress the issuer address of the NFT minter
@@ -31,32 +27,31 @@ export async function deployParallelClosedMinter(
     ownerAddress: ByteString,
     metadata: NftParallelClosedMinterCat721Meta,
     feeRate: number,
-    icon: {
-        type: string,
-        body: string,
-    } | undefined,
-    changeAddress?: string
+    icon:
+        | {
+              type: string;
+              body: string;
+          }
+        | undefined,
+    changeAddress?: string,
 ): Promise<
     Cat721NftInfo<NftParallelClosedMinterCat721Meta> & {
-        genesisTx: Psbt
-        revealTx: CatPsbt
-        estGenesisTxVSize: number
-        estRevealTxVSize: number
+        genesisTx: Psbt;
+        revealTx: CatPsbt;
+        estGenesisTxVSize: number;
+        estRevealTxVSize: number;
     }
 > {
-    if (
-        metadata.minterMd5 !==
-        NftParallelClosedMinterCovenant.LOCKED_ASM_VERSION
-    ) {
-        throw new Error('Invalid minterMd5 for OpenMinterV2Covenant')
+    if (metadata.minterMd5 !== NftParallelClosedMinterCovenant.LOCKED_ASM_VERSION) {
+        throw new Error('Invalid minterMd5 for OpenMinterV2Covenant');
     }
 
-    const pubKey = await signer.getPublicKey()
-    const address = await signer.getAddress()
-    changeAddress = changeAddress || address
-    let sigRequests = []
+    const pubKey = await signer.getPublicKey();
+    const address = await signer.getAddress();
+    changeAddress = changeAddress || address;
+    let sigRequests = [];
 
-    const utxos = await utxoProvider.getUtxos(address)
+    const utxos = await utxoProvider.getUtxos(address);
 
     const { commitTxVSize, revealTxVSize } = estimateDeployTxVSizes(
         utxos,
@@ -66,23 +61,25 @@ export async function deployParallelClosedMinter(
         pubKey,
         changeAddress,
         icon,
-        feeRate
-    )
+        feeRate,
+    );
 
-    const revealTxOutputAmount = Math.max(546, revealTxVSize * feeRate + Postage.MINTER_POSTAGE - Postage.METADATA_POSTAGE);
+    const revealTxOutputAmount = Math.max(
+        546,
+        revealTxVSize * feeRate + Postage.MINTER_POSTAGE - Postage.METADATA_POSTAGE,
+    );
 
-    const { collectionId, collectionAddr, minterAddr, commitTxPsbt, revealPsbt } =
-        buildCommitAndRevealTxs(
-            metadata,
-            ownerAddress,
-            utxos,
-            address,
-            pubKey,
-            changeAddress,
-            feeRate,
-            icon,
-            revealTxOutputAmount
-        )
+    const { collectionId, collectionAddr, minterAddr, commitTxPsbt, revealPsbt } = buildCommitAndRevealTxs(
+        metadata,
+        ownerAddress,
+        utxos,
+        address,
+        pubKey,
+        changeAddress,
+        feeRate,
+        icon,
+        revealTxOutputAmount,
+    );
 
     sigRequests = [
         {
@@ -92,21 +89,17 @@ export async function deployParallelClosedMinter(
             psbtHex: revealPsbt.toHex(),
             options: revealPsbt.psbtOptions(),
         },
-    ]
-    
+    ];
+
     // sign the psbts
-    const [signedCommitPsbt, signedRevealPsbt] = await signer.signPsbts(
-        sigRequests
-    )
+    const [signedCommitPsbt, signedRevealPsbt] = await signer.signPsbts(sigRequests);
 
     // combine and finalize the signed psbts
-    const genesisTx = Psbt.fromHex(signedCommitPsbt).finalizeAllInputs()
-    const revealTx = await revealPsbt
-        .combine(Psbt.fromHex(signedRevealPsbt))
-        .finalizeAllInputsAsync()
+    const genesisTx = Psbt.fromHex(signedCommitPsbt).finalizeAllInputs();
+    const revealTx = await revealPsbt.combine(Psbt.fromHex(signedRevealPsbt)).finalizeAllInputsAsync();
     // broadcast the psbts
-    await chainProvider.broadcast(genesisTx.extractTransaction().toHex())
-    await chainProvider.broadcast(revealTx.extractTransaction().toHex())
+    await chainProvider.broadcast(genesisTx.extractTransaction().toHex());
+    await chainProvider.broadcast(revealTx.extractTransaction().toHex());
     return {
         metadata,
         collectionId,
@@ -118,7 +111,7 @@ export async function deployParallelClosedMinter(
         revealTx,
         estGenesisTxVSize: commitTxVSize,
         estRevealTxVSize: revealTxVSize,
-    }
+    };
 }
 
 function estimateDeployTxVSizes(
@@ -128,35 +121,35 @@ function estimateDeployTxVSizes(
     address: string,
     pubKey: string,
     changeAddress: string,
-    icon: {
-        type: string,
-        body: string,
-    } | undefined,
-    feeRate: number
+    icon:
+        | {
+              type: string;
+              body: string;
+          }
+        | undefined,
+    feeRate: number,
 ): {
-    commitTxVSize: number
-    revealTxVSize: number
+    commitTxVSize: number;
+    revealTxVSize: number;
 } {
-    const { commitTxPsbt: dummyCommitPsbt, revealPsbt: dummyRevealPsbt } =
-        buildCommitAndRevealTxs(
-            metadata,
-            ownerAddress,
-            utxos,
-            address,
-            pubKey,
-            changeAddress,
-            feeRate,
-            icon,
-            Postage.METADATA_POSTAGE
-        )
+    const { commitTxPsbt: dummyCommitPsbt, revealPsbt: dummyRevealPsbt } = buildCommitAndRevealTxs(
+        metadata,
+        ownerAddress,
+        utxos,
+        address,
+        pubKey,
+        changeAddress,
+        feeRate,
+        icon,
+        Postage.METADATA_POSTAGE,
+    );
 
     dummySig(dummyCommitPsbt, changeAddress);
-  
 
     return {
         commitTxVSize: dummyCommitPsbt.extractTransaction().virtualSize(),
         revealTxVSize: dummyRevealPsbt.estimateVSize(),
-    }
+    };
 }
 
 function buildCommitAndRevealTxs(
@@ -167,14 +160,16 @@ function buildCommitAndRevealTxs(
     pubKey: string,
     changeAddress: string,
     feeRate: number,
-    icon: {
-        type: string,
-        body: string,
-    } | undefined,
-    revealTxOutputAmount: number
+    icon:
+        | {
+              type: string;
+              body: string;
+          }
+        | undefined,
+    revealTxOutputAmount: number,
 ) {
     // build the commit tx
-    const {commitTxPsbt, commitScript} = NftParallelClosedMinterCovenant.buildCommitTx(
+    const { commitTxPsbt, commitScript } = NftParallelClosedMinterCovenant.buildCommitTx(
         metadata,
         address,
         pubKey,
@@ -182,38 +177,33 @@ function buildCommitAndRevealTxs(
         changeAddress,
         feeRate,
         icon,
-        revealTxOutputAmount
-    )
+        revealTxOutputAmount,
+    );
 
-    const commitTxid = getUnfinalizedTxId(commitTxPsbt)
+    const commitTxid = getUnfinalizedTxId(commitTxPsbt);
 
     // build the reveal tx
-    const { collectionId, collectionAddr, minterAddr, revealPsbt } =
-        NftParallelClosedMinterCovenant.buildRevealTx(
+    const { collectionId, collectionAddr, minterAddr, revealPsbt } = NftParallelClosedMinterCovenant.buildRevealTx(
+        {
+            txId: commitTxid,
+            outputIndex: 0,
+            script: Buffer.from(commitTxPsbt.txOutputs[0].script).toString('hex'),
+            satoshis: Number(commitTxPsbt.txOutputs[0].value),
+        },
+        ownerAddress,
+        metadata,
+        commitScript,
+        address,
+        pubKey,
+        [
             {
                 txId: commitTxid,
-                outputIndex: 0,
-                script: Buffer.from(commitTxPsbt.txOutputs[0].script).toString(
-                    'hex'
-                ),
-                satoshis: Number(commitTxPsbt.txOutputs[0].value),
+                outputIndex: 1,
+                script: Buffer.from(commitTxPsbt.txOutputs[1].script).toString('hex'),
+                satoshis: Number(commitTxPsbt.txOutputs[1].value),
             },
-            ownerAddress,
-            metadata,
-            commitScript,
-            address,
-            pubKey,
-            [
-                {
-                    txId: commitTxid,
-                    outputIndex: 1,
-                    script: Buffer.from(
-                        commitTxPsbt.txOutputs[1].script
-                    ).toString('hex'),
-                    satoshis: Number(commitTxPsbt.txOutputs[1].value),
-                },
-            ]
-        )
+        ],
+    );
 
     return {
         collectionId,
@@ -221,5 +211,5 @@ function buildCommitAndRevealTxs(
         minterAddr,
         commitTxPsbt,
         revealPsbt,
-    }
+    };
 }

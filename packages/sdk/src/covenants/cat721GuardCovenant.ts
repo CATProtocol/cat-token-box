@@ -1,188 +1,114 @@
-import { ByteString, int2ByteString } from 'scrypt-ts'
-import { NftBurnGuard } from '../contracts/nft/nftBurnGuard'
-import {
-    NftGuardConstState,
-    NftGuardProto,
-} from '../contracts/nft/nftGuardProto'
-import { NftTransferGuard } from '../contracts/nft/nftTransferGuard'
-import { Covenant } from '../lib/covenant'
-import { MAX_TOKEN_OUTPUT } from '../contracts/utils/txUtil'
-import { CatPsbt, SubContractCall } from '../lib/catPsbt'
-import { TapLeafSmartContract } from '../lib/tapLeafSmartContract'
-import { InputContext } from '../contracts/utils/sigHashUtils'
-import { getTxHeaderCheck } from '../lib/proof'
-import { Postage, SupportedNetwork } from '../lib/constants'
-import { btc } from '../lib/btc'
-import { CAT721Covenant } from './cat721Covenant'
-import { GuardType } from './cat20GuardCovenant'
-import { NftGuardInfo } from '../contracts/nft/cat721'
+import { ByteString, fill, FixedArray, int2ByteString } from 'scrypt-ts';
+import { NftGuardProto } from '../contracts/nft/nftGuardProto';
+import { NftGuard } from '../contracts/nft/nftGuard';
+import { Covenant } from '../lib/covenant';
+import { CatPsbt, InputContext, SubContractCall } from '../lib/catPsbt';
+import { getTxHeaderCheck } from '../lib/proof';
+import { SupportedNetwork } from '../lib/constants';
+import { btc } from '../lib/btc';
+import { CAT721Covenant } from './cat721Covenant';
+import { CAT721State, NftGuardConstState, NftGuardInfo } from '../contracts/nft/types';
+import { STATE_OUTPUT_COUNT_MAX, TX_INPUT_COUNT_MAX } from '../contracts/constants';
+import { InputStateProof, StateHashes } from '../contracts/types';
 
 export class CAT721GuardCovenant extends Covenant<NftGuardConstState> {
     // locked artifacts md5
-    static readonly LOCKED_ASM_VERSION = Covenant.calculateAsmVersion([
-        // NftBurnGuard md5
-        'bdcfe0b013ecd9ec68098b8060234af4',
-        // NftTransferGuard md5
-        '477458c3bb4a3b586664dddf525e5060',
-    ])
+    static readonly LOCKED_ASM_VERSION = '728de8cfa1233aca7e9c321f02889867';
 
     constructor(state?: NftGuardConstState, network?: SupportedNetwork) {
         super(
             [
                 {
-                    alias: GuardType.Burn,
-                    contract: new NftBurnGuard(),
-                },
-                {
-                    alias: GuardType.Transfer,
-                    contract: new NftTransferGuard(),
+                    contract: new NftGuard(),
                 },
             ],
             {
                 lockedAsmVersion: CAT721GuardCovenant.LOCKED_ASM_VERSION,
                 network,
-            }
-        )
+            },
+        );
 
-        this.state = state
+        this.state = state;
     }
 
     serializedState(): ByteString {
-        return NftGuardProto.toByteString(this.state)
+        return NftGuardProto.propHashes(this.state);
     }
 
     transfer(
         inputIndex: number,
         inputCtxs: Map<number, InputContext>,
         nftOutputs: (CAT721Covenant | undefined)[],
-        guardTxHex: string,
-        guardTxOutputIndex?: number,
-        nftSatoshis?: ByteString
+        inputStateProofArray: FixedArray<InputStateProof, typeof TX_INPUT_COUNT_MAX>,
+        cat721StateArray: FixedArray<CAT721State, typeof TX_INPUT_COUNT_MAX>,
     ): SubContractCall {
-        const inputCtx = inputCtxs.get(inputIndex)
+        const inputCtx = inputCtxs.get(inputIndex);
         if (!inputCtx) {
-            throw new Error('Input context is not available')
+            throw new Error('Input context is not available');
         }
 
-        const preState = this.state
+        const preState = this.state;
         if (!preState) {
-            throw new Error('Nft state is not available')
+            throw new Error('Nft state is not available');
         }
 
-        if (nftOutputs.length !== MAX_TOKEN_OUTPUT) {
+        if (nftOutputs.length !== STATE_OUTPUT_COUNT_MAX) {
             throw new Error(
-                `Invalid nft owner output length: ${nftOutputs.length}, should be ${MAX_TOKEN_OUTPUT}`
-            )
+                `Invalid nft owner output length: ${nftOutputs.length}, should be ${STATE_OUTPUT_COUNT_MAX}`,
+            );
         }
 
-        const nftOwners = nftOutputs.map((output) => output?.state!.ownerAddr)
-        const localIdList = nftOutputs.map(
-            (output) => output?.state!.localId || 0n
-        )
-        const nftOutputMaskList = nftOutputs.map((output) => !!output)
-        nftSatoshis =
-            nftSatoshis || int2ByteString(BigInt(Postage.TOKEN_POSTAGE), 8n)
-
-        const guardInfo = this.getGuardInfo(
-            inputIndex,
-            guardTxHex,
-            guardTxOutputIndex
-        )
+        const nftOwners = nftOutputs.map((output) => output?.state!.ownerAddr);
+        const localIdList = nftOutputs.map((output) => (output ? output.state!.localId : -1n));
+        const collectionScriptIndexArray = fill(-1n, STATE_OUTPUT_COUNT_MAX);
+        nftOutputs.forEach((value, index) => {
+            if (value) {
+                collectionScriptIndexArray[index] = 0n;
+            }
+        });
 
         return {
-            contractAlias: GuardType.Transfer,
-            method: 'transfer',
-            argsBuilder: (
-                curPsbt: CatPsbt,
-                tapLeafContract: TapLeafSmartContract
-            ) => {
-                const { shPreimage, prevoutsCtx, spentScriptsCtx } = inputCtx
-
-                const args = []
-                args.push(curPsbt.txState.stateHashList) // curTxoStateHashes
+            method: 'unlock',
+            argsBuilder: (curPsbt: CatPsbt) => {
+                const { shPreimage, prevoutsCtx, spentScriptsCtx } = inputCtx;
+                const args = [];
+                args.push(curPsbt.txState.stateHashList); // curTxoStateHashes
+                args.push(curPsbt.txOutputs.length - 1); // the number of outputs except for the state hash root output
                 args.push(
                     nftOwners.map((ownerAddr, oidx) => {
-                        const output = curPsbt.txOutputs[oidx + 1]
-                        return (
-                            ownerAddr ||
-                            (output
-                                ? Buffer.from(output.script).toString('hex')
-                                : '')
-                        )
-                    })
-                ) // ownerAddrOrScriptList
-                args.push(localIdList) // localIdList
-                args.push(nftOutputMaskList) // nftOutputMaskList
-                args.push(curPsbt.getOutputSatoshisList()) // outputSatoshisList
-                args.push(nftSatoshis) // nftSatoshis
-                args.push(preState) // preState
-                args.push(guardInfo.tx) // preTx
-                args.push(shPreimage) // shPreimage
-                args.push(prevoutsCtx) // prevoutsCtx
-                args.push(spentScriptsCtx) // spentScriptsCtx
-                return args
+                        const output = curPsbt.txOutputs[oidx + 1];
+                        return ownerAddr || (output ? Buffer.from(output.script).toString('hex') : '');
+                    }),
+                ); // ownerAddrOrScriptList
+                args.push(localIdList); // localIdList
+                args.push(collectionScriptIndexArray); // collectionScriptIndexArray
+                args.push(curPsbt.getOutputSatoshisList()); // outputSatoshisList
+                args.push(inputStateProofArray); // inputStateProofArray
+                args.push(cat721StateArray); // cat721StateArray
+                args.push(preState); // preState
+                args.push(shPreimage); // shPreimage
+                args.push(prevoutsCtx); // prevoutsCtx
+                args.push(spentScriptsCtx); // spentScriptsCtx
+                return args;
             },
-        }
-    }
-
-    burn(
-        inputIndex: number,
-        inputCtxs: Map<number, InputContext>,
-        guardTxHex: string,
-        guardTxOutputIndex?: number
-    ): SubContractCall {
-        const inputCtx = inputCtxs.get(inputIndex)
-        if (!inputCtx) {
-            throw new Error('Input context is not available')
-        }
-
-        const preState = this.state
-        if (!preState) {
-            throw new Error('Nft state is not available')
-        }
-
-        const guardInfo = this.getGuardInfo(
-            inputIndex,
-            guardTxHex,
-            guardTxOutputIndex
-        )
-
-        return {
-            contractAlias: GuardType.Burn,
-            method: 'burn',
-            argsBuilder: (
-                curPsbt: CatPsbt,
-                tapLeafContract: TapLeafSmartContract
-            ) => {
-                const { shPreimage, prevoutsCtx } = inputCtx
-                const args = []
-                args.push(curPsbt.txState.stateHashList) // curTxoStateHashes
-                args.push(curPsbt.getOutputScriptList()) // outputScriptList
-                args.push(curPsbt.getOutputSatoshisList()) // outputSatoshisList
-                args.push(preState) // preState
-                args.push(guardInfo.tx) // preTx
-                args.push(shPreimage) // shPreimage
-                args.push(prevoutsCtx) // prevoutsCtx
-                return args
-            },
-        }
+        };
     }
 
     getGuardInfo(
         inputIndex: number,
         guardTxHex: string,
-        guardTxOutputIndex?: number
+        txStatesInfo: StateHashes,
+        guardTxOutputIndex?: number,
     ): NftGuardInfo {
-        guardTxOutputIndex ||= 1
-        const { tx } = getTxHeaderCheck(
-            new btc.Transaction(guardTxHex),
-            guardTxOutputIndex
-        )
+        guardTxOutputIndex ||= 1;
+        const { tx } = getTxHeaderCheck(new btc.Transaction(guardTxHex), guardTxOutputIndex);
         return {
-            tx,
+            prevTxPreimage: tx,
             inputIndexVal: BigInt(inputIndex),
-            outputIndex: int2ByteString(BigInt(guardTxOutputIndex), 4n),
-            guardState: this.state,
-        }
+            prevOutputIndex: int2ByteString(BigInt(guardTxOutputIndex), 4n),
+            prevOutputIndexVal: BigInt(guardTxOutputIndex),
+            curState: this.state,
+            curStateHashes: txStatesInfo,
+        };
     }
 }

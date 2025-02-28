@@ -1,176 +1,127 @@
+import { ByteString, SmartContract, prop, method, assert, hash160, len } from 'scrypt-ts';
+import { OwnerUtils } from '../utils/ownerUtils';
+import { CAT20State, GuardInfo } from './types';
 import {
-    ByteString,
-    SmartContract,
-    prop,
-    method,
-    assert,
-    PubKey,
-    Sig,
-    hash160,
-    FixedArray,
-} from 'scrypt-ts'
-import {
+    BacktraceInfo,
+    ContractUnlockArgs,
+    int32,
+    Prevouts,
     PrevoutsCtx,
     SHPreimage,
-    SigHashUtils,
     SpentScriptsCtx,
-} from '../utils/sigHashUtils'
-import { MAX_INPUT, STATE_OUTPUT_INDEX, int32 } from '../utils/txUtil'
-import { TxProof, XrayedTxIdPreimg3 } from '../utils/txProof'
-import { PreTxStatesInfo, StateUtils } from '../utils/stateUtils'
-import { CAT20State, CAT20Proto } from './cat20Proto'
-import { GuardConstState, GuardProto } from './guardProto'
-import { Backtrace, BacktraceInfo } from '../utils/backtrace'
-
-export type GuardInfo = {
-    tx: XrayedTxIdPreimg3
-    inputIndexVal: int32
-    outputIndex: ByteString
-    guardState: GuardConstState
-}
-
-export type TokenUnlockArgs = {
-    // `true`: spend by user, `false`: spend by contract
-    isUserSpend: boolean
-
-    // user spend args
-    userPubKeyPrefix: ByteString
-    userPubKey: PubKey
-    userSig: Sig
-
-    // contract spend arg
-    contractInputIndex: int32
-}
+    StateHashes,
+} from '../types';
+import { ContextUtils } from '../utils/contextUtils';
+import { StateUtils } from '../utils/stateUtils';
+import { CAT20Proto } from './cat20Proto';
+import { Backtrace } from '../utils/backtrace';
+import { OWNER_ADDR_CONTRACT_HASH_BYTE_LEN } from '../constants';
+import { GuardProto } from './guardProto';
+import { TxUtils } from '../utils/txUtils';
 
 export class CAT20 extends SmartContract {
     @prop()
-    minterScript: ByteString
+    minterScript: ByteString;
 
     @prop()
-    guardScript: ByteString
+    guardScript: ByteString;
 
     constructor(minterScript: ByteString, guardScript: ByteString) {
-        super(...arguments)
-        this.minterScript = minterScript
-        this.guardScript = guardScript
+        super(...arguments);
+        this.minterScript = minterScript;
+        this.guardScript = guardScript;
     }
 
     @method()
     public unlock(
-        tokenUnlockArgs: TokenUnlockArgs,
-
-        // verify preTx data part
-        preState: CAT20State,
-        preTxStatesInfo: PreTxStatesInfo,
-
-        // amount check guard
+        unlockArgs: ContractUnlockArgs,
+        // state of current spending UTXO, comes from prevTx
+        curState: CAT20State,
+        curStateHashes: StateHashes,
+        // guard
         guardInfo: GuardInfo,
         // backtrace
         backtraceInfo: BacktraceInfo,
-        // common args
-        // current tx info
+        // curTx context
         shPreimage: SHPreimage,
         prevoutsCtx: PrevoutsCtx,
-        spentScriptsCtx: SpentScriptsCtx
+        spentScriptsCtx: SpentScriptsCtx,
     ) {
-        // Check sighash preimage.
+        // ctx
+        // check sighash preimage
         assert(
-            this.checkSig(
-                SigHashUtils.checkSHPreimage(shPreimage),
-                SigHashUtils.Gx
-            ),
-            'preimage check error'
-        )
-        // check ctx
-        SigHashUtils.checkPrevoutsCtx(
-            prevoutsCtx,
-            shPreimage.hashPrevouts,
-            shPreimage.inputIndex
-        )
-        SigHashUtils.checkSpentScriptsCtx(
-            spentScriptsCtx,
-            shPreimage.hashSpentScripts
-        )
-        // verify state
-        StateUtils.verifyPreStateHash(
-            preTxStatesInfo,
-            CAT20Proto.stateHash(preState),
-            backtraceInfo.preTx.outputScriptList[STATE_OUTPUT_INDEX],
-            prevoutsCtx.outputIndexVal
-        )
+            this.checkSig(ContextUtils.checkSHPreimage(shPreimage), ContextUtils.Gx),
+            'sighash preimage check error',
+        );
+        // check prevouts
+        const inputCount = ContextUtils.checkPrevoutsCtx(prevoutsCtx, shPreimage.shaPrevouts, shPreimage.inputIndex);
+        // check spent scripts
+        ContextUtils.checkSpentScriptsCtx(spentScriptsCtx, shPreimage.shaSpentScripts, inputCount);
 
-        const preScript = spentScriptsCtx[Number(prevoutsCtx.inputIndexVal)]
-        Backtrace.verifyToken(
-            prevoutsCtx.spentTxhash,
-            backtraceInfo,
-            this.minterScript,
-            preScript
-        )
+        // back to genesis
+        const tokenScript = spentScriptsCtx[Number(prevoutsCtx.inputIndexVal)];
+        Backtrace.verifyToken(backtraceInfo, prevoutsCtx.prevTxHash, this.minterScript, tokenScript);
 
-        // make sure the token is spent with a valid guard
-        this.valitateGuard(
+        // check state of prevTx
+        const curStateHash = CAT20Proto.stateHash(curState);
+        StateUtils.checkStateHash(
+            curStateHashes,
+            curStateHash,
+            backtraceInfo.prevTxPreimage.hashRoot,
+            prevoutsCtx.prevOutputIndexVal,
+        );
+
+        // make sure tx inputs contain a valid guard
+        this.checkGuard(
             guardInfo,
-            preScript,
-            preState,
+            tokenScript,
+            curStateHash,
             prevoutsCtx.inputIndexVal,
             prevoutsCtx.prevouts,
-            spentScriptsCtx
-        )
+            spentScriptsCtx,
+        );
 
-        if (tokenUnlockArgs.isUserSpend) {
-            // unlock token owned by user key
-            assert(
-                hash160(
-                    tokenUnlockArgs.userPubKeyPrefix +
-                        tokenUnlockArgs.userPubKey
-                ) == preState.ownerAddr
-            )
-            assert(
-                this.checkSig(
-                    tokenUnlockArgs.userSig,
-                    tokenUnlockArgs.userPubKey
-                )
-            )
-        } else {
+        if (len(curState.ownerAddr) == OWNER_ADDR_CONTRACT_HASH_BYTE_LEN) {
             // unlock token owned by contract script
-            assert(
-                preState.ownerAddr ==
-                    hash160(
-                        spentScriptsCtx[Number(tokenUnlockArgs.contractInputIndex)]
-                    )
-            )
+            assert(curState.ownerAddr == hash160(spentScriptsCtx[Number(unlockArgs.contractInputIndexVal)]));
+        } else {
+            // unlock token owned by user key
+            OwnerUtils.checkUserOwner(unlockArgs.userPubKeyPrefix, unlockArgs.userXOnlyPubKey, curState.ownerAddr);
+            assert(this.checkSig(unlockArgs.userSig, unlockArgs.userXOnlyPubKey));
         }
     }
 
     @method()
-    valitateGuard(
+    checkGuard(
         guardInfo: GuardInfo,
-        preScript: ByteString,
-        preState: CAT20State,
-        inputIndexVal: int32,
-        prevouts: FixedArray<ByteString, typeof MAX_INPUT>,
-        spentScriptsCtx: SpentScriptsCtx
-    ): boolean {
-        // check amount script
-        const guardHashRoot = GuardProto.stateHash(guardInfo.guardState)
-        assert(guardInfo.guardState.tokenScript == preScript)
-        assert(
-            StateUtils.getStateScript(guardHashRoot, 1n) ==
-                guardInfo.tx.outputScriptList[STATE_OUTPUT_INDEX]
-        )
-        assert(preState.amount > 0n)
-        assert(
-            guardInfo.guardState.inputTokenAmountArray[Number(inputIndexVal)] ==
-                preState.amount
-        )
-        const guardTxid = TxProof.getTxIdFromPreimg3(guardInfo.tx)
-        assert(
-            prevouts[Number(guardInfo.inputIndexVal)] ==
-                guardTxid + guardInfo.outputIndex
-        )
-        assert(
-            spentScriptsCtx[Number(guardInfo.inputIndexVal)] == this.guardScript
-        )
-        return true
+        // below params are all trustable
+        tokenScript: ByteString,
+        tokenStateHash: ByteString,
+        tokenInputIndexVal: int32,
+        prevouts: Prevouts,
+        spentScriptsCtx: SpentScriptsCtx,
+    ): void {
+        // check guardInfo
+        TxUtils.checkIndex(guardInfo.prevOutputIndexVal, guardInfo.prevOutputIndex);
+        StateUtils.checkInputState(
+            {
+                prevTxPreimage: guardInfo.prevTxPreimage,
+                prevOutputIndexVal: guardInfo.prevOutputIndexVal,
+                stateHashes: guardInfo.curStateHashes,
+            },
+            GuardProto.stateHash(guardInfo.curState),
+            prevouts[Number(guardInfo.inputIndexVal)],
+        );
+
+        // guard script in curTx matches the pre-saved guard script property in the token contract
+        assert(spentScriptsCtx[Number(guardInfo.inputIndexVal)] == this.guardScript);
+
+        // guard state contains current token state hash
+        assert(guardInfo.curState.inputStateHashes[Number(tokenInputIndexVal)] == tokenStateHash);
+
+        // guard state contains current token script
+        // and the corresponding value of array tokenScripts and tokenScriptIndexes is correct
+        const tokenScriptIndex = guardInfo.curState.tokenScriptIndexes[Number(tokenInputIndexVal)];
+        assert(guardInfo.curState.tokenScripts[Number(tokenScriptIndex)] == tokenScript);
     }
 }

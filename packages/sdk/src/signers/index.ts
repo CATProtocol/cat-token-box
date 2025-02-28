@@ -1,2 +1,2 @@
-export * from './defaultSigner'
-export * from './unisatSigner'
+export * from './defaultSigner';
+export * from './unisatSigner';

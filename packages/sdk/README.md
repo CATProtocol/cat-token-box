@@ -55,5 +55,3 @@ This is because the maximum byte limit for an element on the Bitcoin Virtual Mac
 ## CAT Protocol
 
 ![](https://raw.githubusercontent.com/CATProtocol/cat-token-box/refs/heads/main/packages/sdk/static/cat-token-protocol.svg)
-
-

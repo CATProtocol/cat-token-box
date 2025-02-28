@@ -10,7 +10,7 @@ import {
 } from './apis-rpc';
 import { logerror } from './log';
 import { ConfigService, WalletService } from 'src/providers';
-import { btc } from '@cat-protocol/cat-sdk';
+import { btc } from '@cat-protocol/cat-sdk-v2';
 
 export const getFeeRate = async function (
   config: ConfigService,
