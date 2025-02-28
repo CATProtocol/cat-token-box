@@ -29,8 +29,6 @@ export class NftGuard extends SmartContract {
     @method()
     public unlock(
         nextStateHashes: StateHashes,
-        // the number of curTx outputs except for the state hash root output
-        outputCount: int32,
 
         // the logic is the same as token guard
         ownerAddrOrScripts: FixedArray<ByteString, typeof STATE_OUTPUT_COUNT_MAX>,
@@ -55,6 +53,8 @@ export class NftGuard extends SmartContract {
 
         // guard state of current spending UTXO
         curState: NftGuardConstState,
+        // the number of curTx outputs except for the state hash root output
+        outputCount: int32,
         // curTx context
         shPreimage: SHPreimage,
         prevoutsCtx: PrevoutsCtx,

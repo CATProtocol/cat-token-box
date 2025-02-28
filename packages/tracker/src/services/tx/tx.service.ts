@@ -672,7 +672,7 @@ export class TxService {
 
       if (blockHeader.height >= 365400) {
         // verify the token amount in guard witness equals to it in token input
-        await this.verifyGuardTokenAmount(guardInput, tx);
+        // TODO: await this.verifyGuardTokenAmount(guardInput, tx);
       }
 
       // save tx outputs

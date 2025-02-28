@@ -73,7 +73,6 @@ export class CAT721GuardCovenant extends Covenant<NftGuardConstState> {
                 const { shPreimage, prevoutsCtx, spentScriptsCtx } = inputCtx;
                 const args = [];
                 args.push(curPsbt.txState.stateHashList); // curTxoStateHashes
-                args.push(curPsbt.txOutputs.length - 1); // the number of outputs except for the state hash root output
                 args.push(
                     nftOwners.map((ownerAddr, oidx) => {
                         const output = curPsbt.txOutputs[oidx + 1];
@@ -86,6 +85,7 @@ export class CAT721GuardCovenant extends Covenant<NftGuardConstState> {
                 args.push(inputStateProofArray); // inputStateProofArray
                 args.push(cat721StateArray); // cat721StateArray
                 args.push(preState); // preState
+                args.push(curPsbt.txOutputs.length - 1); // the number of outputs except for the state hash root output
                 args.push(shPreimage); // shPreimage
                 args.push(prevoutsCtx); // prevoutsCtx
                 args.push(spentScriptsCtx); // spentScriptsCtx

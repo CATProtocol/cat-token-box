@@ -29,8 +29,6 @@ export class Guard extends SmartContract {
     @method()
     public unlock(
         nextStateHashes: StateHashes,
-        // the number of curTx outputs except for the state hash root output
-        outputCount: int32,
         // for each curTx output except the state hash root output,
         // if it is a token output, the value is token owner address of this output,
         // otherwise, the value is the locking script of this output
@@ -57,6 +55,8 @@ export class Guard extends SmartContract {
         cat20States: FixedArray<CAT20State, typeof TX_INPUT_COUNT_MAX>,
         // guard state of current spending UTXO
         curState: GuardConstState,
+        // the number of curTx outputs except for the state hash root output
+        outputCount: int32,
         // curTx context
         shPreimage: SHPreimage,
         prevoutsCtx: PrevoutsCtx,

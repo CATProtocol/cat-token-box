@@ -8,9 +8,9 @@ export function scaleMetadata(
   metadata: OpenMinterCat20Meta,
 ): OpenMinterCat20Meta {
   const clone = Object.assign({}, metadata);
-  clone.max = scaleByDecimals(metadata.max, metadata.decimals);
-  clone.premine = scaleByDecimals(metadata.premine, metadata.decimals);
-  clone.limit = scaleByDecimals(metadata.limit, metadata.decimals);
+  clone.max = scaleByDecimals(metadata.max || 0n, metadata.decimals);
+  clone.premine = scaleByDecimals(metadata.premine || 0n, metadata.decimals);
+  clone.limit = scaleByDecimals(metadata.limit || 0n, metadata.decimals);
   return clone;
 }
 

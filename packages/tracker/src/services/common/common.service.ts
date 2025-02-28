@@ -90,7 +90,7 @@ export class CommonService {
       }
     >();
     for (let i = 0; i < Constants.CONTRACT_OUTPUT_MAX_COUNT; i++) {
-      if (masks[i].toString('hex') !== '') {
+      if (masks[i].toString('hex') !== '81') {
         const ownerPubKeyHash = ownerPubKeyHashes[i].toString('hex');
         const tokenAmount =
           tokenAmounts[i].length === 0
