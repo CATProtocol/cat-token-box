@@ -7,7 +7,6 @@ import {
   TokenTypeScope,
 } from '../../common/types';
 import { CommonService } from '../../services/common/common.service';
-import { RpcService } from '../../services/rpc/rpc.service';
 import { Constants } from '../../common/constants';
 import { parseEnvelope } from '../../common/utils';
 import { LRUCache } from 'lru-cache';
@@ -23,11 +22,10 @@ export class TxService {
   constructor(
     private readonly commonService: CommonService,
     private readonly tokenService: TokenService,
-    private readonly rpcService: RpcService,
   ) {}
 
   async parseTransferTxTokenOutputs(txid: string) {
-    const raw = await this.getRawTx(txid);
+    const raw = await this.commonService.getRawTx(txid);
     const tx = Transaction.fromHex(raw);
     const payIns = tx.ins.map((input) => this.parseTaprootInput(input));
     const payOuts = tx.outs.map((output) =>
@@ -78,14 +76,6 @@ export class TxService {
     return { outputs };
   }
 
-  async getRawTx(
-    txid: string,
-    verbose: boolean = false,
-  ): Promise<string | undefined> {
-    const resp = await this.rpcService.getRawTx(txid, verbose);
-    return resp?.data?.result;
-  }
-
   /**
    * Parse taproot input from tx input, returns null if failed
    */
@@ -128,7 +118,7 @@ export class TxService {
     const key = `${txId}_${inputIndex}`;
     let cached = TxService.contentCache.get(key);
     if (!cached) {
-      const raw = await this.getRawTx(txId, true);
+      const raw = await this.commonService.getRawTx(txId, true);
       const tx = Transaction.fromHex(raw['hex']);
       if (inputIndex < tx.ins.length) {
         const payIn = this.parseTaprootInput(tx.ins[inputIndex]);

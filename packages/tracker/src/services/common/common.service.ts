@@ -178,4 +178,12 @@ export class CommonService {
       this.guardScriptHash(guardInput) === this.NFT_TRANSFER_GUARD_SCRIPT_HASH
     );
   }
+
+  public async getRawTx(
+    txid: string,
+    verbose: boolean = false,
+  ): Promise<string | undefined> {
+    const resp = await this.rpcService.getRawTx(txid, verbose);
+    return resp?.data?.result;
+  }
 }

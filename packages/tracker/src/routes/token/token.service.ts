@@ -20,6 +20,7 @@ import { TxEntity } from '../../entities/tx.entity';
 import { CommonService } from '../../services/common/common.service';
 import { TokenTypeScope } from '../../common/types';
 import { TokenMintEntity } from '../../entities/tokenMint.entity';
+import { Transaction } from 'bitcoinjs-lib';
 
 @Injectable()
 export class TokenService {
@@ -280,6 +281,10 @@ export class TokenService {
     const renderedUtxos = [];
     for (const utxo of utxos) {
       const txoStateHashes = await this.queryStateHashes(utxo.txid);
+      const txHex = await this.commonService.getRawTx(utxo.txid);
+      const txHashPreimage = Buffer.from(
+        Transaction.fromHex(txHex).__toBuffer(),
+      ).toString('hex');
       const renderedUtxo = {
         utxo: {
           txId: utxo.txid,
@@ -288,6 +293,7 @@ export class TokenService {
           satoshis: utxo.satoshis,
         },
         txoStateHashes,
+        txHashPreimage,
       };
       if (utxo.ownerPubKeyHash !== null && utxo.tokenAmount !== null) {
         Object.assign(
