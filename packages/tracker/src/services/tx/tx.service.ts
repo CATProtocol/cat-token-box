@@ -214,6 +214,7 @@ export class TxService {
       stateHashes: [rootHash, ...stateHashes]
         .map((stateHash) => stateHash.toString('hex'))
         .join(';'),
+      txHashPreimage: Buffer.from(tx.__toBuffer()).toString('hex'),
     });
   }
 

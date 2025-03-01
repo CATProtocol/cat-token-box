@@ -20,11 +20,11 @@ import { TxEntity } from '../../entities/tx.entity';
 import { CommonService } from '../../services/common/common.service';
 import { TokenTypeScope } from '../../common/types';
 import { TokenMintEntity } from '../../entities/tokenMint.entity';
-import { Transaction } from 'bitcoinjs-lib';
 
 @Injectable()
 export class TokenService {
-  private static readonly stateHashesCache = new LRUCache<string, string[]>({
+  // tx stateHashes and txHashPreimage cache
+  private static readonly txCache = new LRUCache<string, TxEntity>({
     max: Constants.CACHE_MAX_SIZE,
   });
 
@@ -256,22 +256,33 @@ export class TokenService {
     }));
   }
 
-  async queryStateHashes(txid: string) {
-    let cached = TokenService.stateHashesCache.get(txid);
+  /**
+   * query tx stateHashes and txHashPreimage from database
+   */
+  async queryTx(txid: string): Promise<{
+    txoStateHashes: string[];
+    txHashPreimage: string;
+  }> {
+    let cached = TokenService.txCache.get(txid);
     if (!cached) {
-      const tx = await this.txRepository.findOne({
-        select: ['stateHashes'],
+      cached = await this.txRepository.findOne({
+        select: ['stateHashes', 'txHashPreimage'],
         where: { txid },
       });
-      cached = tx.stateHashes.split(';').slice(1);
-      if (cached.length < Constants.CONTRACT_OUTPUT_MAX_COUNT) {
-        cached = cached.concat(
-          Array(Constants.CONTRACT_OUTPUT_MAX_COUNT - cached.length).fill(''),
-        );
-      }
-      TokenService.stateHashesCache.set(txid, cached);
+      TokenService.txCache.set(txid, cached);
     }
-    return cached;
+    let txoStateHashes = cached.stateHashes.split(';').slice(1);
+    if (txoStateHashes.length < Constants.CONTRACT_OUTPUT_MAX_COUNT) {
+      txoStateHashes = txoStateHashes.concat(
+        Array(Constants.CONTRACT_OUTPUT_MAX_COUNT - txoStateHashes.length).fill(
+          '',
+        ),
+      );
+    }
+    return {
+      txoStateHashes,
+      txHashPreimage: cached.txHashPreimage,
+    };
   }
 
   /**
@@ -280,11 +291,7 @@ export class TokenService {
   async renderUtxos(utxos: TxOutEntity[], tokenInfo?: TokenInfoEntity) {
     const renderedUtxos = [];
     for (const utxo of utxos) {
-      const txoStateHashes = await this.queryStateHashes(utxo.txid);
-      const txHex = await this.commonService.getRawTx(utxo.txid);
-      const txHashPreimage = Buffer.from(
-        Transaction.fromHex(txHex).__toBuffer(),
-      ).toString('hex');
+      const { txoStateHashes, txHashPreimage } = await this.queryTx(utxo.txid);
       const renderedUtxo = {
         utxo: {
           txId: utxo.txid,

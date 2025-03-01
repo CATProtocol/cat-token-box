@@ -21,6 +21,9 @@ export class TxEntity {
   @Column({ name: 'state_hashes', nullable: true })
   stateHashes: string;
 
+  @Column({ name: 'tx_hash_preimage', nullable: true })
+  txHashPreimage: string;
+
   @CreateDateColumn({ name: 'created_at' })
   createdAt: Date;
 }
