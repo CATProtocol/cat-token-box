@@ -5,6 +5,9 @@ import { ChainProvider, MempolChainProvider } from '@cat-protocol/cat-sdk';
 import { networks, TxInput, payments, Transaction } from 'bitcoinjs-lib';
 import { TaprootPayment, TokenTypeScope } from '../../common/types';
 import { CommonService } from '../../services/common/common.service';
+import { InjectRepository } from '@nestjs/typeorm';
+import { TxOutEntity } from '../../entities/txOut.entity';
+import { Repository } from 'typeorm';
 
 @Injectable()
 export class TxService {
@@ -13,6 +16,8 @@ export class TxService {
   constructor(
     private readonly commonService: CommonService,
     private readonly tokenService: TokenService,
+    @InjectRepository(TxOutEntity)
+    private readonly txOutRepository: Repository<TxOutEntity>,
   ) {
     this.provider = new MempolChainProvider(
       _network === networks.bitcoin ? 'fractal-mainnet' : 'fractal-testnet',
@@ -95,5 +100,14 @@ export class TxService {
     } catch {
       return null;
     }
+  }
+
+  async getTxOut(txid: string, outputIndex: number) {
+    return this.txOutRepository.findOne({
+      where: {
+        txid,
+        outputIndex,
+      },
+    });
   }
 }

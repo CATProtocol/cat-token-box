@@ -24,4 +24,31 @@ export class TxController {
       return errorResponse(e);
     }
   }
+
+  @Get(':txid/:outputIndex')
+  @ApiTags('tx')
+  @ApiOperation({ summary: 'Get tx out' })
+  @ApiParam({
+    name: 'txid',
+    required: true,
+    type: String,
+    description: 'txid',
+  })
+  @ApiParam({
+    name: 'outputIndex',
+    required: true,
+    type: 'integer',
+    description: 'output index',
+  })
+  async getTxOut(
+    @Param('txid') txid: string,
+    @Param('outputIndex') outputIndex: number,
+  ) {
+    try {
+      const parsedTx = await this.txService.getTxOut(txid, outputIndex);
+      return okResponse(parsedTx);
+    } catch (e) {
+      return errorResponse(e);
+    }
+  }
 }
