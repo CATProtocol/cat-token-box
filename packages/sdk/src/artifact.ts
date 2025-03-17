@@ -1,36 +1,24 @@
-import { ClosedMinter } from './contracts/token/minters/closedMinter';
-import { OpenMinter } from './contracts/token/minters/openMinter';
-import { CAT20 } from './contracts/token/cat20';
-import { Guard } from './contracts/token/guard';
-import { NftClosedMinter } from './contracts/nft/minters/nftClosedMinter';
-import { NftParallelClosedMinter } from './contracts/nft/minters/nftParallelClosedMinter';
-import { NftOpenMinter } from './contracts/nft/minters/nftOpenMinter';
-import { CAT721 } from './contracts/nft/cat721';
-import { NftGuard } from './contracts/nft/nftGuard';
+import { CAT20ClosedMinter } from './contracts/cat20/minters/cat20ClosedMinter';
+import { CAT20OpenMinter } from './contracts/cat20/minters/cat20OpenMinter';
+import { CAT20 } from './contracts/cat20/cat20';
+import { CAT20StateLib } from './contracts/cat20/cat20State';
+import { CAT20Guard } from './contracts/cat20/cat20Guard';
+import { CAT20GuardStateLib } from './contracts/cat20/cat20GuardState';
 
-import closedMinter from '../artifacts/token/minters/closedMinter.json';
-import openMinter from '../artifacts/token/minters/openMinter.json';
-import cat20 from '../artifacts/token/cat20.json';
-import guard from '../artifacts/token/guard.json';
-
-import nftClosedMinter from '../artifacts/nft/minters/nftClosedMinter.json';
-import nftParallelClosedMinter from '../artifacts/nft/minters/nftParallelClosedMinter.json';
-import nftOpenMinter from '../artifacts/nft/minters/nftOpenMinter.json';
-import cat721 from '../artifacts/nft/cat721.json';
-import nftGuard from '../artifacts/nft/nftGuard.json';
+import cat20ClosedMinter from '../artifacts/cat20/minters/cat20ClosedMinter.json';
+import cat20OpenMinter from '../artifacts/cat20/minters/cat20OpenMinter.json';
+import cat20 from '../artifacts/cat20/cat20.json';
+import cat20StateLib from '../artifacts/cat20/cat20State.json';
+import cat20Guard from '../artifacts/cat20/cat20Guard.json';
+import cat20GuardStateLib from '../artifacts/cat20/cat20GuardState.json';
 
 export function loadArtifacts() {
-    // token minter
-    ClosedMinter.loadArtifact(closedMinter);
-    OpenMinter.loadArtifact(openMinter);
-    // token
+    // cat20 minter
+    CAT20ClosedMinter.loadArtifact(cat20ClosedMinter);
+    CAT20OpenMinter.loadArtifact(cat20OpenMinter);
+    // cat20
     CAT20.loadArtifact(cat20);
-    Guard.loadArtifact(guard);
-    // nft minter
-    NftClosedMinter.loadArtifact(nftClosedMinter);
-    NftParallelClosedMinter.loadArtifact(nftParallelClosedMinter);
-    NftOpenMinter.loadArtifact(nftOpenMinter);
-    // nft
-    CAT721.loadArtifact(cat721);
-    NftGuard.loadArtifact(nftGuard);
+    CAT20StateLib.loadArtifact(cat20StateLib);
+    CAT20Guard.loadArtifact(cat20Guard);
+    CAT20GuardStateLib.loadArtifact(cat20GuardStateLib);
 }

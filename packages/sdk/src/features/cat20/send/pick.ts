@@ -1,5 +1,5 @@
-import { UTXO } from 'scrypt-ts';
-import { Cat20Utxo } from '../../../lib/provider';
+import { UTXO } from '@scrypt-inc/scrypt-ts-btc';
+import { CAT20Utxo } from '../../../lib/provider';
 
 /**
  * Select CAT20 UTXOs from all available CAT20 UTXOs such that the cumulative number of tokens equals the specified amount, with priority given to those containing a number of tokens greater than or equal to the amount.
@@ -7,7 +7,7 @@ import { Cat20Utxo } from '../../../lib/provider';
  * @param amount the minimum required number of tokens.
  * @returns
  */
-export function pick(tokens: Array<Cat20Utxo>, amount: bigint): Array<Cat20Utxo> {
+export function pick(tokens: Array<CAT20Utxo>, amount: bigint): Array<CAT20Utxo> {
     let t = tokens.find((token) => {
         return token.state.amount == amount;
     });
@@ -26,7 +26,7 @@ export function pick(tokens: Array<Cat20Utxo>, amount: bigint): Array<Cat20Utxo>
         return [t];
     }
 
-    const acc: Array<Cat20Utxo> = [];
+    const acc: Array<CAT20Utxo> = [];
     let accAmount: bigint = 0n;
 
     for (let i = 0; i < tokens.length; i++) {
@@ -47,8 +47,8 @@ export function pick(tokens: Array<Cat20Utxo>, amount: bigint): Array<Cat20Utxo>
  * @param amount the minimum required number of tokens.
  * @returns
  */
-export function pickFromStart(tokens: Array<Cat20Utxo>, amount: bigint): Array<Cat20Utxo> {
-    const acc: Array<Cat20Utxo> = [];
+export function pickFromStart(tokens: Array<CAT20Utxo>, amount: bigint): Array<CAT20Utxo> {
+    const acc: Array<CAT20Utxo> = [];
     let accAmount: bigint = 0n;
 
     for (let i = 0; i < tokens.length; i++) {
@@ -84,6 +84,6 @@ export function pickLargeFeeUtxo(utxos: Array<UTXO>): UTXO {
  * @param tokens Cat20Utxo
  * @returns
  */
-export function calcTotalAmount(tokens: Cat20Utxo[]) {
+export function calcTotalAmount(tokens: CAT20Utxo[]) {
     return tokens.reduce((acc, t) => acc + t.state.amount, 0n);
 }

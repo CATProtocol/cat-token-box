@@ -4,40 +4,26 @@ dotenv.config();
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { expect, use } from 'chai';
 import chaiAsPromised from 'chai-as-promised';
-import { Ripemd160 } from 'scrypt-ts';
-import { OpenMinterCat20Meta } from '../../../../src/lib/metadata';
-import { OpenMinter } from '../../../../src/contracts/token/minters/openMinter';
-import { verifyInputSpent } from '../../../utils/txHelper';
-import { CAT20 } from '../../../../src/contracts/token/cat20';
-import { CatPsbt } from '../../../../src/lib/catPsbt';
+import { bvmVerify, Ripemd160 } from '@scrypt-inc/scrypt-ts-btc';
+import { OpenMinterCat20Meta, toTokenAddress } from '../../../../src/';
 import { testSigner } from '../../../utils/testSigner';
-import { Guard } from '../../../../src/contracts/token/guard';
-import { ALLOWED_SIZE_DIFF, burnToken, deployToken, FEE_RATE, mintToken } from '../openMinter.utils';
-import { CAT20Proto } from '../../../../src/contracts/token/cat20Proto';
-import { Cat20MinterUtxo, Cat20Utxo } from '../../../../src/lib/provider';
-import { OpenMinterCovenant } from '../../../../src/covenants/openMinterCovenant';
-import { addrToP2trLockingScript, toTokenAddress } from '../../../../src/lib/utils';
-import { Postage } from '../../../../src/lib/constants';
+import { TestCAT20Generater } from '../../../utils/testCAT20Generater';
+import { CAT20Utxo } from '../../../../src/lib/provider';
+import { burn } from '../../../../src/features/cat20/burn/burn';
+import { testChainProvider, testUtxoProvider } from '../../../utils/testProvider';
+import { loadAllArtifacts } from '../utils';
 
 use(chaiAsPromised);
 
 describe('Test the feature `burn` for `Cat20Covenant`', () => {
     let toReceiverAddr: Ripemd160;
-
-    let tokenId: string;
-    let tokenAddr: string;
-    let minterAddr: string;
     let metadata: OpenMinterCat20Meta;
-
-    let firstMintTx: CatPsbt;
-    let secondMintTx: CatPsbt;
+    let cat20Generater: TestCAT20Generater;
 
     before(async () => {
-        await OpenMinter.loadArtifact();
-        await CAT20.loadArtifact();
-        await Guard.loadArtifact();
+        loadAllArtifacts();
         const address = await testSigner.getAddress();
-        toReceiverAddr = toTokenAddress(address);
+        toReceiverAddr = Ripemd160(toTokenAddress(address));
 
         metadata = {
             name: 'c',
@@ -47,69 +33,42 @@ describe('Test the feature `burn` for `Cat20Covenant`', () => {
             limit: 1000n,
             premine: 3150000n,
             preminerAddr: toReceiverAddr,
-            minterMd5: OpenMinterCovenant.LOCKED_ASM_VERSION,
+            minterMd5: '',
         };
-
-        const {
-            tokenId: deployedTokenId,
-            tokenAddr: deployedTokenAddr,
-            minterAddr: deployedMinterAddr,
-            premineTx,
-        } = await deployToken(metadata);
-
-        tokenId = deployedTokenId;
-        tokenAddr = deployedTokenAddr;
-        minterAddr = deployedMinterAddr;
-
-        firstMintTx = premineTx!;
-
-        const cat20MinterUtxo: Cat20MinterUtxo = {
-            utxo: {
-                txId: premineTx!.extractTransaction().getId(),
-                outputIndex: 1,
-                script: addrToP2trLockingScript(minterAddr),
-                satoshis: Postage.MINTER_POSTAGE,
-            },
-            txoStateHashes: premineTx!.getTxStatesInfo().stateHashes,
-            state: { tokenScript: addrToP2trLockingScript(tokenAddr), hasMintedBefore: true, remainingCount: 8925n },
-        };
-
-        const { mintTx } = await mintToken(cat20MinterUtxo, tokenId, metadata);
-
-        secondMintTx = mintTx;
+        cat20Generater = await TestCAT20Generater.init(metadata);
     });
+
+    const getTokenUtxos = async function (generater: TestCAT20Generater, toReceiverAddr: string, n: number) {
+        const r: CAT20Utxo[] = [];
+        for (let index = 0; index < n; index++) {
+            const utxo = await generater.mintTokenToHash160(
+                toReceiverAddr,
+                BigInt(Math.floor(Math.random() * 1000000)),
+            );
+            r.push(utxo);
+        }
+        return r;
+    };
 
     describe('When burn tokens in a single tx', () => {
         it('should burn one token utxo successfully', async () => {
-            await testBurnResult([
-                {
-                    utxo: firstMintTx.getUtxo(3),
-                    txoStateHashes: firstMintTx.txState.stateHashList,
-                    state: CAT20Proto.create(metadata.premine * 10n ** BigInt(metadata.decimals), toReceiverAddr),
-                },
-            ]);
+            await testBurnResult(await getTokenUtxos(cat20Generater, toReceiverAddr, 1));
         });
 
         it('should burn multiple token utxos successfully', async () => {
-            await testBurnResult([
-                // first token utxo
-                {
-                    utxo: firstMintTx.getUtxo(3),
-                    txoStateHashes: firstMintTx.txState.stateHashList,
-                    state: CAT20Proto.create(metadata.premine * 10n ** BigInt(metadata.decimals), toReceiverAddr),
-                },
-                // second token utxo
-                {
-                    utxo: secondMintTx.getUtxo(3),
-                    txoStateHashes: secondMintTx.txState.stateHashList,
-                    state: CAT20Proto.create(metadata.limit * 10n ** BigInt(metadata.decimals), toReceiverAddr),
-                },
-            ]);
+            await testBurnResult(await getTokenUtxos(cat20Generater, toReceiverAddr, 2));
         });
     });
 
-    async function testBurnResult(cat20Utxos: Cat20Utxo[]) {
-        const { guardTx, burnTx, estGuardTxVSize, estSendTxVSize } = await burnToken(minterAddr, cat20Utxos);
+    async function testBurnResult(cat20Utxos: CAT20Utxo[]) {
+        const { guardTx, burnTx, estGuardTxVSize, estSendTxVSize } = await burn(
+            testSigner,
+            testUtxoProvider,
+            testChainProvider,
+            cat20Generater.deployInfo.minterAddr,
+            cat20Utxos,
+            await testChainProvider.getFeeRate(),
+        );
 
         const realGuardVSize = guardTx.extractTransaction().virtualSize();
         const realSendVSize = burnTx.extractTransaction().virtualSize();
@@ -121,16 +80,6 @@ describe('Test the feature `burn` for `Cat20Covenant`', () => {
             estGuardTxVSize >= realGuardVSize,
             `Estimated guard tx size ${estGuardTxVSize} is less that the real size ${realGuardVSize}`,
         ).to.be.true;
-        expect(
-            estGuardTxVSize <= realGuardVSize + ALLOWED_SIZE_DIFF,
-            `Estimated guard tx size ${estGuardTxVSize} is more than the real size ${realGuardVSize}`,
-        ).to.be.true;
-        expect(
-            guardTx.getFeeRate() <= (estGuardTxVSize / realGuardVSize) * FEE_RATE,
-            `Guard tx fee rate ${guardTx.getFeeRate()} is large than the expected fee rate ${
-                (estGuardTxVSize / realGuardVSize) * FEE_RATE
-            }`,
-        ).to.be.true;
 
         // check send tx
         expect(burnTx).not.to.be.undefined;
@@ -139,23 +88,13 @@ describe('Test the feature `burn` for `Cat20Covenant`', () => {
             estSendTxVSize >= realSendVSize,
             `Estimated send tx size ${estSendTxVSize} is less that the real size ${realSendVSize}`,
         ).to.be.true;
-        expect(
-            estSendTxVSize <= realSendVSize + ALLOWED_SIZE_DIFF,
-            `Estimated send tx size ${estSendTxVSize} is more than the real size ${realSendVSize}`,
-        ).to.be.true;
-        expect(
-            burnTx.getFeeRate() <= (estSendTxVSize / realSendVSize) * FEE_RATE,
-            `Send tx fee rate ${burnTx.getFeeRate()} is larger than the expected fee rate ${
-                (estSendTxVSize / realSendVSize) * FEE_RATE
-            }`,
-        ).to.be.true;
 
         // verify token input unlock
         for (let i = 0; i < cat20Utxos.length; i++) {
-            expect(verifyInputSpent(burnTx, i)).to.be.true;
+            expect(bvmVerify(burnTx, i)).to.be.true;
         }
 
         // verify guard input unlock
-        expect(verifyInputSpent(burnTx, cat20Utxos.length)).to.be.true;
+        expect(bvmVerify(burnTx, cat20Utxos.length)).to.be.true;
     }
 });

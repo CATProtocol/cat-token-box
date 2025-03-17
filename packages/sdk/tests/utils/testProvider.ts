@@ -1,13 +1,17 @@
-import { UTXO } from 'scrypt-ts';
-import { ChainProvider, UtxoProvider } from '../../src/lib/provider';
-import { Transaction } from 'bitcoinjs-lib';
-import { getDummyUtxo } from '../../src/lib/utils';
+import { Transaction } from '@scrypt-inc/bitcoinjs-lib';
+import { ChainProvider, UTXO, UtxoProvider } from '@scrypt-inc/scrypt-ts-btc';
+import { getDummyUtxo } from '../../src';
 
 export class TestChainProvider implements ChainProvider {
     private broadcastedTxs: Map<string, string> = new Map();
 
     constructor() {}
-    getConfirmations(txId: string): Promise<number> {
+
+    async getFeeRate(): Promise<number> {
+        return 1;
+    }
+
+    getConfirmations(): Promise<number> {
         return Promise.resolve(1);
     }
 
@@ -15,7 +19,6 @@ export class TestChainProvider implements ChainProvider {
         const tx = Transaction.fromHex(txHex);
         const txId = tx.getId();
         this.broadcastedTxs.set(txId, txHex);
-        // console.log(`Broadcasted tx with id: ${txId}, hex: ${txHex}`)
         return txId;
     }
 
@@ -30,10 +33,12 @@ export class TestChainProvider implements ChainProvider {
 
 export class TestUtxoProvider implements UtxoProvider {
     constructor() {}
-    markSpent(txId: string, vout: number): void {}
-    addNewUTXO(utxo: UTXO): void {}
 
-    async getUtxos(address: string, options?: { total?: number; maxCnt?: number }): Promise<UTXO[]> {
+    markSpent(): void {}
+
+    addNewUTXO(): void {}
+
+    async getUtxos(address: string): Promise<UTXO[]> {
         return Promise.resolve([getDummyUtxo(address)]);
     }
 }

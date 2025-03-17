@@ -1,13 +1,9 @@
-import { UTXO } from 'scrypt-ts';
-import { Cat20TokenInfo, OpenMinterCat20Meta } from '../../../lib/metadata';
-import { Signer } from '../../../lib/signer';
-import { OpenMinterCovenant } from '../../../covenants/openMinterCovenant';
-import { addrToP2trLockingScript, dummySig, getDummyUtxo, getUnfinalizedTxId } from '../../../lib/utils';
-import { Psbt, Transaction } from 'bitcoinjs-lib';
+import { Psbt, Transaction } from '@scrypt-inc/bitcoinjs-lib';
+import { ChainProvider, ExtPsbt, markSpent, Signer, UTXO, UtxoProvider } from '@scrypt-inc/scrypt-ts-btc';
+import { CAT20OpenMinterCovenant } from '../../../covenants/cat20OpenMinterCovenant';
 import { Postage } from '../../../lib/constants';
-import { bitcoinjs } from '../../../lib/btc';
-import { ChainProvider, markSpent, UtxoProvider } from '../../../lib/provider';
-import { CatPsbt } from '../../../lib/catPsbt';
+import { Cat20TokenInfo, OpenMinterCat20Meta } from '../../../lib/metadata';
+import { addrToP2trLockingScript, dummySig, getDummyUtxo } from '../../../lib/utils';
 
 /**
  * Deploy a CAT20 token with metadata and automatically mint the pre-mined tokens, if applicable.
@@ -28,27 +24,21 @@ export async function deploy(
     changeAddress?: string,
 ): Promise<
     Cat20TokenInfo<OpenMinterCat20Meta> & {
-        genesisTx: bitcoinjs.Psbt;
-        revealTx: CatPsbt;
-        premineTx?: CatPsbt;
+        genesisTx: ExtPsbt;
+        revealTx: ExtPsbt;
+        premineTx?: ExtPsbt;
     }
 > {
-    if (metadata.minterMd5 !== OpenMinterCovenant.LOCKED_ASM_VERSION) {
-        throw new Error('Invalid minterMd5 for OpenMinterV2Covenant');
-    }
-
     const pubKey = await signer.getPublicKey();
     const address = await signer.getAddress();
     const feeAddress = await signer.getAddress();
     changeAddress = changeAddress || feeAddress;
     let sigRequests = [];
 
-    const { commitTxVSize, revealTxVSize } = estimateDeployTxVSizes(metadata, address, pubKey, changeAddress, feeRate);
+    const { revealTxVSize } = estimateDeployTxVSizes(metadata, address, pubKey, changeAddress, feeRate);
 
     const commitTxOutputsAmount = revealTxVSize * feeRate + Postage.MINTER_POSTAGE;
-    const commitTxFee = commitTxVSize * feeRate;
-    const total = commitTxOutputsAmount + commitTxFee;
-    const utxos = await utxoProvider.getUtxos(feeAddress, { total });
+    const utxos = await utxoProvider.getUtxos(feeAddress);
 
     const { tokenId, tokenAddr, minterAddr, commitPsbt, revealPsbt, newFeeUtxo } = buildCommitAndRevealTxs(
         metadata,
@@ -77,7 +67,7 @@ export async function deploy(
     ];
 
     // build the premine tx if applicable
-    let preminePsbt: CatPsbt | undefined;
+    let preminePsbt: ExtPsbt | undefined;
     if (metadata.premine > 0n && metadata.preminerAddr) {
         preminePsbt = await buildPremineTx(
             newFeeUtxo,
@@ -103,11 +93,11 @@ export async function deploy(
     const [signedCommitPsbt, signedRevealPsbt, signedPreminePsbt] = await signer.signPsbts(sigRequests);
 
     // combine and finalize the signed psbts
-    const genesisTxPsbt = Psbt.fromHex(signedCommitPsbt).finalizeAllInputs();
-    const revealTxPsbt = await revealPsbt.combine(Psbt.fromHex(signedRevealPsbt)).finalizeAllInputsAsync();
-    let premineTxPsbt: CatPsbt | undefined;
+    const genesisTxPsbt = commitPsbt.combine(Psbt.fromHex(signedCommitPsbt)).finalizeAllInputs();
+    const revealTxPsbt = revealPsbt.combine(Psbt.fromHex(signedRevealPsbt)).finalizeAllInputs();
+    let premineTxPsbt: ExtPsbt | undefined;
     if (preminePsbt && signedPreminePsbt) {
-        premineTxPsbt = await preminePsbt.combine(Psbt.fromHex(signedPreminePsbt)).finalizeAllInputsAsync();
+        premineTxPsbt = preminePsbt.combine(Psbt.fromHex(signedPreminePsbt)).finalizeAllInputs();
     }
 
     // broadcast the psbts
@@ -176,7 +166,7 @@ function buildCommitAndRevealTxs(
     commitTxOutputsAmount: number,
 ) {
     // build the commit tx
-    const commitPsbt = OpenMinterCovenant.buildCommitTx(
+    const commitPsbt = CAT20OpenMinterCovenant.buildCommitTx(
         metadata,
         address,
         pubKey,
@@ -186,27 +176,13 @@ function buildCommitAndRevealTxs(
         feeRate,
     );
 
-    const commitTxid = getUnfinalizedTxId(commitPsbt);
-
     // build the reveal tx
-    const { tokenId, tokenAddr, minterAddr, revealPsbt } = OpenMinterCovenant.buildRevealTx(
-        {
-            txId: commitTxid,
-            outputIndex: 0,
-            script: Buffer.from(commitPsbt.txOutputs[0].script).toString('hex'),
-            satoshis: Number(commitPsbt.txOutputs[0].value),
-        },
+    const { tokenId, tokenAddr, minterAddr, revealPsbt } = CAT20OpenMinterCovenant.buildRevealTx(
+        commitPsbt.getUtxo(0),
         metadata,
         address,
         pubKey,
-        [
-            {
-                txId: commitTxid,
-                outputIndex: 1,
-                script: Buffer.from(commitPsbt.txOutputs[1].script).toString('hex'),
-                satoshis: Number(commitPsbt.txOutputs[1].value),
-            },
-        ],
+        [commitPsbt.getUtxo(1)],
     );
 
     return {
@@ -215,19 +191,14 @@ function buildCommitAndRevealTxs(
         minterAddr,
         commitPsbt,
         revealPsbt,
-        newFeeUtxo: {
-            txId: commitTxid,
-            outputIndex: 2,
-            script: Buffer.from(commitPsbt.txOutputs[2].script).toString('hex'),
-            satoshis: Number(commitPsbt.txOutputs[2].value),
-        },
+        newFeeUtxo: commitPsbt.getUtxo(2),
     };
 }
 
 async function buildPremineTx(
     feeUtxo: UTXO,
-    commitPsbt: Psbt,
-    revealPsbt: CatPsbt,
+    commitPsbt: ExtPsbt,
+    revealPsbt: ExtPsbt,
     tokenId: string,
     tokenAddr: string,
     metadata: OpenMinterCat20Meta,
@@ -244,23 +215,17 @@ async function buildPremineTx(
     const tokenReceiver = metadata.preminerAddr;
     const minterPreTxHex = Transaction.fromBuffer(commitPsbt.data.getTransaction()).toHex();
     const spentMinterTx = Transaction.fromBuffer(revealPsbt.data.getTransaction());
-    const txId = spentMinterTx.getId();
     const spentMinterTxHex = spentMinterTx.toHex();
 
-    const initialMinter = new OpenMinterCovenant(tokenId, metadata, {
+    const initialMinter = new CAT20OpenMinterCovenant(tokenId, metadata, {
         tokenScript: addrToP2trLockingScript(tokenAddr),
         hasMintedBefore: false,
         remainingCount: (metadata.max - metadata.premine) / metadata.limit,
-    }).bindToUtxo({
-        txId,
-        outputIndex: 1,
-        satoshis: Postage.MINTER_POSTAGE,
-    });
+    }).bindToUtxo(revealPsbt.getStatefulCovenantUtxo(1));
 
-    const estimatedVSize = OpenMinterCovenant.buildMintTx(
+    const estimatedVSize = CAT20OpenMinterCovenant.buildMintTx(
         minterPreTxHex,
         spentMinterTxHex,
-        revealPsbt.txState,
         initialMinter,
         tokenReceiver,
         [getDummyUtxo(feeAddress)],
@@ -271,10 +236,9 @@ async function buildPremineTx(
         preminterPubKey,
     ).estimateVSize();
 
-    return OpenMinterCovenant.buildMintTx(
+    return CAT20OpenMinterCovenant.buildMintTx(
         minterPreTxHex,
         spentMinterTxHex,
-        revealPsbt.txState,
         initialMinter,
         tokenReceiver,
         [feeUtxo],

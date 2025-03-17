@@ -1,9 +1,11 @@
-import { Cat20Utxo, ChainProvider, UtxoProvider } from '../../../lib/provider';
-import { Signer } from '../../../lib/signer';
+// import { Cat20Utxo, ChainProvider, UtxoProvider } from '../../../lib/provider';
+// import { Signer } from '../../../lib/signer';
 import { toTokenAddress } from '../../../lib/utils';
 import { singleSend } from './singleSend';
 import { feeSplitTx, waitTxConfirm } from './split';
 import { calcTotalAmount } from './pick';
+import { ChainProvider, Signer, UtxoProvider } from '@scrypt-inc/scrypt-ts-btc';
+import { CAT20Utxo } from '../../../lib/provider';
 
 /**
  * Consolidate all CAT20 tokens into a single UTXO through multiple transactions.
@@ -20,10 +22,10 @@ export async function mergeCat20Utxo(
     utxoProvider: UtxoProvider,
     chainProvider: ChainProvider,
     minterAddr: string,
-    inputTokenUtxos: Cat20Utxo[],
+    inputTokenUtxos: CAT20Utxo[],
     feeRate: number,
 ): Promise<{
-    cat20Utxos: Cat20Utxo[];
+    cat20Utxos: CAT20Utxo[];
 }> {
     if (inputTokenUtxos.length < 2) {
         return {
@@ -41,16 +43,16 @@ export async function mergeCat20Utxo(
 
     await feeSplitTx(signer, utxoProvider, chainProvider, feeRate, count);
 
-    const newTokensTobeMerge: Cat20Utxo[] = [];
+    const newTokensTobeMerge: CAT20Utxo[] = [];
 
     const txIdsWaitConfirm: string[] = [];
 
     await Promise.all(
         new Array(count).fill(0).map(async (_, i) => {
-            let newToken: Cat20Utxo | null = null;
-            const batchTokensTobeMerge: Cat20Utxo[] = inputTokenUtxos.slice(i * nOneMerge, (i + 1) * nOneMerge);
+            let newToken: CAT20Utxo | null = null;
+            const batchTokensTobeMerge: CAT20Utxo[] = inputTokenUtxos.slice(i * nOneMerge, (i + 1) * nOneMerge);
             for (let j = 0; j < 12; j++) {
-                const tokensTobeMerge: Cat20Utxo[] = batchTokensTobeMerge.slice(0, 4);
+                const tokensTobeMerge: CAT20Utxo[] = batchTokensTobeMerge.slice(0, 4);
 
                 if (tokensTobeMerge.length === 1) {
                     break;
@@ -73,13 +75,13 @@ export async function mergeCat20Utxo(
                     feeRate,
                 );
 
-                newToken = result.newCat20Utxos[0];
+                newToken = result.newCAT20Utxos[0];
                 batchTokensTobeMerge.splice(0, 4, newToken);
             }
 
             newTokensTobeMerge.push(newToken);
             if (count > 1) {
-                txIdsWaitConfirm.push(newToken.utxo.txId);
+                txIdsWaitConfirm.push(newToken.txId);
             }
         }),
     );

@@ -1,20 +1,19 @@
-import { Cat20Utxo, ChainProvider, UtxoProvider } from '../../../lib/provider';
-import { Signer } from '../../../lib/signer';
-import { pickFromStart } from './pick';
+import { ChainProvider, Int32, Signer, UtxoProvider } from '@scrypt-inc/scrypt-ts-btc';
+import { toTokenAddress } from '../../../lib/utils';
 import { mergeCat20Utxo } from './merge';
+import { pickFromStart } from './pick';
 import { singleSend } from './singleSend';
-import { toTokenAddress, validteSupportedAddress } from '../../../lib/utils';
 import { waitTxConfirm } from './split';
-import { int32 } from '../../../contracts/types';
+import { CAT20Utxo } from '../../../lib/provider';
 
 export interface AirdropProcess {
     onStart: () => void;
-    onProcess: (receiver: { address: string; amount: int32; txId: string }) => void;
+    onProcess: (receiver: { address: string; amount: Int32; txId: string }) => void;
 
     onSuccess: (
         success: Array<{
             address: string;
-            amount: int32;
+            amount: Int32;
             txId: string;
         }>,
     ) => void;
@@ -40,23 +39,23 @@ export async function airdrop(
     utxoProvider: UtxoProvider,
     chainProvider: ChainProvider,
     minterAddr: string,
-    inputTokenUtxos: Cat20Utxo[],
+    inputTokenUtxos: CAT20Utxo[],
     receivers: Array<{
         address: string;
-        amount: int32;
+        amount: Int32;
     }>,
     feeRate: number,
     cb?: AirdropProcess,
 ): Promise<{
-    cat20Utxos: Cat20Utxo[];
+    cat20Utxos: CAT20Utxo[];
     success: Array<{
         address: string;
-        amount: int32;
+        amount: Int32;
         txId: string;
     }>;
 }> {
     receivers.forEach((receiver) => {
-        validteSupportedAddress(receiver.address);
+        toTokenAddress(receiver.address);
     });
 
     const totalInputAmount = inputTokenUtxos.reduce((acc, inputTokenUtxo) => acc + inputTokenUtxo.state.amount, 0n);
@@ -74,11 +73,11 @@ export async function airdrop(
 
     const success: Array<{
         address: string;
-        amount: int32;
+        amount: Int32;
         txId: string;
     }> = [];
 
-    const airdropCat20Utxos: Cat20Utxo[] = [];
+    const airdropCat20Utxos: CAT20Utxo[] = [];
     let sendCount = 0;
 
     try {
@@ -136,13 +135,13 @@ export async function airdrop(
                 });
             }
 
-            const newCat20Utxos = result.newCat20Utxos.slice(
+            const newCat20Utxos = result.newCAT20Utxos.slice(
                 0,
-                result.changeTokenOutputIndex > -1 ? result.newCat20Utxos.length - 1 : result.newCat20Utxos.length,
+                result.changeTokenOutputIndex > -1 ? result.newCAT20Utxos.length - 1 : result.newCAT20Utxos.length,
             );
             airdropCat20Utxos.push(...newCat20Utxos);
             if (result.changeTokenOutputIndex > -1) {
-                const changeCat20Utxo = result.newCat20Utxos[result.changeTokenOutputIndex - 1];
+                const changeCat20Utxo = result.newCAT20Utxos[result.changeTokenOutputIndex - 1];
                 inputTokenUtxos.push(changeCat20Utxo);
             }
 

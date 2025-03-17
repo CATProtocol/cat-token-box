@@ -13,8 +13,7 @@
     "node": ">=20"
   },
   "scripts": {
-    "build": "turbo build",
-    "postinstall": "sh ./scripts/patch.sh"
+    "build": "turbo build"
   },
   "devDependencies": {
     "turbo": "^2.1.1"

@@ -1,4 +1,4 @@
-import { Ripemd160 } from 'scrypt-ts';
+import { Ripemd160 } from '@scrypt-inc/scrypt-ts-btc';
 
 /**
  * CAT20 metadata

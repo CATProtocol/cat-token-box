@@ -1,3 +1,3 @@
-import { DefaultSigner } from '../../src/signers';
+import { DefaultSigner } from '@scrypt-inc/scrypt-ts-btc';
 
 export const testSigner = new DefaultSigner();

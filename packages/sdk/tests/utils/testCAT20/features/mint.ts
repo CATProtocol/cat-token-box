@@ -1,10 +1,18 @@
 import { Psbt, Transaction } from '@scrypt-inc/bitcoinjs-lib';
-import { ChainProvider, ExtPsbt, getTxId, markSpent, Ripemd160, Signer, UtxoProvider } from '@scrypt-inc/scrypt-ts-btc';
-import { OpenMinterCat20Meta } from '../../../lib/metadata';
-import { CAT20OpenMinterUtxo } from '../../../lib/provider';
-import { CAT20OpenMinterState } from '../../../contracts';
-import { CAT20OpenMinterCovenant } from '../../../covenants';
-
+import {
+    ByteString,
+    ChainProvider,
+    ExtPsbt,
+    getTxId,
+    Int32,
+    markSpent,
+    Signer,
+    UtxoProvider,
+} from '@scrypt-inc/scrypt-ts-btc';
+import { CAT20Covenant } from '../../../../src';
+import { CAT20ClosedMinterUtxo } from '../../testCAT20Generater';
+import { CAT20Utxo } from '../../../../src/lib/provider';
+import { CAT20ClosedMinterCovenant } from '../cat20ClosedMinterCovenant';
 /**
  * Mint CAT20 tokens in a single transaction.
  * @param signer a signer, such as {@link DefaultSigner} or {@link UnisatSigner}
@@ -22,14 +30,15 @@ export async function mint(
     signer: Signer,
     utxoProvider: UtxoProvider,
     chainProvider: ChainProvider,
-    minterUtxo: CAT20OpenMinterUtxo,
+    minterUtxo: CAT20ClosedMinterUtxo,
     tokenId: string,
-    metadata: OpenMinterCat20Meta,
-    tokenReceiver: Ripemd160,
+    tokenReceiver: ByteString,
+    tokenAmount: Int32,
     changeAddress: string,
     feeRate: number,
 ): Promise<{
     mintTx: ExtPsbt;
+    cat20Utxo: CAT20Utxo;
     mintTxId: string;
 }> {
     const address = await signer.getAddress();
@@ -40,39 +49,40 @@ export async function mint(
     const spentMinterTxHex = await chainProvider.getRawTransaction(minterUtxo.txId);
     const spentMinterTx = Transaction.fromHex(spentMinterTxHex);
     const minterPreTxHex = await chainProvider.getRawTransaction(getTxId(spentMinterTx.ins[minterInputIndex]));
+    const minterCovenant = new CAT20ClosedMinterCovenant(changeAddress, tokenId, minterUtxo.state).bindToUtxo(
+        minterUtxo,
+    );
 
-    const minterCovenant = new CAT20OpenMinterCovenant(
-        tokenId,
-        metadata,
-        minterUtxo.state as CAT20OpenMinterState,
-    ).bindToUtxo(minterUtxo);
-
+    const token = new CAT20Covenant(minterCovenant.address);
+    minterCovenant.state = {
+        tokenScript: token.lockingScriptHex,
+    };
     const utxos = await utxoProvider.getUtxos(address);
-
-    const estimatedVSize = CAT20OpenMinterCovenant.buildMintTx(
+    const estimatedVSize = CAT20ClosedMinterCovenant.buildMintTx(
         minterPreTxHex,
         spentMinterTxHex,
         minterCovenant,
         tokenReceiver,
+        tokenAmount,
         utxos,
         feeRate,
         changeAddress,
-        undefined,
-        address,
-        metadata.preminerAddr ? pubkey : undefined,
+        changeAddress,
+        pubkey,
     ).estimateVSize();
 
-    const mintPsbt = CAT20OpenMinterCovenant.buildMintTx(
+    const mintPsbt = CAT20ClosedMinterCovenant.buildMintTx(
         minterPreTxHex,
         spentMinterTxHex,
         minterCovenant,
         tokenReceiver,
+        tokenAmount,
         utxos,
         feeRate,
         changeAddress,
-        estimatedVSize,
         address,
-        metadata.preminerAddr ? pubkey : undefined,
+        pubkey,
+        estimatedVSize,
     );
 
     const signedMintPsbt = await signer.signPsbt(mintPsbt.toHex(), mintPsbt.psbtOptions());
@@ -80,11 +90,18 @@ export async function mint(
     await mintPsbt.combine(Psbt.fromHex(signedMintPsbt)).finalizeAllInputs();
 
     const mintTx = mintPsbt.extractTransaction();
-
     await chainProvider.broadcast(mintTx.toHex());
     markSpent(utxoProvider, mintTx);
+    const cat20Utxo: CAT20Utxo = {
+        ...mintPsbt.getStatefulCovenantUtxo(2),
+        state: {
+            ownerAddr: tokenReceiver,
+            amount: tokenAmount,
+        },
+    };
     return {
         mintTxId: mintTx.getId(),
         mintTx: mintPsbt,
+        cat20Utxo: cat20Utxo,
     };
 }

@@ -1,10 +1,16 @@
-import { ByteString, SmartContractLib, assert, hash160, len, method, toByteString } from 'scrypt-ts';
 import {
-    OWNER_ADDR_P2WPKH_BYTE_LEN,
-    OWNER_ADDR_P2TR_BYTE_LEN,
+    assert,
+    ByteString,
+    hash160,
+    len,
+    method,
     OWNER_ADDR_CONTRACT_HASH_BYTE_LEN,
+    OWNER_ADDR_P2TR_BYTE_LEN,
+    OWNER_ADDR_P2WPKH_BYTE_LEN,
+    SmartContractLib,
+    toByteString,
     X_ONLY_PUBKEY_BYTE_LEN,
-} from '../constants';
+} from '@scrypt-inc/scrypt-ts-btc';
 
 export class OwnerUtils extends SmartContractLib {
     /**

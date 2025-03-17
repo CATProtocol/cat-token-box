@@ -13,7 +13,6 @@
     }
   },
   "scripts": {
-    "postinstall": "sh ./scripts/patch.sh",
     "prebuild": "npm run clean && npm run compile",
     "postbuild": "node ./scripts/fixArtifacts.mjs",
     "prepublishOnly": "npm run build",
@@ -22,7 +21,7 @@
     "build": "npm run build:cjs && npm run build:esm",
     "deploy": "npx ts-node ./deploy.ts",
     "clean": "rimraf scrypt.index.json && rimraf dist && rimraf artifacts/*",
-    "compile": "npx scrypt-cli@0.2.3 compile",
+    "compile": "node ../scrypt-ts-cli-btc/dist/main.js compile",
     "_pretest": "npm run build",
     "test": "npm run test:mocha",
     "coverage:c8": "c8 npm run test:mocha",
@@ -48,20 +47,19 @@
     "@cmdcode/buff": "^2.2.4",
     "@cmdcode/crypto-tools": "^2.7.4",
     "@cmdcode/tapscript": "=1.4.4",
+    "@scrypt-inc/bitcoinjs-lib": "^1.0.11",
+    "@scrypt-inc/cli-btc": "0.2.9-beta.3",
+    "@scrypt-inc/scrypt-ts-btc": "0.2.9-beta.3",
+    "@scrypt-inc/scrypt-ts-transpiler-btc": "0.2.9-beta.3",
     "@scure/btc-signer": "^1.4.0",
-    "bigi": "^1.4.2",
     "bip174": "^3.0.0-rc.1",
-    "bitcoinjs-lib": "7.0.0-rc.0",
-    "bitcore-lib-inquisition": "^10.3.1",
     "cbor": "^9.0.2",
     "cross-fetch": "^4.0.0",
     "decimal.js": "^10.4.3",
     "dotenv": "^16.0.3",
     "ecpair": "^2.1.0",
     "ecurve": "^1.0.6",
-    "js-sha256": "^0.9.0",
-    "lodash": "^4.17.21",
-    "scrypt-ts": "^1.4.4"
+    "js-sha256": "^0.9.0"
   },
   "devDependencies": {
     "@istanbuljs/nyc-config-typescript": "^1.0.2",

@@ -1,7 +1,7 @@
+import { hash160 } from '@scrypt-inc/scrypt-ts-btc';
 import { OwnerUtils } from '../../../src/contracts/utils/ownerUtils';
 import { expect, use } from 'chai';
 import chaiAsPromised from 'chai-as-promised';
-import { hash160 } from 'scrypt-ts';
 
 use(chaiAsPromised);
 

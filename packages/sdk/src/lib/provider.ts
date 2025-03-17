@@ -1,53 +1,21 @@
-import { Ripemd160, UTXO } from 'scrypt-ts';
-import { StatefulCovenantUtxo } from './covenant';
-import { Transaction } from 'bitcoinjs-lib';
-import { getTxId } from './utils';
-import { CAT20State, OpenMinterState } from '../contracts/token/types';
 import {
-    CAT721State,
-    NftClosedMinterState,
-    NftOpenMinterState,
-    NftParallelClosedMinterState,
-} from '../contracts/nft/types';
+    ChainProvider,
+    ExtPsbt,
+    markSpent,
+    Ripemd160,
+    Signer,
+    StatefulCovenantUtxo,
+    UtxoProvider,
+} from '@scrypt-inc/scrypt-ts-btc';
+import { Transaction } from '@scrypt-inc/bitcoinjs-lib';
+import { Cat20Metadata, CAT20OpenMinterState, CAT20State, Cat20TokenInfo } from '..';
 
-export interface Cat20Utxo extends StatefulCovenantUtxo {
+export interface CAT20Utxo extends StatefulCovenantUtxo {
     state: CAT20State;
 }
 
-export interface Cat721Utxo extends StatefulCovenantUtxo {
-    state: CAT721State;
-}
-
-export interface Cat20MinterUtxo extends StatefulCovenantUtxo {
-    state: OpenMinterState;
-}
-
-export interface Cat721MinterUtxo extends StatefulCovenantUtxo {
-    state: NftParallelClosedMinterState;
-}
-
-export interface Cat721OpenMinterUtxo extends StatefulCovenantUtxo {
-    state: NftOpenMinterState;
-}
-
-export interface Cat721ClosedMinterUtxo extends StatefulCovenantUtxo {
-    state: NftClosedMinterState;
-}
-
-/**
- * a Provider used to query UTXO related to the address
- */
-export interface UtxoProvider {
-    getUtxos(address: string, options?: { total?: number; maxCnt?: number }): Promise<UTXO[]>;
-    markSpent(txId: string, vout: number): void;
-    addNewUTXO(utxo: UTXO): void;
-}
-
-export function markSpent(utxoProvider: UtxoProvider, tx: Transaction) {
-    for (let i = 0; i < tx.ins.length; i++) {
-        const input = tx.ins[i];
-        utxoProvider.markSpent(getTxId(input), input.index);
-    }
+export interface CAT20OpenMinterUtxo extends StatefulCovenantUtxo {
+    state: CAT20OpenMinterState;
 }
 
 export interface Cat20UtxoProvider {
@@ -55,25 +23,67 @@ export interface Cat20UtxoProvider {
         tokenIdOrAddr: string,
         ownerAddr: Ripemd160,
         options?: { total?: number; maxCnt?: number },
-    ): Promise<Cat20Utxo[]>;
+    ): Promise<CAT20Utxo[]>;
 }
 
-export interface Cat721UtxoProvider {
-    getCat721Utxos(
-        tokenIdOrAddr: string,
-        ownerAddr: Ripemd160,
-        options?: { total?: number; maxCnt?: number },
-    ): Promise<Cat721Utxo[]>;
+export interface TrackerProvider {
+    tokenInfo<T extends Cat20Metadata>(tokenId: string): Promise<Cat20TokenInfo<T>>;
+
+    tokens(tokenId: string, ownerAddr: string): Promise<Array<CAT20Utxo>>;
 }
 
 type TxId = string;
 
-/**
- * a provider for interacting with the blockchain
- */
-export interface ChainProvider {
+export interface SwapChainProvider {
     broadcast(txHex: string): Promise<TxId>;
+    cacheTx(tx: Transaction);
     getRawTransaction(txId: TxId): Promise<string>;
-
     getConfirmations(txId: TxId): Promise<number>;
+}
+
+export async function processCatPsbts(
+    signer: Signer,
+    utxoProvider: UtxoProvider,
+    chainProvider: SwapChainProvider,
+    extPsbts: ExtPsbt[],
+    broadcast: boolean = true,
+): Promise<Transaction[]> {
+    // sign
+    const signedPsbtHexs = await signer.signPsbts(
+        extPsbts.map((catPsbt) => {
+            return {
+                psbtHex: catPsbt.toHex(),
+                options: catPsbt.psbtOptions(),
+            };
+        }),
+    );
+    const txs: Transaction[] = [];
+    // combine
+    for (let index = 0; index < extPsbts.length; index++) {
+        const signedPsbtHex = signedPsbtHexs[index];
+        const signedCatPsbt = extPsbts[index].combine(ExtPsbt.fromHex(signedPsbtHex)).finalizeAllInputs();
+        txs.push(signedCatPsbt.extractTransaction());
+    }
+    // boradcast
+    if (broadcast) {
+        for (let index = 0; index < txs.length; index++) {
+            const tx = txs[index];
+            await chainProvider.broadcast(tx.toHex());
+            markSpent(utxoProvider, tx);
+        }
+    }
+    return txs;
+}
+
+export async function providerCacheTx(chainProvider: SwapChainProvider, extPsbts: ExtPsbt[]) {
+    for (let index = 0; index < extPsbts.length; index++) {
+        await chainProvider.cacheTx(extPsbts[index].unsignedTx);
+    }
+}
+
+export async function batchBroadcast(chainProvider: ChainProvider, txHexList: string[]) {
+    for (let index = 0; index < txHexList.length; index++) {
+        const txHex = txHexList[index];
+        await chainProvider.broadcast(txHex);
+    }
 }

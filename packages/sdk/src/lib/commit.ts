@@ -1,7 +1,6 @@
-import { btc } from './btc';
-
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const cbor2 = require('cbor');
+import { script } from '@scrypt-inc/bitcoinjs-lib';
 
 const limit = 520;
 
@@ -72,11 +71,10 @@ export const getCatCommitScript = (
     res.push(
         toPushData(Buffer.from(leafKeyXPub, 'hex')), // 0 OP_IF "cat"
     );
-
-    res.push(btc.Script.fromASM('OP_CHECKSIGVERIFY').toBuffer()); // checkSig
-    res.push(btc.Script.fromASM('OP_2DROP OP_2DROP OP_DROP').toBuffer()); // drop all stateHashes in the witness
-    res.push(btc.Script.fromASM('OP_0 OP_IF 636174').toBuffer()); //  cat protocal envelope start
-    res.push(btc.Script.fromASM('OP_1').toBuffer()); // cat FT
+    res.push(Buffer.from(script.fromASM('OP_CHECKSIGVERIFY'))); // checkSig
+    res.push(Buffer.from(script.fromASM('OP_2DROP OP_2DROP OP_DROP'))); // drop all stateHashes in the witness
+    res.push(Buffer.from(script.fromASM('OP_0 OP_IF 636174'))); //  cat protocal envelope start
+    res.push(Buffer.from(script.fromASM('OP_1'))); // cat FT
 
     const dataChunks = chunks(Array.from(data), limit);
 
@@ -85,9 +83,9 @@ export const getCatCommitScript = (
         res.push(toPushData(Buffer.from(chunk)));
     }
 
-    res.push(btc.Script.fromASM('OP_ENDIF').toBuffer()); // cat protocal envelope end
+    res.push(Buffer.from(script.fromASM('OP_ENDIF'))); // cat protocal envelope end
 
-    res.push(btc.Script.fromASM('OP_1').toBuffer()); // put true on top stack
+    res.push(Buffer.from(script.fromASM('OP_1'))); // put true on top stack
 
     return Buffer.concat(res).toString('hex');
 };
@@ -107,10 +105,10 @@ export const getCatCollectionCommitScript = (
         toPushData(Buffer.from(leafKeyXPub, 'hex')), // 0 OP_IF "cat"
     );
 
-    res.push(btc.Script.fromASM('OP_CHECKSIGVERIFY').toBuffer()); // checkSig
-    res.push(btc.Script.fromASM('OP_2DROP OP_2DROP OP_DROP').toBuffer()); // drop all stateHashes in the witness
-    res.push(btc.Script.fromASM('OP_0 OP_IF 636174').toBuffer()); //  cat protocal envelope start
-    res.push(btc.Script.fromASM('OP_2').toBuffer()); // cat NFT collection
+    res.push(Buffer.from(script.fromASM('OP_CHECKSIGVERIFY'))); // checkSig
+    res.push(Buffer.from(script.fromASM('OP_2DROP OP_2DROP OP_DROP'))); // drop all stateHashes in the witness
+    res.push(Buffer.from(script.fromASM('OP_0 OP_IF 636174'))); //  cat protocal envelope start
+    res.push(Buffer.from(script.fromASM('OP_2'))); // cat NFT collection
 
     if (Object.keys(metadata).length > 0) {
         const m = new Map();
@@ -142,15 +140,16 @@ export const getCatCollectionCommitScript = (
         }
     }
 
-    res.push(btc.Script.fromASM('OP_ENDIF').toBuffer()); // cat protocal envelope end
+    res.push(Buffer.from(script.fromASM('OP_ENDIF'))); // cat protocal envelope end
 
-    res.push(btc.Script.fromASM('OP_1').toBuffer()); // put true on top stack
+    res.push(Buffer.from(script.fromASM('OP_1'))); // put true on top stack
 
     return Buffer.concat(res).toString('hex');
 };
 
 export const getCatNFTCommitScript = (
     leafKeyXPub: string,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     metadata: Record<string, any>,
     content?: {
         type: string;
@@ -162,9 +161,9 @@ export const getCatNFTCommitScript = (
         toPushData(Buffer.from(leafKeyXPub, 'hex')), // 0 OP_IF "cat"
     );
 
-    res.push(btc.Script.fromASM('OP_CHECKSIGVERIFY').toBuffer()); // checkSig
-    res.push(btc.Script.fromASM('OP_0 OP_IF 636174').toBuffer()); //  cat protocal envelope start
-    res.push(btc.Script.fromASM('OP_3').toBuffer()); // cat NFT
+    res.push(Buffer.from(script.fromASM('OP_CHECKSIGVERIFY'))); // checkSig
+    res.push(Buffer.from(script.fromASM('OP_0 OP_IF 636174'))); //  cat protocal envelope start
+    res.push(Buffer.from(script.fromASM('OP_3'))); // cat NFT
 
     if (Object.keys(metadata).length > 0) {
         const m = new Map();
@@ -196,9 +195,9 @@ export const getCatNFTCommitScript = (
         }
     }
 
-    res.push(btc.Script.fromASM('OP_ENDIF').toBuffer()); // cat protocal envelope end
+    res.push(Buffer.from(script.fromASM('OP_ENDIF'))); // cat protocal envelope end
 
-    res.push(btc.Script.fromASM('OP_1').toBuffer()); // put true on top stack
+    res.push(Buffer.from(script.fromASM('OP_1'))); // put true on top stack
 
     return Buffer.concat(res).toString('hex');
 };
