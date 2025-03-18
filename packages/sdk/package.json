@@ -21,7 +21,7 @@
     "build": "npm run build:cjs && npm run build:esm",
     "deploy": "npx ts-node ./deploy.ts",
     "clean": "rimraf scrypt.index.json && rimraf dist && rimraf artifacts/*",
-    "compile": "node ../scrypt-ts-cli-btc/dist/main.js compile",
+    "compile": "node ../../node_modules/@scrypt-inc/cli-btc/dist/main.js compile",
     "_pretest": "npm run build",
     "test": "npm run test:mocha",
     "coverage:c8": "c8 npm run test:mocha",
