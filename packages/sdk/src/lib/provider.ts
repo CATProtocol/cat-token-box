@@ -8,7 +8,7 @@ import {
     UtxoProvider,
 } from '@scrypt-inc/scrypt-ts-btc';
 import { Transaction } from '@scrypt-inc/bitcoinjs-lib';
-import { Cat20Metadata, CAT20OpenMinterState, CAT20State, Cat20TokenInfo } from '..';
+import { Cat20Metadata, CAT20OpenMinterState, CAT20State, Cat20TokenInfo, filterFeeUtxos } from '..';
 import { CAT721State } from '../contracts/cat721/types';
 
 export interface CAT20Utxo extends StatefulCovenantUtxo {
@@ -94,3 +94,14 @@ export async function batchBroadcast(chainProvider: ChainProvider, txHexList: st
         await chainProvider.broadcast(txHex);
     }
 }
+
+export const getUtxos = async function (utxoProvider: UtxoProvider, address: string, limit?: number) {
+    let utxos = await utxoProvider.getUtxos(address);
+
+    utxos = filterFeeUtxos(utxos).slice(0, limit || utxos.length);
+
+    if (utxos.length === 0) {
+        throw new Error('Insufficient satoshis input amount');
+    }
+    return utxos;
+};

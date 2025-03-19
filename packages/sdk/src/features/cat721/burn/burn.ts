@@ -1,41 +1,47 @@
 import {
-    ByteString,
     ChainProvider,
     fill,
-    getBackTraceInfo_,
-    Int32,
     Signer,
-    STATE_OUTPUT_COUNT_MAX,
     toByteString,
     TX_INPUT_COUNT_MAX,
     UTXO,
     UtxoProvider,
+    ExtPsbt,
     PubKey,
+    getBackTraceInfo_,
+    ByteString,
     FixedArray,
-    Ripemd160,
-    Sig,
-    hash160,
+    Int32,
+    STATE_OUTPUT_COUNT_MAX,
+    uint8ArrayToHex,
 } from '@scrypt-inc/scrypt-ts-btc';
-import { CAT721Utxo, getUtxos, processExtPsbts } from '../../../lib/provider';
-import { ExtPsbt } from '@scrypt-inc/scrypt-ts-btc';
 import { Postage } from '../../../lib/constants';
-import { uint8ArrayToHex } from '../../../lib/utils';
+import { catToXOnly, isP2TR, pubKeyPrefix } from '../../../lib/utils';
+import { CAT721Utxo, getUtxos, processExtPsbts } from '../../../lib/provider';
 import { CAT721, CAT721Guard, CAT721State } from '../../../contracts';
 import { CAT721Covenant, TracedCAT721Nft } from '../../../covenants/cat721Covenant';
 import { CAT721GuardCovenant } from '../../../covenants/cat721GuardCovenant';
 
-export async function contractSendNft(
+/**
+ * Burn CAT721 NFTs in a single transaction,
+ * @param signer a signer, such as {@link DefaultSigner}  or {@link UnisatSigner}
+ * @param utxoProvider a  {@link UtxoProvider}
+ * @param chainProvider a  {@link ChainProvider}
+ * @param minterAddr the minter address of the CAT721 collection
+ * @param inputNftUtxos CAT721 NFT utxos, which will all be burned
+ * @param feeRate the fee rate for constructing transactions
+ * @returns the guard transaction, the burn transaction, the estimated guard transaction vsize and the estimated burn transaction vsize
+ */
+export async function burnNft(
     signer: Signer,
     utxoProvider: UtxoProvider,
     chainProvider: ChainProvider,
     minterAddr: string,
     inputNftUtxos: CAT721Utxo[],
-    nftReceivers: Ripemd160[],
     feeRate: number,
 ): Promise<{
     guardTx: ExtPsbt;
-    sendTx: ExtPsbt;
-    newCAT721Utxos: CAT721Utxo[];
+    burnTx: ExtPsbt;
 }> {
     const pubkey = await signer.getPublicKey();
     const changeAddress = await signer.getAddress();
@@ -50,46 +56,25 @@ export async function contractSendNft(
     );
 
     const inputNfts = tracableNfts.map((nft) => nft.nft);
-    const { guard, outputNfts } = CAT721Covenant.createTransferGuard(
+
+    const { guard } = CAT721Covenant.createBurnGuard(
         inputNfts.map((nft, i) => ({
             nft,
             inputIndex: i,
         })),
-        inputNfts.map((nft, i) => ({
-            address: nftReceivers[i],
-            outputIndex: i + 1,
-        })),
     );
+
     const guardPsbt = buildGuardTx(guard, utxos, changeAddress, feeRate);
 
-    const sendPsbt = buildSendTx(
-        tracableNfts,
-        guard,
-        guardPsbt,
-        changeAddress,
-        pubkey,
-        outputNfts,
-        changeAddress,
-        feeRate,
-    );
+    const sendPsbt = buildBurnTx(tracableNfts, guard, guardPsbt, changeAddress, pubkey, changeAddress, feeRate);
 
-    const { psbts } = await processExtPsbts(signer, utxoProvider, chainProvider, [guardPsbt, sendPsbt]);
-
-    const newCAT721Utxos: CAT721Utxo[] = outputNfts
-        .filter((outputToken) => typeof outputToken !== 'undefined')
-        .map((covenant, index) => ({
-            ...psbts[1].getStatefulCovenantUtxo(index + 1),
-            state: covenant.state,
-        }));
-
-    const newFeeUtxo = sendPsbt.getChangeUTXO();
-
-    utxoProvider.addNewUTXO(newFeeUtxo);
+    const {
+        psbts: [guardTx, sendTx],
+    } = await processExtPsbts(signer, utxoProvider, chainProvider, [guardPsbt, sendPsbt]);
 
     return {
-        guardTx: psbts[0],
-        sendTx: psbts[1],
-        newCAT721Utxos: newCAT721Utxos,
+        guardTx,
+        burnTx: sendTx,
     };
 }
 
@@ -103,13 +88,12 @@ function buildGuardTx(guard: CAT721GuardCovenant, feeUtxos: UTXO[], changeAddres
     return guardTx;
 }
 
-function buildSendTx(
+function buildBurnTx(
     tracableNfts: TracedCAT721Nft[],
     guard: CAT721GuardCovenant,
     guardPsbt: ExtPsbt,
     address: string,
     pubKey: string,
-    outputNfts: (CAT721Covenant | undefined)[],
     changeAddress: string,
     feeRate: number,
 ) {
@@ -121,38 +105,36 @@ function buildSendTx(
 
     const sendPsbt = new ExtPsbt();
 
-    // add nft outputs
-    for (const outputNft of outputNfts) {
-        if (outputNft) {
-            sendPsbt.addCovenantOutput(outputNft, Postage.TOKEN_POSTAGE);
-        }
-    }
-
-    // add nft inputs
-    for (const inputNft of inputNfts) {
-        sendPsbt.addCovenantInput(inputNft);
+    // add token inputs
+    for (const inputToken of inputNfts) {
+        sendPsbt.addCovenantInput(inputToken);
     }
 
     sendPsbt
         .addCovenantInput(guard)
         .spendUTXO([guardPsbt.getUtxo(2)])
+        .addOutput({
+            script: sendPsbt.stateHashRootScript,
+            value: BigInt(0),
+        })
         .change(changeAddress, feeRate)
         .seal();
 
     const guardInputIndex = inputNfts.length;
+
+    const _isP2TR = isP2TR(changeAddress);
     // unlock tokens
     for (let i = 0; i < inputNfts.length; i++) {
         sendPsbt.updateCovenantInput(i, inputNfts[i], {
-            invokeMethod: (contract: CAT721) => {
-                const contractHash = contract.state.ownerAddr;
-                const contractInputIndexVal = contract.ctx.spentScripts.findIndex((v) => hash160(v) === contractHash);
+            invokeMethod: (contract: CAT721, curPsbt: ExtPsbt) => {
+                const sig = curPsbt.getSig(i, { address: address, disableTweakSigner: _isP2TR ? false : true });
                 contract.unlock(
                     {
-                        isUserSpend: false,
-                        userPubKeyPrefix: toByteString(''),
-                        userXOnlyPubKey: toByteString('') as PubKey,
-                        userSig: toByteString('') as Sig,
-                        contractInputIndexVal: BigInt(contractInputIndexVal),
+                        isUserSpend: true,
+                        userPubKeyPrefix: _isP2TR ? '' : pubKeyPrefix(pubKey),
+                        userXOnlyPubKey: PubKey(catToXOnly(pubKey, _isP2TR)),
+                        userSig: sig,
+                        contractInputIndexVal: -1n,
                     },
                     guard.state,
                     BigInt(guardInputIndex),
@@ -165,6 +147,7 @@ function buildSendTx(
             },
         });
     }
+
     const cat721StateArray = fill<CAT721State, typeof TX_INPUT_COUNT_MAX>(
         { ownerAddr: toByteString(''), localId: 0n },
         TX_INPUT_COUNT_MAX,
@@ -174,19 +157,13 @@ function buildSendTx(
             cat721StateArray[index] = value.state;
         }
     });
+
     // unlock guard
     sendPsbt.updateCovenantInput(guardInputIndex, guard, {
         invokeMethod: (contract: CAT721Guard, curPsbt: ExtPsbt) => {
-            const nftOwners = outputNfts.map((output) => output?.state!.ownerAddr || '');
-            const nftLocalIds = outputNfts.map((output) =>
-                output?.state!.localId >= 0n ? output?.state!.localId : -1n,
-            );
+            const nftOwners = fill(toByteString(''), STATE_OUTPUT_COUNT_MAX);
+            const nftLocalIds = fill(-1n, STATE_OUTPUT_COUNT_MAX);
             const nftScriptIndexArray = fill(-1n, STATE_OUTPUT_COUNT_MAX);
-            outputNfts.forEach((value, index) => {
-                if (value) {
-                    nftScriptIndexArray[index] = 0n;
-                }
-            });
             contract.unlock(
                 curPsbt.getTxoStateHashes(),
                 nftOwners.map((ownerAddr, oidx) => {

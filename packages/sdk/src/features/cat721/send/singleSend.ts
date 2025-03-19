@@ -14,24 +14,13 @@ import {
     FixedArray,
     Ripemd160,
 } from '@scrypt-inc/scrypt-ts-btc';
-import { CAT721Utxo, processExtPsbts } from '../../../lib/provider';
+import { CAT721Utxo, getUtxos, processExtPsbts } from '../../../lib/provider';
 import { ExtPsbt } from '@scrypt-inc/scrypt-ts-btc';
 import { Postage } from '../../../lib/constants';
-import { catToXOnly, filterFeeUtxos, isP2TR, pubKeyPrefix, uint8ArrayToHex } from '../../../lib/utils';
+import { catToXOnly, isP2TR, pubKeyPrefix, uint8ArrayToHex } from '../../../lib/utils';
 import { CAT721, CAT721Guard, CAT721State } from '../../../contracts';
 import { CAT721Covenant, TracedCAT721Nft } from '../../../covenants/cat721Covenant';
 import { CAT721GuardCovenant } from '../../../covenants/cat721GuardCovenant';
-
-const getUtxos = async function (utxoProvider: UtxoProvider, address: string, limit?: number) {
-    let utxos = await utxoProvider.getUtxos(address);
-
-    utxos = filterFeeUtxos(utxos).slice(0, limit || utxos.length);
-
-    if (utxos.length === 0) {
-        throw new Error('Insufficient satoshis input amount');
-    }
-    return utxos;
-};
 
 export async function singleSendNft(
     signer: Signer,
