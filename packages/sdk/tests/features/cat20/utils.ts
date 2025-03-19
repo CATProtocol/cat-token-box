@@ -12,9 +12,10 @@ import {
 import { deploy } from '../../../src/features/cat20/deploy/openMinter';
 import { testSigner } from '../../utils/testSigner';
 import { testChainProvider, testUtxoProvider } from '../../utils/testProvider';
-import { CAT20OpenMinterUtxo } from '../../../src/lib/provider';
+import { CAT20OpenMinterUtxo, CAT20Utxo } from '../../../src/lib/provider';
 import { mint } from '../../../src/features/cat20/mint/openMinter';
-import { Ripemd160 } from '@scrypt-inc/scrypt-ts-btc';
+import { Int32, Ripemd160 } from '@scrypt-inc/scrypt-ts-btc';
+import { singleSend } from '../../../src/features/cat20/send/singleSend';
 
 export const loadAllArtifacts = function () {
     //
@@ -44,6 +45,31 @@ export async function mintToken(cat20MinterUtxo: CAT20OpenMinterUtxo, tokenId: s
         info,
         tokenReceiverAddr,
         changeAddress,
+        await testChainProvider.getFeeRate(),
+    );
+}
+
+export async function singleSendToken(
+    minterAddr: string,
+    amount: Int32,
+    inputTokenUtxos: CAT20Utxo[],
+    tokenReceiverAddr: Ripemd160,
+) {
+    const address = await testSigner.getAddress();
+    const tokenChangeAddr = toTokenAddress(address);
+    return singleSend(
+        testSigner,
+        testUtxoProvider,
+        testChainProvider,
+        minterAddr,
+        inputTokenUtxos,
+        [
+            {
+                address: tokenReceiverAddr,
+                amount,
+            },
+        ],
+        tokenChangeAddr,
         await testChainProvider.getFeeRate(),
     );
 }
