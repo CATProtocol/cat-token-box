@@ -19,7 +19,7 @@ import {
 } from '@scrypt-inc/scrypt-ts-btc';
 import { CAT20Utxo } from '../../../lib/provider';
 import { CAT20Covenant, CAT20GuardCovenant, TracedCAT20Token } from '../../../covenants';
-import { filterFeeUtxos, getDummyUtxo, sumUtxosSatoshi, uint8ArrayToHex } from '../../../lib/utils';
+import { filterFeeUtxos, uint8ArrayToHex } from '../../../lib/utils';
 import { Postage } from '../../../lib/constants';
 import { CAT20, CAT20Guard, CAT20State } from '../../../contracts';
 import { Psbt } from '@scrypt-inc/bitcoinjs-lib';
@@ -89,37 +89,9 @@ export async function contractSend(
         },
     );
 
-    const { estGuardTxVSize, dummyGuardPsbt } = estimateGuardTxVSize(
-        guard.bindToUtxo({
-            ...getDummyUtxo(changeAddress),
-            script: undefined,
-            txoStateHashes: fill(toByteString(hash160(toByteString(''))), STATE_OUTPUT_COUNT_MAX),
-            txHashPreimage: '00'.repeat(520),
-        }),
-        utxos,
-        changeAddress,
-    );
+    const guardPsbt = buildGuardTx(guard, utxos, changeAddress, feeRate);
 
-    const estSendTxVSize = estimateSentTxVSize(
-        tracableTokens,
-        guard,
-        dummyGuardPsbt,
-        outputTokens,
-        changeAddress,
-        feeRate,
-    );
-
-    const guardPsbt = buildGuardTx(guard, utxos, changeAddress, feeRate, estGuardTxVSize);
-
-    const sendPsbt = buildSendTx(
-        tracableTokens,
-        guard,
-        guardPsbt,
-        outputTokens,
-        changeAddress,
-        feeRate,
-        estSendTxVSize,
-    );
+    const sendPsbt = buildSendTx(tracableTokens, guard, guardPsbt, outputTokens, changeAddress, feeRate);
 
     // sign the psbts
     const [signedGuardPsbt, signedSendPsbt] = await signer.signPsbts([
@@ -165,32 +137,14 @@ export async function contractSend(
     };
 }
 
-function buildGuardTx(
-    guard: CAT20GuardCovenant,
-    feeUtxos: UTXO[],
-    changeAddress: string,
-    feeRate: number,
-    estimatedVSize?: number,
-) {
-    if (sumUtxosSatoshi(feeUtxos) < Postage.GUARD_POSTAGE + feeRate * (estimatedVSize || 1)) {
-        throw new Error('Insufficient satoshis input amount');
-    }
-
+function buildGuardTx(guard: CAT20GuardCovenant, feeUtxos: UTXO[], changeAddress: string, feeRate: number) {
     const guardTx = new ExtPsbt()
         .spendUTXO(feeUtxos)
         .addCovenantOutput(guard, Postage.GUARD_POSTAGE)
-        .change(changeAddress, feeRate, estimatedVSize)
+        .change(changeAddress, feeRate)
         .seal();
     guard.bindToUtxo(guardTx.getStatefulCovenantUtxo(1));
     return guardTx;
-}
-
-function estimateGuardTxVSize(guard: CAT20GuardCovenant, utxos: UTXO[], changeAddress: string) {
-    const dummyGuardPsbt = buildGuardTx(guard, utxos, changeAddress, 1);
-    return {
-        dummyGuardPsbt,
-        estGuardTxVSize: dummyGuardPsbt.estimateVSize(),
-    };
 }
 
 function buildSendTx(
@@ -200,7 +154,6 @@ function buildSendTx(
     outputTokens: (CAT20Covenant | undefined)[],
     changeAddress: string,
     feeRate: number,
-    estimatedVSize?: number,
 ) {
     const inputTokens = tracableTokens.map((token) => token.token);
 
@@ -225,7 +178,7 @@ function buildSendTx(
     sendPsbt
         .addCovenantInput(guard)
         .spendUTXO([guardPsbt.getUtxo(2)])
-        .change(changeAddress, feeRate, estimatedVSize)
+        .change(changeAddress, feeRate)
         .seal();
 
     const guardInputIndex = inputTokens.length;
@@ -289,15 +242,4 @@ function buildSendTx(
         },
     });
     return sendPsbt;
-}
-
-function estimateSentTxVSize(
-    tracableTokens: TracedCAT20Token[],
-    guard: CAT20GuardCovenant,
-    guardPsbt: ExtPsbt,
-    outputTokens: CAT20Covenant[],
-    changeAddress: string,
-    feeRate: number,
-) {
-    return buildSendTx(tracableTokens, guard, guardPsbt, outputTokens, changeAddress, feeRate).estimateVSize();
 }

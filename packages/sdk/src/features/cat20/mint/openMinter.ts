@@ -49,19 +49,6 @@ export async function mint(
 
     const utxos = await utxoProvider.getUtxos(address);
 
-    const estimatedVSize = CAT20OpenMinterCovenant.buildMintTx(
-        minterPreTxHex,
-        spentMinterTxHex,
-        minterCovenant,
-        tokenReceiver,
-        utxos,
-        feeRate,
-        changeAddress,
-        undefined,
-        address,
-        metadata.preminerAddr ? pubkey : undefined,
-    ).estimateVSize();
-
     const mintPsbt = CAT20OpenMinterCovenant.buildMintTx(
         minterPreTxHex,
         spentMinterTxHex,
@@ -70,7 +57,7 @@ export async function mint(
         utxos,
         feeRate,
         changeAddress,
-        estimatedVSize,
+        undefined,
         address,
         metadata.preminerAddr ? pubkey : undefined,
     );

@@ -3,7 +3,6 @@ import {
     ChainProvider,
     fill,
     getBackTraceInfo_,
-    hash160,
     Int32,
     markSpent,
     Signer,
@@ -19,15 +18,7 @@ import { CAT20Utxo } from '../../../lib/provider';
 import { ExtPsbt } from '@scrypt-inc/scrypt-ts-btc';
 import { CAT20Covenant, CAT20GuardCovenant, TracedCAT20Token } from '../../../covenants';
 import { Postage } from '../../../lib/constants';
-import {
-    catToXOnly,
-    filterFeeUtxos,
-    getDummyUtxo,
-    isP2TR,
-    pubKeyPrefix,
-    sumUtxosSatoshi,
-    uint8ArrayToHex,
-} from '../../../lib/utils';
+import { catToXOnly, filterFeeUtxos, isP2TR, pubKeyPrefix, uint8ArrayToHex } from '../../../lib/utils';
 import { Psbt } from '@scrypt-inc/bitcoinjs-lib';
 import { CAT20, CAT20Guard, CAT20State } from '../../../contracts';
 
@@ -97,28 +88,7 @@ export async function singleSend(
         },
     );
 
-    const { estGuardTxVSize, dummyGuardPsbt } = estimateGuardTxVSize(
-        guard.bindToUtxo({
-            ...getDummyUtxo(changeAddress),
-            script: undefined,
-            txoStateHashes: fill(toByteString(hash160(toByteString(''))), STATE_OUTPUT_COUNT_MAX),
-            txHashPreimage: '00'.repeat(520),
-        }),
-        utxos,
-        changeAddress,
-    );
-
-    const estSendTxVSize = estimateSentTxVSize(
-        tracableTokens,
-        guard,
-        dummyGuardPsbt,
-        pubkey,
-        outputTokens,
-        changeAddress,
-        feeRate,
-    );
-
-    const guardPsbt = buildGuardTx(guard, utxos, changeAddress, feeRate, estGuardTxVSize);
+    const guardPsbt = buildGuardTx(guard, utxos, changeAddress, feeRate);
 
     const sendPsbt = buildSendTx(
         tracableTokens,
@@ -129,7 +99,6 @@ export async function singleSend(
         outputTokens,
         changeAddress,
         feeRate,
-        estSendTxVSize,
     );
 
     // sign the psbts
@@ -176,32 +145,14 @@ export async function singleSend(
     };
 }
 
-function buildGuardTx(
-    guard: CAT20GuardCovenant,
-    feeUtxos: UTXO[],
-    changeAddress: string,
-    feeRate: number,
-    estimatedVSize?: number,
-) {
-    if (sumUtxosSatoshi(feeUtxos) < Postage.GUARD_POSTAGE + feeRate * (estimatedVSize || 1)) {
-        throw new Error('Insufficient satoshis input amount');
-    }
-
+function buildGuardTx(guard: CAT20GuardCovenant, feeUtxos: UTXO[], changeAddress: string, feeRate: number) {
     const guardTx = new ExtPsbt()
         .spendUTXO(feeUtxos)
         .addCovenantOutput(guard, Postage.GUARD_POSTAGE)
-        .change(changeAddress, feeRate, estimatedVSize)
+        .change(changeAddress, feeRate)
         .seal();
     guard.bindToUtxo(guardTx.getStatefulCovenantUtxo(1));
     return guardTx;
-}
-
-function estimateGuardTxVSize(guard: CAT20GuardCovenant, utxos: UTXO[], changeAddress: string) {
-    const dummyGuardPsbt = buildGuardTx(guard, utxos, changeAddress, 1);
-    return {
-        dummyGuardPsbt,
-        estGuardTxVSize: dummyGuardPsbt.estimateVSize(),
-    };
 }
 
 function buildSendTx(
@@ -213,7 +164,6 @@ function buildSendTx(
     outputTokens: (CAT20Covenant | undefined)[],
     changeAddress: string,
     feeRate: number,
-    estimatedVSize?: number,
 ) {
     const inputTokens = tracableTokens.map((token) => token.token);
 
@@ -238,7 +188,7 @@ function buildSendTx(
     sendPsbt
         .addCovenantInput(guard)
         .spendUTXO([guardPsbt.getUtxo(2)])
-        .change(changeAddress, feeRate, estimatedVSize)
+        .change(changeAddress, feeRate)
         .seal();
 
     const guardInputIndex = inputTokens.length;
@@ -302,25 +252,4 @@ function buildSendTx(
         },
     });
     return sendPsbt;
-}
-
-function estimateSentTxVSize(
-    tracableTokens: TracedCAT20Token[],
-    guard: CAT20GuardCovenant,
-    guardPsbt: ExtPsbt,
-    pubKey: string,
-    outputTokens: CAT20Covenant[],
-    changeAddress: string,
-    feeRate: number,
-) {
-    return buildSendTx(
-        tracableTokens,
-        guard,
-        guardPsbt,
-        changeAddress,
-        pubKey,
-        outputTokens,
-        changeAddress,
-        feeRate,
-    ).estimateVSize();
 }
