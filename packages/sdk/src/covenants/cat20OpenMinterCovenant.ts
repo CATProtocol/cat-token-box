@@ -80,8 +80,8 @@ export class CAT20OpenMinterCovenant extends StatefulCovenant<CAT20OpenMinterSta
                 ),
                 address: changeAddress,
             })
-            .change(changeAddress, feeRate);
-        commitTxPsbt.calculateInputCtxs();
+            .change(changeAddress, feeRate)
+            .seal();
         return commitTxPsbt;
     }
 
@@ -146,9 +146,9 @@ export class CAT20OpenMinterCovenant extends StatefulCovenant<CAT20OpenMinterSta
                     return witness.map(hexToUint8Array);
                 },
             })
-            .spendUTXO(feeUtxos);
+            .spendUTXO(feeUtxos)
+            .seal();
         // NOTE: can not have a fee change output here due to the protocol
-        revealTx.calculateInputCtxs();
         return {
             tokenId: `${commitUtxo.txId}_0`,
             minterAddr: minter.address,
@@ -208,7 +208,8 @@ export class CAT20OpenMinterCovenant extends StatefulCovenant<CAT20OpenMinterSta
             // add fees
             .spendUTXO(feeUtxos)
             // add change output
-            .change(changeAddress, feeRate, estimatedVSize);
+            .change(changeAddress, feeRate, estimatedVSize)
+            .seal();
         const minterInputIndex = 0;
 
         const backTraceInfo = getBackTraceInfo_(spentMinterTxHex, spentMinterPreTxHex, minterInputIndex);
@@ -227,7 +228,6 @@ export class CAT20OpenMinterCovenant extends StatefulCovenant<CAT20OpenMinterSta
                 );
             },
         });
-        mintTx.calculateInputCtxs();
         return mintTx;
     }
 

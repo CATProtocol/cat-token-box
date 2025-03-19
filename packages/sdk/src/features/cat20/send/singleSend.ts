@@ -190,8 +190,8 @@ function buildGuardTx(
     const guardTx = new ExtPsbt()
         .spendUTXO(feeUtxos)
         .addCovenantOutput(guard, Postage.GUARD_POSTAGE)
-        .change(changeAddress, feeRate, estimatedVSize);
-    guardTx.calculateInputCtxs();
+        .change(changeAddress, feeRate, estimatedVSize)
+        .seal();
     guard.bindToUtxo(guardTx.getStatefulCovenantUtxo(1));
     return guardTx;
 }
@@ -238,7 +238,8 @@ function buildSendTx(
     sendPsbt
         .addCovenantInput(guard)
         .spendUTXO([guardPsbt.getUtxo(2)])
-        .change(changeAddress, feeRate, estimatedVSize);
+        .change(changeAddress, feeRate, estimatedVSize)
+        .seal();
 
     const guardInputIndex = inputTokens.length;
     const _isP2TR = isP2TR(changeAddress);
@@ -300,7 +301,6 @@ function buildSendTx(
             );
         },
     });
-    sendPsbt.calculateInputCtxs();
     return sendPsbt;
 }
 

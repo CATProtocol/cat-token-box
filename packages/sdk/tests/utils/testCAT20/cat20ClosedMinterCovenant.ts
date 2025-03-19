@@ -14,7 +14,6 @@ import {
     CAT20ClosedMinterState,
     CAT20Covenant,
     ClosedMinterCat20Meta,
-    // getBackTraceInfo_,
     getCatCommitScript,
     isP2TR,
     outpoint2ByteString,
@@ -67,7 +66,8 @@ export class CAT20ClosedMinterCovenant extends StatefulCovenant<CAT20ClosedMinte
                 ),
                 address: changeAddress,
             })
-            .change(changeAddress, feeRate);
+            .change(changeAddress, feeRate)
+            .seal();
         return commitTxPsbt;
     }
 
@@ -126,7 +126,8 @@ export class CAT20ClosedMinterCovenant extends StatefulCovenant<CAT20ClosedMinte
                 },
             })
             .spendUTXO(feeUtxos)
-            .addCovenantOutput(minter, Postage.MINTER_POSTAGE);
+            .addCovenantOutput(minter, Postage.MINTER_POSTAGE)
+            .seal();
 
         // NOTE: can not have a fee change output here due to the protocol
         return {
@@ -167,7 +168,8 @@ export class CAT20ClosedMinterCovenant extends StatefulCovenant<CAT20ClosedMinte
             // add fees
             .spendUTXO(feeUtxos)
             // add change output
-            .change(changeAddress, feeRate, estimatedVSize);
+            .change(changeAddress, feeRate, estimatedVSize)
+            .seal();
 
         const minterInputIndex = 0;
         const tokenState = token.state!;
