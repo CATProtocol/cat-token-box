@@ -61,7 +61,7 @@ describe('Test the feature `burn` for `Cat20Covenant`', () => {
     });
 
     async function testBurnResult(cat20Utxos: CAT20Utxo[]) {
-        const { guardTx, burnTx, estGuardTxVSize, estSendTxVSize } = await burn(
+        const { guardTx, burnTx } = await burn(
             testSigner,
             testUtxoProvider,
             testChainProvider,
@@ -70,24 +70,13 @@ describe('Test the feature `burn` for `Cat20Covenant`', () => {
             await testChainProvider.getFeeRate(),
         );
 
-        const realGuardVSize = guardTx.extractTransaction().virtualSize();
-        const realSendVSize = burnTx.extractTransaction().virtualSize();
-
         // check guard tx
         expect(guardTx).not.to.be.undefined;
         expect(guardTx.isFinalized).to.be.true;
-        expect(
-            estGuardTxVSize >= realGuardVSize,
-            `Estimated guard tx size ${estGuardTxVSize} is less that the real size ${realGuardVSize}`,
-        ).to.be.true;
 
         // check send tx
         expect(burnTx).not.to.be.undefined;
         expect(burnTx.isFinalized).to.be.true;
-        expect(
-            estSendTxVSize >= realSendVSize,
-            `Estimated send tx size ${estSendTxVSize} is less that the real size ${realSendVSize}`,
-        ).to.be.true;
 
         // verify token input unlock
         for (let i = 0; i < cat20Utxos.length; i++) {
