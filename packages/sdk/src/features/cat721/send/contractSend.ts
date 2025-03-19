@@ -13,11 +13,13 @@ import {
     PubKey,
     FixedArray,
     Ripemd160,
+    Sig,
+    hash160,
 } from '@scrypt-inc/scrypt-ts-btc';
 import { CAT721Utxo, processExtPsbts } from '../../../lib/provider';
 import { ExtPsbt } from '@scrypt-inc/scrypt-ts-btc';
 import { Postage } from '../../../lib/constants';
-import { catToXOnly, filterFeeUtxos, isP2TR, pubKeyPrefix, uint8ArrayToHex } from '../../../lib/utils';
+import { filterFeeUtxos, uint8ArrayToHex } from '../../../lib/utils';
 import { CAT721, CAT721Guard, CAT721State } from '../../../contracts';
 import { CAT721Covenant, TracedCAT721Nft } from '../../../covenants/cat721Covenant';
 import { CAT721GuardCovenant } from '../../../covenants/cat721GuardCovenant';
@@ -33,7 +35,7 @@ const getUtxos = async function (utxoProvider: UtxoProvider, address: string, li
     return utxos;
 };
 
-export async function singleSendNft(
+export async function contractSendNft(
     signer: Signer,
     utxoProvider: UtxoProvider,
     chainProvider: ChainProvider,
@@ -149,19 +151,19 @@ function buildSendTx(
         .seal();
 
     const guardInputIndex = inputNfts.length;
-    const _isP2TR = isP2TR(changeAddress);
     // unlock tokens
     for (let i = 0; i < inputNfts.length; i++) {
         sendPsbt.updateCovenantInput(i, inputNfts[i], {
-            invokeMethod: (contract: CAT721, curPsbt: ExtPsbt) => {
-                const sig = curPsbt.getSig(i, { address: address, disableTweakSigner: _isP2TR ? false : true });
+            invokeMethod: (contract: CAT721) => {
+                const contractHash = contract.state.ownerAddr;
+                const contractInputIndexVal = contract.ctx.spentScripts.findIndex((v) => hash160(v) === contractHash);
                 contract.unlock(
                     {
-                        isUserSpend: true,
-                        userPubKeyPrefix: _isP2TR ? '' : pubKeyPrefix(pubKey),
-                        userXOnlyPubKey: PubKey(catToXOnly(pubKey, _isP2TR)),
-                        userSig: sig,
-                        contractInputIndexVal: -1n,
+                        isUserSpend: false,
+                        userPubKeyPrefix: toByteString(''),
+                        userXOnlyPubKey: toByteString('') as PubKey,
+                        userSig: toByteString('') as Sig,
+                        contractInputIndexVal: BigInt(contractInputIndexVal),
                     },
                     guard.state,
                     BigInt(guardInputIndex),

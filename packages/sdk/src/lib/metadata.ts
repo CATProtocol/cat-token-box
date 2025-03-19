@@ -38,7 +38,7 @@ export interface ClosedMinterCat20Meta extends Cat20Metadata {}
 
 export interface NftParallelClosedMinterCat721Meta extends Cat721Metadata {}
 
-export interface NftClosedMinterCat721Meta extends Cat721Metadata {}
+export interface ClosedMinterCat721Meta extends Cat721Metadata {}
 
 export interface NftOpenMinterCat721Meta extends Cat721Metadata {
     preminerAddr?: Ripemd160;

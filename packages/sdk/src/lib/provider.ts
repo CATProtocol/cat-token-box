@@ -9,9 +9,14 @@ import {
 } from '@scrypt-inc/scrypt-ts-btc';
 import { Transaction } from '@scrypt-inc/bitcoinjs-lib';
 import { Cat20Metadata, CAT20OpenMinterState, CAT20State, Cat20TokenInfo } from '..';
+import { CAT721State } from '../contracts/cat721/types';
 
 export interface CAT20Utxo extends StatefulCovenantUtxo {
     state: CAT20State;
+}
+
+export interface CAT721Utxo extends StatefulCovenantUtxo {
+    state: CAT721State;
 }
 
 export interface CAT20OpenMinterUtxo extends StatefulCovenantUtxo {
@@ -41,13 +46,13 @@ export interface SwapChainProvider {
     getConfirmations(txId: TxId): Promise<number>;
 }
 
-export async function processCatPsbts(
+export async function processExtPsbts(
     signer: Signer,
     utxoProvider: UtxoProvider,
-    chainProvider: SwapChainProvider,
+    chainProvider: ChainProvider,
     extPsbts: ExtPsbt[],
     broadcast: boolean = true,
-): Promise<Transaction[]> {
+): Promise<{ txs: Transaction[]; psbts: ExtPsbt[] }> {
     // sign
     const signedPsbtHexs = await signer.signPsbts(
         extPsbts.map((catPsbt) => {
@@ -58,11 +63,13 @@ export async function processCatPsbts(
         }),
     );
     const txs: Transaction[] = [];
+    const psbts: ExtPsbt[] = [];
     // combine
     for (let index = 0; index < extPsbts.length; index++) {
         const signedPsbtHex = signedPsbtHexs[index];
         const signedCatPsbt = extPsbts[index].combine(ExtPsbt.fromHex(signedPsbtHex)).finalizeAllInputs();
         txs.push(signedCatPsbt.extractTransaction());
+        psbts.push(signedCatPsbt);
     }
     // boradcast
     if (broadcast) {
@@ -72,7 +79,7 @@ export async function processCatPsbts(
             markSpent(utxoProvider, tx);
         }
     }
-    return txs;
+    return { txs, psbts };
 }
 
 export async function providerCacheTx(chainProvider: SwapChainProvider, extPsbts: ExtPsbt[]) {
