@@ -34,21 +34,19 @@ export class CAT20 extends SmartContract<CAT20State> {
         unlockArgs: ContractUnlockArgs,
         // guard
         guardState: CAT20GuardConstState,
-        //
         guardInputIndex: Int32,
-        //
+        // backtrace
         backtraceInfo: BacktraceInfo,
     ) {
-        //
         this.backtraceToScript(backtraceInfo, this.minterScript);
-        //
+
         CAT20StateLib.checkState(this.state);
         const cat20StateHash = CAT20StateLib.stateHash(this.state);
-        // check guardInfo
+
         CAT20GuardStateLib.checkState(guardState);
         const guardStateHash = CAT20GuardStateLib.stateHash(guardState);
         this.checkInputState(guardInputIndex, guardStateHash);
-        // check state of prevTx
+
         // make sure tx inputs contain a valid guard
         assert(this.ctx.spentScripts[Number(guardInputIndex)] == this.guardScript);
         this.checkGuardState(guardState, this.ctx.spentScript, cat20StateHash, this.ctx.inputIndexVal);

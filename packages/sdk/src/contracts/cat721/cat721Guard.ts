@@ -28,7 +28,7 @@ export class CAT721Guard extends SmartContract<CAT721GuardConstState> {
     public unlock(
         nextStateHashes: StateHashes,
 
-        // the logic is the same as token guard
+        // the logic is the same as cat20 guard
         ownerAddrOrScripts: FixedArray<ByteString, typeof STATE_OUTPUT_COUNT_MAX>,
         // localId list of curTx nft outputs
         // note that the element index of this array does NOT correspond to the outputIndex of curTx nft output
@@ -50,13 +50,13 @@ export class CAT721Guard extends SmartContract<CAT721GuardConstState> {
 
         // the number of curTx outputs except for the state hash root output
         outputCount: Int32,
-        // curTx context
     ) {
-        // ctx
         // inputStateHashes in guard state cannot contain the guard state hash itself
         assert(this.state.inputStateHashes[Number(this.ctx.inputIndexVal)] == toByteString(''));
+
         // check state
         CAT721GuardStateLib.checkState(this.state);
+
         // how many different types of nft in curTx inputs
         let inputNftTypes = 0n;
         const nftScriptPlaceholders: FixedArray<ByteString, typeof NFT_GUARD_COLLECTION_TYPE_MAX> = [
@@ -96,13 +96,13 @@ export class CAT721Guard extends SmartContract<CAT721GuardConstState> {
                 // this is an nft input
                 const nftScript = this.state.nftScripts[Number(nftScriptIndex)];
                 assert(nftScript == this.ctx.spentScripts[i]);
+                CAT721StateLib.checkState(cat721States[i]);
                 const cat721StateHash = CAT721StateLib.stateHash(cat721States[i]);
                 assert(this.state.inputStateHashes[i] == cat721StateHash);
                 this.checkInputState(BigInt(i), cat721StateHash);
                 nftScriptIndexMax = nftScriptIndex > nftScriptIndexMax ? nftScriptIndex : nftScriptIndexMax;
                 if (!this.state.nftBurnMasks[i]) {
                     // this nft is not burned
-                    // todo
                     nextNfts[Number(nextNftCount)] = nftScript + hash160(int32ToByteString(cat721States[i].localId));
                     nextNftCount++;
                 }

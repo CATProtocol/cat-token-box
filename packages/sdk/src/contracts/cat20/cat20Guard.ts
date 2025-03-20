@@ -43,21 +43,18 @@ export class CAT20Guard extends SmartContract<CAT20GuardConstState> {
         // output satoshi of each curTx output except the state hash root output
         outputSatoshis: FixedArray<ByteString, typeof STATE_OUTPUT_COUNT_MAX>,
         // for each curTx input,
-        // if it is a contract input, the value is the input state proof of this input,
-        // otherwise, the value is an empty proof by default
-        // for each curTx input,
         // if it is a token input, the value is the raw state of this input,
         // otherwise, the value is an empty state by default
         cat20States: FixedArray<CAT20State, typeof TX_INPUT_COUNT_MAX>,
-        // guard state of current spending UTXO
         // the number of curTx outputs except for the state hash root output
         outputCount: Int32,
     ) {
         // inputStateHashes in guard state cannot contain the guard state hash itself
         assert(this.state.inputStateHashes[Number(this.ctx.inputIndexVal)] == toByteString(''));
+
         // check state
         CAT20GuardStateLib.checkState(this.state);
-        // check input state proof for each curTx input
+
         // how many different types of tokens in curTx inputs
         let inputTokenTypes = 0n;
         const tokenScriptPlaceholders: FixedArray<ByteString, typeof GUARD_TOKEN_TYPE_MAX> = [
@@ -71,7 +68,7 @@ export class CAT20Guard extends SmartContract<CAT20GuardConstState> {
                 inputTokenTypes++;
             }
         }
-        // // ensure there are no placeholders between valid token scripts in curState.tokenScripts
+        // ensure there are no placeholders between valid token scripts in curState.tokenScripts
         for (let i = 0; i < GUARD_TOKEN_TYPE_MAX; i++) {
             if (i < Number(inputTokenTypes)) {
                 assert(this.state.tokenScripts[i] != tokenScriptPlaceholders[i]);
@@ -81,8 +78,10 @@ export class CAT20Guard extends SmartContract<CAT20GuardConstState> {
             }
         }
         assert(inputTokenTypes > 0n);
+
         // inputTokenTypes here is not trustable yet
         // user could append token scripts in curState.tokenScripts that are not used in curTx inputs
+
         // sum token input amount, data comes from cat20 raw states passed in by the user
         const sumInputTokens = fill(0n, GUARD_TOKEN_TYPE_MAX);
         let tokenScriptIndexMax = -1n;
@@ -93,6 +92,7 @@ export class CAT20Guard extends SmartContract<CAT20GuardConstState> {
                 // this is a token input
                 const tokenScript = this.state.tokenScripts[Number(tokenScriptIndex)];
                 assert(tokenScript == this.ctx.spentScripts[i]);
+                CAT20StateLib.checkState(cat20States[i]);
                 const cat20StateHash = CAT20StateLib.stateHash(cat20States[i]);
                 assert(this.state.inputStateHashes[i] == cat20StateHash);
                 this.checkInputState(BigInt(i), cat20StateHash);
@@ -107,6 +107,7 @@ export class CAT20Guard extends SmartContract<CAT20GuardConstState> {
         // tokenScriptIndexMax is trustable because it is calculated after going through all the curTx inputs
         // this also ensures that there is at least one token input in curTx
         assert(tokenScriptIndexMax >= 0n && tokenScriptIndexMax == inputTokenTypes - 1n);
+
         // sum token output amount, data comes from outputTokens passed in by the user
         // and build curTx outputs and stateRoots as well
         assert(outputCount >= 0n && outputCount <= STATE_OUTPUT_COUNT_MAX);
@@ -129,6 +130,7 @@ export class CAT20Guard extends SmartContract<CAT20GuardConstState> {
                         ownerAddr: ownerAddrOrScript,
                         amount: tokenAmount,
                     });
+                    assert(nextStateHashes[i] == tokenStateHash);
                     this.appendStateOutput(
                         TxUtils.buildOutput(this.state.tokenScripts[Number(tokenScriptIndex)], outputSatoshis[i]),
                         Ripemd160(tokenStateHash),
@@ -140,7 +142,6 @@ export class CAT20Guard extends SmartContract<CAT20GuardConstState> {
                     for (let j = 0; j < GUARD_TOKEN_TYPE_MAX; j++) {
                         assert(ownerAddrOrScript != this.state.tokenScripts[j]);
                     }
-                    // outputs += TxUtils.buildOutput(ownerAddrOrScript, outputSatoshis[i]);
                     this.appendStateOutput(
                         TxUtils.buildOutput(ownerAddrOrScript, outputSatoshis[i]),
                         nextStateHashes[i] as Ripemd160,
@@ -150,10 +151,11 @@ export class CAT20Guard extends SmartContract<CAT20GuardConstState> {
                 assert(len(ownerAddrOrScripts[i]) == 0n);
                 assert(tokenScriptIndexes[i] == -1n);
                 assert(outputTokens[i] == 0n);
+                assert(nextStateHashes[i] == toByteString(''));
                 assert(outputSatoshis[i] == toByteString(''));
             }
-            // stateRoots += hash160(nextStateHashes[i]);
         }
+
         // check token amount consistency of inputs and outputs
         for (let i = 0; i < GUARD_TOKEN_TYPE_MAX; i++) {
             assert(sumInputTokens[i] == this.state.tokenAmounts[i]);
@@ -168,6 +170,7 @@ export class CAT20Guard extends SmartContract<CAT20GuardConstState> {
                 assert(this.state.tokenBurnAmounts[i] == 0n);
             }
         }
+
         // confine curTx outputs
         const outputs = this.buildStateOutputs();
         assert(sha256(outputs) == this.ctx.shaOutputs, 'shaOutputs mismatch');

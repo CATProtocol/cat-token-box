@@ -71,7 +71,6 @@ export class CAT20OpenMinter extends SmartContract<CAT20OpenMinterState> {
         minterSatoshis: ByteString,
         // output satoshis of curTx token output
         tokenSatoshis: ByteString,
-        // state of current spending UTXO, comes from prevTx
         // backtrace
         backtraceInfo: BacktraceInfo,
     ) {
@@ -97,9 +96,7 @@ export class CAT20OpenMinter extends SmartContract<CAT20OpenMinterState> {
         }
 
         // next token output
-        // const tokenOutput = TxUtils.buildOutput(this.state.tokenScript, tokenSatoshis);
-        // leadingStateRoots += hash160(CAT20Proto.stateHash(tokenMint));
-        // stateCount++;
+        CAT20StateLib.checkState(tokenMint);
         this.appendStateOutput(
             TxUtils.buildOutput(this.state.tokenScript, tokenSatoshis),
             CAT20StateLib.stateHash(tokenMint),
@@ -125,9 +122,8 @@ export class CAT20OpenMinter extends SmartContract<CAT20OpenMinterState> {
             assert(tokenMint.amount == this.limit);
         }
 
-        const outputs = this.buildStateOutputs() + this.buildChangeOutput();
-
         // confine curTx outputs
+        const outputs = this.buildStateOutputs() + this.buildChangeOutput();
         assert(sha256(outputs) === this.ctx.shaOutputs, `output hash mismatch`);
     }
 }

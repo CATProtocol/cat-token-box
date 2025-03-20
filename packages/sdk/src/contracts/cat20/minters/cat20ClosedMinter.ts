@@ -39,12 +39,12 @@ export class CAT20ClosedMinter extends SmartContract<CAT20ClosedMinterState> {
         minterSatoshis: ByteString,
         // output satoshis of curTx token output
         tokenSatoshis: ByteString,
-        //
+        // backtrace
         backtraceInfo: BacktraceInfo,
     ) {
-        // ctx
         // check state of prevTx
         this.backtraceToOutpoint(backtraceInfo, this.genesisOutpoint);
+
         // check issuer
         OwnerUtils.checkUserOwner(issuerPubKeyPrefix, issuerPubKey, this.issuerAddress);
         assert(this.checkSig(issuerSig, issuerPubKey));
@@ -58,15 +58,13 @@ export class CAT20ClosedMinter extends SmartContract<CAT20ClosedMinterState> {
             );
         }
         // next token output
+        CAT20StateLib.checkState(tokenMint);
         this.appendStateOutput(
             TxUtils.buildOutput(this.state.tokenScript, tokenSatoshis),
             CAT20StateLib.stateHash(tokenMint),
         );
 
         const outputs = this.buildStateOutputs() + this.buildChangeOutput();
-
-        // this.debug.diffOutputs(outputs);
-
         assert(sha256(outputs) === this.ctx.shaOutputs, `output hash mismatch`);
     }
 }

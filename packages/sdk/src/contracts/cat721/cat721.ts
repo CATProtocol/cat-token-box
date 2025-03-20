@@ -34,21 +34,19 @@ export class CAT721 extends SmartContract<CAT721State> {
         unlockArgs: ContractUnlockArgs,
         // guard
         guardInfo: CAT721GuardConstState,
-        //
         guardInputIndex: Int32,
-        //
+        // backtrace
         backtraceInfo: BacktraceInfo,
     ) {
-        //
         this.backtraceToScript(backtraceInfo, this.minterScript);
-        //
+
         CAT721StateLib.checkState(this.state);
         const cat721StateHash = CAT721StateLib.stateHash(this.state);
-        // check guardInfo
+
         CAT721GuardStateLib.checkState(guardInfo);
         const guardStateHash = CAT721GuardStateLib.stateHash(guardInfo);
         this.checkInputState(guardInputIndex, guardStateHash);
-        // check state of prevTx
+
         // make sure tx inputs contain a valid guard
         assert(this.ctx.spentScripts[Number(guardInputIndex)] == this.guardScript);
         this.checkGuardState(guardInfo, this.ctx.spentScript, cat721StateHash, this.ctx.inputIndexVal);

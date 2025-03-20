@@ -46,8 +46,8 @@ export class CAT721ClosedMinter extends SmartContract<CAT721ClosedMinterState> {
         // backtrace
         backtraceInfo: BacktraceInfo,
     ) {
-        // ctx
         this.backtraceToOutpoint(backtraceInfo, this.genesisOutpoint);
+
         // check issuer
         OwnerUtils.checkUserOwner(issuerPubKeyPrefix, issuerPubKey, this.issuerAddress);
         assert(this.checkSig(issuerSig, issuerPubKey));
@@ -74,15 +74,15 @@ export class CAT721ClosedMinter extends SmartContract<CAT721ClosedMinterState> {
             );
         }
         // next nft output
+        CAT721StateLib.checkState(nftMint);
         assert(nftMint.localId == this.state.nextLocalId);
         this.appendStateOutput(
             TxUtils.buildOutput(this.state.nftScript, nftSatoshis),
             CAT721StateLib.stateHash(nftMint),
         );
 
-        const outputs = this.buildStateOutputs() + this.buildChangeOutput();
-
         // confine curTx outputs
+        const outputs = this.buildStateOutputs() + this.buildChangeOutput();
         assert(sha256(outputs) === this.ctx.shaOutputs, `output hash mismatch`);
     }
 }
