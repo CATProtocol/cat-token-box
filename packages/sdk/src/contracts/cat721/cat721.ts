@@ -53,6 +53,7 @@ export class CAT721 extends SmartContract<CAT721State> {
 
         if (len(this.state.ownerAddr) == OWNER_ADDR_CONTRACT_HASH_BYTE_LEN) {
             // unlock token owned by contract script
+            assert(unlockArgs.contractInputIndexVal >= 0n && unlockArgs.contractInputIndexVal < this.ctx.inputCount);
             assert(this.state.ownerAddr == hash160(this.ctx.spentScripts[Number(unlockArgs.contractInputIndexVal)]));
         } else {
             // unlock token owned by user key
