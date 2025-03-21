@@ -45,7 +45,7 @@ export class CAT20 extends SmartContract<CAT20State> {
 
         CAT20GuardStateLib.checkState(guardState);
         const guardStateHash = CAT20GuardStateLib.stateHash(guardState);
-        this.checkInputState(guardInputIndex, guardStateHash);
+        this.checkInputStateHash(guardInputIndex, guardStateHash);
 
         // make sure tx inputs contain a valid guard
         assert(this.ctx.spentScripts[Number(guardInputIndex)] == this.guardScript);

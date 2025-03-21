@@ -89,26 +89,27 @@ export class CAT721Guard extends SmartContract<CAT721GuardConstState> {
             STATE_OUTPUT_COUNT_MAX,
         );
         let nextNftCount = 0n;
-        for (let i = 0; i < TX_INPUT_COUNT_MAX; i++) {
+        for (let i = 0n; i < TX_INPUT_COUNT_MAX; i++) {
             const nftScriptIndex = this.state.nftScriptIndexes[Number(i)];
             assert(nftScriptIndex < inputNftTypes);
             if (nftScriptIndex != -1n) {
                 // this is an nft input
                 const nftScript = this.state.nftScripts[Number(nftScriptIndex)];
-                assert(nftScript == this.ctx.spentScripts[i]);
-                CAT721StateLib.checkState(cat721States[i]);
-                const cat721StateHash = CAT721StateLib.stateHash(cat721States[i]);
-                assert(this.state.inputStateHashes[i] == cat721StateHash);
-                this.checkInputState(BigInt(i), cat721StateHash);
+                assert(nftScript == this.ctx.spentScripts[Number(i)]);
+                const cat721StateHash = CAT721StateLib.stateHash(cat721States[Number(i)]);
+                assert(this.state.inputStateHashes[Number(i)] == cat721StateHash);
+                this.checkInputStateHash(i, cat721StateHash);
                 nftScriptIndexMax = nftScriptIndex > nftScriptIndexMax ? nftScriptIndex : nftScriptIndexMax;
-                if (!this.state.nftBurnMasks[i]) {
+                if (!this.state.nftBurnMasks[Number(i)]) {
                     // this nft is not burned
-                    nextNfts[Number(nextNftCount)] = nftScript + hash160(int32ToByteString(cat721States[i].localId));
+                    // todo
+                    nextNfts[Number(nextNftCount)] =
+                        nftScript + hash160(int32ToByteString(cat721States[Number(i)].localId));
                     nextNftCount++;
                 }
             } else {
                 // this is a non-nft input
-                assert(!this.state.nftBurnMasks[i]);
+                assert(!this.state.nftBurnMasks[Number(i)]);
             }
         }
         assert(nftScriptIndexMax >= 0n && nftScriptIndexMax == inputNftTypes - 1n);

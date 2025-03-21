@@ -85,20 +85,20 @@ export class CAT20Guard extends SmartContract<CAT20GuardConstState> {
         // sum token input amount, data comes from cat20 raw states passed in by the user
         const sumInputTokens = fill(0n, GUARD_TOKEN_TYPE_MAX);
         let tokenScriptIndexMax = -1n;
-        for (let i = 0; i < TX_INPUT_COUNT_MAX; i++) {
+        for (let i = 0n; i < TX_INPUT_COUNT_MAX; i++) {
             const tokenScriptIndex = this.state.tokenScriptIndexes[Number(i)];
             assert(tokenScriptIndex < inputTokenTypes);
             if (tokenScriptIndex != -1n) {
                 // this is a token input
                 const tokenScript = this.state.tokenScripts[Number(tokenScriptIndex)];
-                assert(tokenScript == this.ctx.spentScripts[i]);
-                CAT20StateLib.checkState(cat20States[i]);
-                const cat20StateHash = CAT20StateLib.stateHash(cat20States[i]);
-                assert(this.state.inputStateHashes[i] == cat20StateHash);
-                this.checkInputState(BigInt(i), cat20StateHash);
+                assert(tokenScript == this.ctx.spentScripts[Number(i)]);
+                CAT20StateLib.checkState(cat20States[Number(i)]);
+                const cat20StateHash = CAT20StateLib.stateHash(cat20States[Number(i)]);
+                assert(this.state.inputStateHashes[Number(i)] == cat20StateHash);
+                this.checkInputStateHash(i, cat20StateHash);
                 sumInputTokens[Number(tokenScriptIndex)] = SafeMath.add(
                     sumInputTokens[Number(tokenScriptIndex)],
-                    cat20States[i].amount,
+                    cat20States[Number(i)].amount,
                 );
                 tokenScriptIndexMax = tokenScriptIndex > tokenScriptIndexMax ? tokenScriptIndex : tokenScriptIndexMax;
             }
