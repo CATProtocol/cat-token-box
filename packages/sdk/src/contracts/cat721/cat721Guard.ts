@@ -8,7 +8,6 @@ import {
     len,
     method,
     NFT_GUARD_COLLECTION_TYPE_MAX,
-    sha256,
     SmartContract,
     STATE_OUTPUT_COUNT_MAX,
     StateHashes,
@@ -170,7 +169,7 @@ export class CAT721Guard extends SmartContract<CAT721GuardConstState> {
 
         // confine curTx outputs
         const outputs = this.buildStateOutputs();
-        assert(sha256(outputs) == this.ctx.shaOutputs, 'shaOutputs mismatch');
+        assert(this.checkOutputs(outputs), 'Outputs mismatch with the transaction context');
     }
 
     static createEmptyState(): CAT721GuardConstState {

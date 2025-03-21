@@ -1,14 +1,4 @@
-import {
-    SmartContract,
-    prop,
-    ByteString,
-    method,
-    PubKey,
-    Sig,
-    TxUtils,
-    sha256,
-    assert,
-} from '@scrypt-inc/scrypt-ts-btc';
+import { SmartContract, prop, ByteString, method, PubKey, Sig, TxUtils, assert } from '@scrypt-inc/scrypt-ts-btc';
 import { OwnerUtils } from '../../utils/ownerUtils';
 import { CAT20State, CAT20ClosedMinterState } from '../types';
 import { CAT20StateLib } from '../cat20State';
@@ -65,6 +55,6 @@ export class CAT20ClosedMinter extends SmartContract<CAT20ClosedMinterState> {
         );
 
         const outputs = this.buildStateOutputs() + this.buildChangeOutput();
-        assert(sha256(outputs) === this.ctx.shaOutputs, `output hash mismatch`);
+        assert(this.checkOutputs(outputs), 'Outputs mismatch with the transaction context');
     }
 }

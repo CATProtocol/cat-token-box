@@ -6,7 +6,6 @@ import {
     PubKey,
     Sig,
     TxUtils,
-    sha256,
     Int32,
     assert,
 } from '@scrypt-inc/scrypt-ts-btc';
@@ -83,6 +82,6 @@ export class CAT721ClosedMinter extends SmartContract<CAT721ClosedMinterState> {
 
         // confine curTx outputs
         const outputs = this.buildStateOutputs() + this.buildChangeOutput();
-        assert(sha256(outputs) === this.ctx.shaOutputs, `output hash mismatch`);
+        assert(this.checkOutputs(outputs), 'Outputs mismatch with the transaction context');
     }
 }

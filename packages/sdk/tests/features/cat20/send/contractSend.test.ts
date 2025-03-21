@@ -59,7 +59,7 @@ describe('Test the feature `contractSend` for `Cat20Covenant`', () => {
 
     describe('When sending tokens in a single tx', () => {
         it('should contract send one token utxo successfully', async () => {
-            const tokenUtxos = await getTokenUtxos(cat20Generater, hash160(''), 1);
+            const tokenUtxos = await getTokenUtxos(cat20Generater, contractHash, 1);
             const total = tokenUtxos.reduce((p, c) => p + c.state.amount, 0n);
             const toReceiverAmount = total / 2n;
             await testContractSendResult(tokenUtxos, toReceiverAmount, total - toReceiverAmount);

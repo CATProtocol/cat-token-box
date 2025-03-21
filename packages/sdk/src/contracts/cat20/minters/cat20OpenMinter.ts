@@ -6,7 +6,6 @@ import {
     method,
     prop,
     PubKey,
-    sha256,
     Sig,
     SmartContract,
     TxUtils,
@@ -124,6 +123,6 @@ export class CAT20OpenMinter extends SmartContract<CAT20OpenMinterState> {
 
         // confine curTx outputs
         const outputs = this.buildStateOutputs() + this.buildChangeOutput();
-        assert(sha256(outputs) === this.ctx.shaOutputs, `output hash mismatch`);
+        assert(this.checkOutputs(outputs), 'Outputs mismatch with the transaction context');
     }
 }

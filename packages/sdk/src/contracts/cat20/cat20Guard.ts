@@ -8,7 +8,6 @@ import {
     len,
     method,
     Ripemd160,
-    sha256,
     SmartContract,
     STATE_OUTPUT_COUNT_MAX,
     StateHashes,
@@ -173,7 +172,7 @@ export class CAT20Guard extends SmartContract<CAT20GuardConstState> {
 
         // confine curTx outputs
         const outputs = this.buildStateOutputs();
-        assert(sha256(outputs) == this.ctx.shaOutputs, 'shaOutputs mismatch');
+        assert(this.checkOutputs(outputs), 'Outputs mismatch with the transaction context');
     }
 
     static createEmptyState(): CAT20GuardConstState {
