@@ -165,7 +165,6 @@ function buildBurnTx(
             const nftLocalIds = fill(-1n, STATE_OUTPUT_COUNT_MAX);
             const nftScriptIndexArray = fill(-1n, STATE_OUTPUT_COUNT_MAX);
             contract.unlock(
-                curPsbt.getTxoStateHashes(),
                 nftOwners.map((ownerAddr, oidx) => {
                     const output = curPsbt.txOutputs[oidx + 1];
                     return ownerAddr || (output ? uint8ArrayToHex(output.script) : '');

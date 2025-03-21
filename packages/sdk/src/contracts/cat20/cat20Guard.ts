@@ -10,7 +10,6 @@ import {
     Ripemd160,
     SmartContract,
     STATE_OUTPUT_COUNT_MAX,
-    StateHashes,
     toByteString,
     TX_INPUT_COUNT_MAX,
     TX_P2TR_OUTPUT_SCRIPT_BYTE_LEN,
@@ -24,7 +23,6 @@ import { CAT20GuardStateLib } from './cat20GuardState';
 export class CAT20Guard extends SmartContract<CAT20GuardConstState> {
     @method()
     public unlock(
-        nextStateHashes: StateHashes,
         // for each curTx output except the state hash root output,
         // if it is a token output, the value is token owner address of this output,
         // otherwise, the value is the locking script of this output
@@ -129,7 +127,7 @@ export class CAT20Guard extends SmartContract<CAT20GuardConstState> {
                         ownerAddr: ownerAddrOrScript,
                         amount: tokenAmount,
                     });
-                    assert(nextStateHashes[i] == tokenStateHash);
+                    assert(this.ctx.nextStateHashes[i] == tokenStateHash);
                     this.appendStateOutput(
                         TxUtils.buildOutput(this.state.tokenScripts[Number(tokenScriptIndex)], outputSatoshis[i]),
                         Ripemd160(tokenStateHash),
@@ -143,14 +141,14 @@ export class CAT20Guard extends SmartContract<CAT20GuardConstState> {
                     }
                     this.appendStateOutput(
                         TxUtils.buildOutput(ownerAddrOrScript, outputSatoshis[i]),
-                        nextStateHashes[i] as Ripemd160,
+                        this.ctx.nextStateHashes[i] as Ripemd160,
                     );
                 }
             } else {
                 assert(len(ownerAddrOrScripts[i]) == 0n);
                 assert(tokenScriptIndexes[i] == -1n);
                 assert(outputTokens[i] == 0n);
-                assert(nextStateHashes[i] == toByteString(''));
+                assert(this.ctx.nextStateHashes[i] == toByteString(''));
                 assert(outputSatoshis[i] == toByteString(''));
             }
         }

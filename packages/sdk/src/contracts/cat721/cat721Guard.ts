@@ -10,7 +10,6 @@ import {
     NFT_GUARD_COLLECTION_TYPE_MAX,
     SmartContract,
     STATE_OUTPUT_COUNT_MAX,
-    StateHashes,
     toByteString,
     TX_INPUT_COUNT_MAX,
     TX_P2TR_OUTPUT_SCRIPT_BYTE_LEN,
@@ -25,8 +24,6 @@ import { CAT721GuardStateLib } from './cat721GuardState';
 export class CAT721Guard extends SmartContract<CAT721GuardConstState> {
     @method()
     public unlock(
-        nextStateHashes: StateHashes,
-
         // the logic is the same as cat20 guard
         ownerAddrOrScripts: FixedArray<ByteString, typeof STATE_OUTPUT_COUNT_MAX>,
         // localId list of curTx nft outputs
@@ -133,7 +130,7 @@ export class CAT721Guard extends SmartContract<CAT721GuardConstState> {
                         ownerAddr: ownerAddrOrScript,
                         localId,
                     });
-                    assert(nextStateHashes[i] == nftStateHash);
+                    assert(this.ctx.nextStateHashes[i] == nftStateHash);
                     this.appendStateOutput(
                         TxUtils.buildOutput(this.state.nftScripts[Number(nftScriptIndex)], outputSatoshis[i]),
                         Ripemd160(nftStateHash),
@@ -146,14 +143,14 @@ export class CAT721Guard extends SmartContract<CAT721GuardConstState> {
                     }
                     this.appendStateOutput(
                         TxUtils.buildOutput(ownerAddrOrScript, outputSatoshis[i]),
-                        nextStateHashes[i] as Ripemd160,
+                        this.ctx.nextStateHashes[i] as Ripemd160,
                     );
                 }
             } else {
                 assert(len(ownerAddrOrScripts[i]) == 0n);
                 assert(nftScriptIndexes[i] == -1n);
                 assert(outputLocalIds[i] == -1n);
-                assert(nextStateHashes[i] == toByteString(''));
+                assert(this.ctx.nextStateHashes[i] == toByteString(''));
                 assert(outputSatoshis[i] == toByteString(''));
             }
         }

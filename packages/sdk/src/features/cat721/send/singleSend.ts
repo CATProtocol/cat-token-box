@@ -186,7 +186,6 @@ function buildSendTx(
                 }
             });
             contract.unlock(
-                curPsbt.getTxoStateHashes(),
                 nftOwners.map((ownerAddr, oidx) => {
                     const output = curPsbt.txOutputs[oidx + 1];
                     return ownerAddr || (output ? uint8ArrayToHex(output.script) : '');
