@@ -1,4 +1,4 @@
-import { LEAF_VERSION_TAPSCRIPT } from '@scrypt-inc/bitcoinjs-lib';
+import { LEAF_VERSION_TAPSCRIPT, Transaction } from '@scrypt-inc/bitcoinjs-lib';
 import {
     StatefulCovenant,
     ByteString,
@@ -15,6 +15,8 @@ import {
     Sig,
     satoshiToHex,
     uint8ArrayToHex,
+    byteStringToBigInt,
+    StateHashes,
 } from '@scrypt-inc/scrypt-ts-btc';
 import { getCatCommitScript } from '../lib/commit';
 import { Postage } from '../lib/constants';
@@ -23,6 +25,7 @@ import { outpoint2ByteString, isP2TR, scriptToP2tr, toTokenAddress, pubKeyPrefix
 import { CAT20Covenant } from './cat20Covenant';
 import { CAT20OpenMinterState } from '../contracts';
 import { CAT20OpenMinter } from '../contracts/cat20/minters/cat20OpenMinter';
+import { CAT20OpenMinterUtxo } from '../lib/provider';
 
 export class CAT20OpenMinterCovenant extends StatefulCovenant<CAT20OpenMinterState> {
     // locked OpenMinter artifact md5
@@ -231,54 +234,41 @@ export class CAT20OpenMinterCovenant extends StatefulCovenant<CAT20OpenMinterSta
         return mintTx;
     }
 
-    // static fromMintTx(
-    //     tokenId: string,
-    //     info: OpenMinterCat20Meta,
-    //     txHex: string,
-    //     outputIndex?: number,
-    // ): OpenMinterCovenant {
-    //     const tx = Transaction.fromHex(txHex);
-
-    //     const minterOutputIndex = outputIndex || 1;
-    //     const minterOutput = tx.outs[minterOutputIndex];
-    //     if (!minterOutput) {
-    //         throw new Error(`Output[${minterOutputIndex}] not found in transaction`);
-    //     }
-
-    //     const minter = new OpenMinterCovenant(tokenId, info).bindToUtxo({
-    //         txId: tx.getId(),
-    //         outputIndex: minterOutputIndex,
-    //         satoshis: Postage.MINTER_POSTAGE,
-    //     });
-
-    //     if (Buffer.from(minterOutput.script).toString('hex') !== minter.lockingScriptHex) {
-    //         throw new Error(`Invalid minter script in outputs[${outputIndex}]`);
-    //     }
-
-    //     const minterInputIndex = 0;
-    //     const minterInput = tx.ins[minterInputIndex];
-
-    //     try {
-    //         const minterCounts = minter.getSubContractCallArg(
-    //             minterInput.witness.map((w) => Buffer.from(w)),
-    //             'mint',
-    //             'nextMinterCounts',
-    //         ) as FixedArray<int32, typeof MAX_NEXT_MINTERS>;
-
-    //         // minter.state = OpenMinterProto.create(minter.tokenScript, true, minterCounts[minterOutputIndex - 1]);
-    //         minter.state = {
-    //             tokenScript: minter.tokenScript,
-    //             hasMintedBefore: true,
-    //             remainingCount: minterCounts[minterOutputIndex - 1],
-    //         };
-    //     } catch (error) {
-    //         throw new Error(
-    //             `Input[${minterInputIndex}] is not a valid minter input, or the transaction is not a mint transaction`,
-    //         );
-    //     }
-
-    //     return minter;
-    // }
+    static utxoFromMintTx(txHex: string, outputIndex: number): CAT20OpenMinterUtxo {
+        const tx = Transaction.fromHex(txHex);
+        const minterOutput = tx.outs[outputIndex];
+        if (!minterOutput) {
+            throw new Error(`Output[${outputIndex}] not found in transaction`);
+        }
+        const witness = tx.ins[0].witness;
+        const witnessHexList = witness.map((v) => uint8ArrayToHex(v));
+        const nextRemainingCounts = witnessHexList.slice(2, 4);
+        const txoStateHashes = witnessHexList.slice(witnessHexList.length - 20 - 5, witnessHexList.length - 20);
+        let tokenOutputIndex = 1n;
+        for (let index = 0; index < nextRemainingCounts.length; index++) {
+            if (nextRemainingCounts[index] !== '') {
+                tokenOutputIndex += 1n;
+            }
+        }
+        const tokenScript = uint8ArrayToHex(tx.outs[Number(tokenOutputIndex)].script);
+        const state: CAT20OpenMinterState = {
+            tokenScript: tokenScript,
+            hasMintedBefore: true,
+            remainingCount: byteStringToBigInt(nextRemainingCounts[outputIndex - 1]),
+        };
+        // return minter;
+        const out = tx.outs[outputIndex];
+        const cat20MinterUtxo: CAT20OpenMinterUtxo = {
+            txId: tx.getId(),
+            outputIndex: outputIndex,
+            script: uint8ArrayToHex(out.script),
+            satoshis: Number(out.value),
+            txHashPreimage: uint8ArrayToHex(tx.toBuffer(undefined, 0, false)),
+            txoStateHashes: txoStateHashes as StateHashes,
+            state: state,
+        };
+        return cat20MinterUtxo;
+    }
 
     private createNextMinters(): {
         nextMinters: CAT20OpenMinterCovenant[];
