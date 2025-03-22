@@ -1,4 +1,4 @@
-import { Ripemd160 } from '@scrypt-inc/scrypt-ts-btc';
+import { Int32, Ripemd160 } from '@scrypt-inc/scrypt-ts-btc';
 
 /**
  * CAT20 metadata
@@ -40,8 +40,9 @@ export interface NftParallelClosedMinterCat721Meta extends Cat721Metadata {}
 
 export interface ClosedMinterCat721Meta extends Cat721Metadata {}
 
-export interface NftOpenMinterCat721Meta extends Cat721Metadata {
+export interface OpenMinterCat721Meta extends Cat721Metadata {
     preminerAddr?: Ripemd160;
+    premine?: Int32;
 }
 
 export interface MigrateClosedMinterCat20Meta extends ClosedMinterCat20Meta {

@@ -12,4 +12,4 @@ export * from './cat721/cat721State';
 export * from './cat721/cat721Guard';
 export * from './cat721/cat721GuardState';
 export * from './cat721/minters/cat721ClosedMinter';
-// export * from './cat721/minters/cat721OpenMinter';
+export * from './cat721/minters/cat721OpenMinter';

@@ -30,3 +30,33 @@ export interface CAT721ClosedMinterState extends StructObject {
     maxLocalId: Int32;
     nextLocalId: Int32;
 }
+
+export const HEIGHT = 15;
+
+export type MerkleProof = FixedArray<ByteString, typeof HEIGHT>;
+// to indicate whether the node in merkle proof is on the left or right
+// if the node is on the right, then the value is true
+// otherwise, the value is false
+export type ProofNodePos = FixedArray<boolean, typeof HEIGHT>;
+
+export type CAT721MerkleLeaf = {
+    // commit script of this nft
+    commitScript: ByteString;
+    localId: Int32;
+    // a flag to indicate whether this nft is mined
+    isMined: boolean;
+};
+
+export interface CAT721OpenMinterState extends StructObject {
+    // nft script
+    nftScript: ByteString;
+    // init merkle root
+    merkleRoot: ByteString;
+    // next mint local id
+    nextLocalId: Int32;
+}
+
+export interface CAT721ParallelClosedMinterState extends StructObject {
+    nftScript: ByteString;
+    nextLocalId: Int32;
+}

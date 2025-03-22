@@ -5,12 +5,12 @@ import {
     CAT721StateLib,
     CAT721Guard,
     CAT721GuardStateLib,
-    // CAT721OpenMinter,
+    CAT721OpenMinter,
 } from '../../../src';
 export const loadAllArtifacts = function () {
     //
     CAT721ClosedMinter.loadArtifact(readArtifact('artifacts/cat721/minters/cat721ClosedMinter.json'));
-    // CAT721OpenMinter.loadArtifact(readArtifact('artifacts/cat721/minters/cat721OpenMinter.json'));
+    CAT721OpenMinter.loadArtifact(readArtifact('artifacts/cat721/minters/cat721OpenMinter.json'));
     //
     CAT721.loadArtifact(readArtifact('artifacts/cat721/cat721.json'));
     CAT721StateLib.loadArtifact(readArtifact('artifacts/cat721/cat721State.json'));
