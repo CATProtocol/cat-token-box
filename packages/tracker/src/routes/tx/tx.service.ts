@@ -50,11 +50,11 @@ export class TxService {
                 },
                 isFungible
                   ? {
-                      tokenAmount: tokenOutput.tokenAmount,
+                      tokenAmount: tokenOutput.tokenAmount.toString(),
                       tokenId: tokenInfo.tokenId,
                     }
                   : {
-                      localId: tokenOutput.tokenAmount,
+                      localId: tokenOutput.tokenAmount.toString(),
                       collectionId: tokenInfo.tokenId,
                     },
               );
