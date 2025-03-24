@@ -83,7 +83,19 @@ function saveTokenInfo(
   tokens.push(token);
   const path = getTokenInfosPath(config);
   try {
-    writeFileSync(path, JSON.stringify(tokens, null, 1));
+    writeFileSync(
+      path,
+      JSON.stringify(
+        tokens,
+        (key, value) => {
+          if (typeof value === 'bigint') {
+            return value.toString(); // Convert BigInt to string
+          }
+          return value; // Return other values unchanged
+        },
+        1,
+      ),
+    );
   } catch (error) {
     console.error('save token metadata error:', error);
   }
