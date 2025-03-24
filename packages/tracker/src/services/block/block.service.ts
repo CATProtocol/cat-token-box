@@ -46,10 +46,7 @@ export class BlockService implements OnModuleInit {
    */
   private async processForceReindex() {
     if (process.env.REINDEX_BLOCK_HEIGHT !== undefined) {
-      const reindexHeight = Math.max(
-        parseInt(process.env.REINDEX_BLOCK_HEIGHT),
-        this.genesisBlockHeight,
-      );
+      const reindexHeight = Math.max(parseInt(process.env.REINDEX_BLOCK_HEIGHT), this.genesisBlockHeight);
       await this.deleteBlocks(reindexHeight);
       this.logger.log(`reindex from height ${reindexHeight}`);
     }
@@ -101,9 +98,7 @@ export class BlockService implements OnModuleInit {
     const lastProcessedBlock = await this.commonService.getLastProcessedBlock();
     // the potential next height to be processed is the height of last processed block plus one
     // or the genesis block height if this is the first time run
-    const nextHeight = lastProcessedBlock
-      ? lastProcessedBlock.height + 1
-      : this.genesisBlockHeight;
+    const nextHeight = lastProcessedBlock ? lastProcessedBlock.height + 1 : this.genesisBlockHeight;
     // get block hash by height to check the existence of the next block
     // if cannot get a result, then there is no new block to process
     const nextHash = await this.getBlockHash(nextHeight);
@@ -155,9 +150,7 @@ export class BlockService implements OnModuleInit {
     }
     if (nextHeader.hash !== nextHash) {
       // found reorg
-      this.logger.log(
-        `found reorg, common ancestor #${nextHeader.height - 1} ${nextHeader.previousblockhash}`,
-      );
+      this.logger.log(`found reorg, common ancestor #${nextHeader.height - 1} ${nextHeader.previousblockhash}`);
       await this.deleteBlocks(nextHeader.height);
     }
     return nextHeader;
@@ -174,11 +167,7 @@ export class BlockService implements OnModuleInit {
     let catTxsCount = 0;
     let catProcessingTime = 0;
     for (let i = 0; i < block.transactions.length; i++) {
-      const ms = await this.txService.processTx(
-        block.transactions[i],
-        i,
-        blockHeader,
-      );
+      const ms = await this.txService.processTx(block.transactions[i], i, blockHeader);
       if (ms !== undefined) {
         catTxsCount += 1;
         catProcessingTime += ms;
@@ -191,13 +180,9 @@ export class BlockService implements OnModuleInit {
     });
 
     let _percentage = '';
-    const latestBlockHeight = (await this.commonService.getBlockchainInfo())
-      ?.headers;
+    const latestBlockHeight = (await this.commonService.getBlockchainInfo())?.headers;
     if (latestBlockHeight && latestBlockHeight !== 0) {
-      _percentage = `[${(
-        (blockHeader.height / latestBlockHeight) *
-        100
-      ).toFixed(2)}%] `.padStart(10, ' ');
+      _percentage = `[${((blockHeader.height / latestBlockHeight) * 100).toFixed(2)}%] `.padStart(10, ' ');
     }
     const processingTime = Math.ceil(Date.now() - startTs);
     const tps = Math.ceil((block.transactions.length / processingTime) * 1000);

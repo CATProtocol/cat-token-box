@@ -34,11 +34,7 @@ export class MinterController {
     @Query('limit') limit?: number,
   ) {
     try {
-      const utxos = await this.minterService.getMinterUtxos(
-        tokenIdOrTokenAddr,
-        offset,
-        limit,
-      );
+      const utxos = await this.minterService.getMinterUtxos(tokenIdOrTokenAddr, offset, limit);
       return okResponse(utxos);
     } catch (e) {
       return errorResponse(e);
@@ -56,12 +52,9 @@ export class MinterController {
     type: String,
     description: 'token id or token address',
   })
-  async getMinterUtxoCount(
-    @Param('tokenIdOrTokenAddr') tokenIdOrTokenAddr: string,
-  ) {
+  async getMinterUtxoCount(@Param('tokenIdOrTokenAddr') tokenIdOrTokenAddr: string) {
     try {
-      const utxos =
-        await this.minterService.getMinterUtxoCount(tokenIdOrTokenAddr);
+      const utxos = await this.minterService.getMinterUtxoCount(tokenIdOrTokenAddr);
       return okResponse(utxos);
     } catch (e) {
       return errorResponse(e);

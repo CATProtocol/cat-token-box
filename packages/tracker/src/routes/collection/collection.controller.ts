@@ -24,15 +24,12 @@ export class CollectionController {
     type: String,
     description: 'collection id or collection address',
   })
-  async getCollectionInfo(
-    @Param('collectionIdOrAddr') collectionIdOrAddr: string,
-  ) {
+  async getCollectionInfo(@Param('collectionIdOrAddr') collectionIdOrAddr: string) {
     try {
-      const collectionInfo =
-        await this.tokenService.getTokenInfoByTokenIdOrTokenAddress(
-          collectionIdOrAddr,
-          TokenTypeScope.NonFungible,
-        );
+      const collectionInfo = await this.tokenService.getTokenInfoByTokenIdOrTokenAddress(
+        collectionIdOrAddr,
+        TokenTypeScope.NonFungible,
+      );
       if (collectionInfo) {
         Object.assign(collectionInfo, {
           collectionId: collectionInfo.tokenId,
@@ -61,13 +58,9 @@ export class CollectionController {
     type: String,
     description: 'collection id or collection address',
   })
-  async getCollectionContent(
-    @Param('collectionIdOrAddr') collectionIdOrAddr: string,
-    @Res() res: Response,
-  ) {
+  async getCollectionContent(@Param('collectionIdOrAddr') collectionIdOrAddr: string, @Res() res: Response) {
     try {
-      const content =
-        await this.collectionService.getCollectionContent(collectionIdOrAddr);
+      const content = await this.collectionService.getCollectionContent(collectionIdOrAddr);
       if (content?.raw) {
         if (content?.type) {
           res.setHeader('Content-Type', content.type);
@@ -103,15 +96,9 @@ export class CollectionController {
     type: Number,
     description: 'nft local id',
   })
-  async getNftInfo(
-    @Param('collectionIdOrAddr') collectionIdOrAddr: string,
-    @Param('localId') localId: bigint,
-  ) {
+  async getNftInfo(@Param('collectionIdOrAddr') collectionIdOrAddr: string, @Param('localId') localId: bigint) {
     try {
-      const nftInfo = await this.collectionService.getNftInfo(
-        collectionIdOrAddr,
-        localId,
-      );
+      const nftInfo = await this.collectionService.getNftInfo(collectionIdOrAddr, localId);
       return okResponse(nftInfo);
     } catch (e) {
       return errorResponse(e);
@@ -139,10 +126,7 @@ export class CollectionController {
     @Res() res: Response,
   ) {
     try {
-      const content = await this.collectionService.getNftContent(
-        collectionIdOrAddr,
-        localId,
-      );
+      const content = await this.collectionService.getNftContent(collectionIdOrAddr, localId);
       if (content?.raw) {
         if (content?.type) {
           res.setHeader('Content-Type', content.type);
@@ -178,15 +162,9 @@ export class CollectionController {
     type: Number,
     description: 'nft local id',
   })
-  async getNftUtxo(
-    @Param('collectionIdOrAddr') collectionIdOrAddr: string,
-    @Param('localId') localId: bigint,
-  ) {
+  async getNftUtxo(@Param('collectionIdOrAddr') collectionIdOrAddr: string, @Param('localId') localId: bigint) {
     try {
-      const utxo = await this.collectionService.getNftUtxo(
-        collectionIdOrAddr,
-        localId,
-      );
+      const utxo = await this.collectionService.getNftUtxo(collectionIdOrAddr, localId);
       return okResponse(utxo);
     } catch (e) {
       return errorResponse(e);
@@ -280,8 +258,7 @@ export class CollectionController {
   @Get(':collectionIdOrAddr/mintAmount')
   @ApiTags('collection')
   @ApiOperation({
-    summary:
-      'Get collection total mint amount by collection id or collection address',
+    summary: 'Get collection total mint amount by collection id or collection address',
   })
   @ApiParam({
     name: 'collectionIdOrAddr',
@@ -289,14 +266,9 @@ export class CollectionController {
     type: String,
     description: 'collection id or collection address',
   })
-  async getCollectionMintAmount(
-    @Param('collectionIdOrAddr') collectionIdOrAddr: string,
-  ) {
+  async getCollectionMintAmount(@Param('collectionIdOrAddr') collectionIdOrAddr: string) {
     try {
-      const mintCount = await this.tokenService.getTokenMintAmount(
-        collectionIdOrAddr,
-        TokenTypeScope.NonFungible,
-      );
+      const mintCount = await this.tokenService.getTokenMintAmount(collectionIdOrAddr, TokenTypeScope.NonFungible);
       return okResponse(mintCount);
     } catch (e) {
       return errorResponse(e);
@@ -306,8 +278,7 @@ export class CollectionController {
   @Get(':collectionIdOrAddr/circulation')
   @ApiTags('collection')
   @ApiOperation({
-    summary:
-      'Get collection current circulation by collection id or collection address',
+    summary: 'Get collection current circulation by collection id or collection address',
   })
   @ApiParam({
     name: 'collectionIdOrAddr',
@@ -315,14 +286,9 @@ export class CollectionController {
     type: String,
     description: 'collection id or collection address',
   })
-  async getCollectionCirculation(
-    @Param('collectionIdOrAddr') collectionIdOrAddr: string,
-  ) {
+  async getCollectionCirculation(@Param('collectionIdOrAddr') collectionIdOrAddr: string) {
     try {
-      const circulation = await this.tokenService.getTokenCirculation(
-        collectionIdOrAddr,
-        TokenTypeScope.NonFungible,
-      );
+      const circulation = await this.tokenService.getTokenCirculation(collectionIdOrAddr, TokenTypeScope.NonFungible);
       return okResponse(circulation);
     } catch (e) {
       return errorResponse(e);
@@ -358,12 +324,7 @@ export class CollectionController {
     @Query('limit') limit?: number,
   ) {
     try {
-      const r = await this.tokenService.getTokenHolders(
-        collectionIdOrAddr,
-        TokenTypeScope.NonFungible,
-        offset,
-        limit,
-      );
+      const r = await this.tokenService.getTokenHolders(collectionIdOrAddr, TokenTypeScope.NonFungible, offset, limit);
       const holders = r.holders.map((holder) => {
         return {
           ownerPubKeyHash: holder.ownerPubKeyHash,

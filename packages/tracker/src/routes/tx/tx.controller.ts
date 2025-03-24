@@ -49,10 +49,7 @@ export class TxController {
     try {
       const inputIndexBuf = Buffer.alloc(4);
       inputIndexBuf.writeUInt32LE(inputIndex || 0);
-      const delegate = Buffer.concat([
-        Buffer.from(txid, 'hex').reverse(),
-        inputIndexBuf,
-      ]);
+      const delegate = Buffer.concat([Buffer.from(txid, 'hex').reverse(), inputIndexBuf]);
       const content = await this.txService.getDelegateContent(delegate);
       if (content?.raw) {
         if (content?.type) {

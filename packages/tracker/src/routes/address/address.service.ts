@@ -18,12 +18,8 @@ export class AddressService {
     return this.getBalances(ownerAddrOrPkh, TokenTypeScope.NonFungible);
   }
 
-  private async getBalances(
-    ownerAddrOrPkh: string,
-    scope: TokenTypeScope.Fungible | TokenTypeScope.NonFungible,
-  ) {
-    const lastProcessedHeight =
-      await this.commonService.getLastProcessedBlockHeight();
+  private async getBalances(ownerAddrOrPkh: string, scope: TokenTypeScope.Fungible | TokenTypeScope.NonFungible) {
+    const lastProcessedHeight = await this.commonService.getLastProcessedBlockHeight();
     const balances = await this.tokenService.queryTokenBalancesByOwnerAddress(
       lastProcessedHeight,
       ownerAddrOrPkh,

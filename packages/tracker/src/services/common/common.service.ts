@@ -6,10 +6,7 @@ import { Repository } from 'typeorm';
 import { Constants } from '../../common/constants';
 import { TaprootPayment } from '../../common/types';
 import { TxOutput } from 'bitcoinjs-lib';
-import {
-  CAT20GuardCovenant,
-  CAT721GuardCovenant,
-} from '@cat-protocol/cat-sdk-v2';
+import { CAT20GuardCovenant, CAT721GuardCovenant } from '@cat-protocol/cat-sdk-v2';
 
 @Injectable()
 export class CommonService {
@@ -77,9 +74,7 @@ export class CommonService {
       if (masks[i].toString('hex') !== '81') {
         const ownerPubKeyHash = ownerPubKeyHashes[i].toString('hex');
         const tokenAmount =
-          tokenAmounts[i].length === 0
-            ? 0n
-            : BigInt(tokenAmounts[i].readIntLE(0, tokenAmounts[i].length));
+          tokenAmounts[i].length === 0 ? 0n : BigInt(tokenAmounts[i].readIntLE(0, tokenAmounts[i].length));
         tokenOutputs.set(i + 1, {
           ownerPubKeyHash,
           tokenAmount,
@@ -143,10 +138,7 @@ export class CommonService {
     return this.FT_GUARD_PUBKEY === guardInput?.pubkey?.toString('hex');
   }
 
-  public async getRawTx(
-    txid: string,
-    verbose: boolean = false,
-  ): Promise<string | undefined> {
+  public async getRawTx(txid: string, verbose: boolean = false): Promise<string | undefined> {
     const resp = await this.rpcService.getRawTx(txid, verbose);
     return resp?.data?.result;
   }

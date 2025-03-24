@@ -26,17 +26,11 @@ export class RpcService {
     this.rpcUrl = `http://${this.rpcHost}:${this.rpcPort}`;
     this.headers = {
       'Content-Type': 'text/plain',
-      Authorization:
-        'Basic ' +
-        Buffer.from(this.rpcUser + ':' + this.rpcPassword).toString('base64'),
+      Authorization: 'Basic ' + Buffer.from(this.rpcUser + ':' + this.rpcPassword).toString('base64'),
     };
   }
 
-  private async rpc(
-    data: any,
-    logException: boolean = true,
-    throwException: boolean = false,
-  ) {
+  private async rpc(data: any, logException: boolean = true, throwException: boolean = false) {
     try {
       const method: Method = 'POST';
       const config = {
@@ -71,9 +65,7 @@ export class RpcService {
     return this.rpc(rpcData, false);
   }
 
-  public async getBlockHeader(
-    blockHash: any,
-  ): Promise<AxiosResponse<any> | undefined> {
+  public async getBlockHeader(blockHash: any): Promise<AxiosResponse<any> | undefined> {
     const now = Date.now();
     const rpcData = {
       jsonrpc: '1.0',
@@ -84,10 +76,7 @@ export class RpcService {
     return this.rpc(rpcData);
   }
 
-  public async getBlock(
-    blockHash: string,
-    verbose: number = 0,
-  ): Promise<AxiosResponse<any> | undefined> {
+  public async getBlock(blockHash: string, verbose: number = 0): Promise<AxiosResponse<any> | undefined> {
     const now = Date.now();
     const rpcData = {
       jsonrpc: '1.0',
@@ -98,10 +87,7 @@ export class RpcService {
     return this.rpc(rpcData);
   }
 
-  public async getBlockchainInfo(
-    logException: boolean = true,
-    throwException: boolean = false,
-  ) {
+  public async getBlockchainInfo(logException: boolean = true, throwException: boolean = false) {
     const now = Date.now();
     const rpcData = {
       jsonrpc: '1.0',

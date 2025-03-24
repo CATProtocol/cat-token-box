@@ -16,19 +16,12 @@ export class MinterService {
     private readonly txOutRepository: Repository<TxOutEntity>,
   ) {}
 
-  async getMinterUtxos(
-    tokenIdOrTokenAddr: string,
-    offset?: number,
-    limit?: number,
-  ) {
+  async getMinterUtxos(tokenIdOrTokenAddr: string, offset?: number, limit?: number) {
     const utxos = await this.queryMinterUtxos(
       tokenIdOrTokenAddr,
       false,
       offset || Constants.QUERY_PAGING_DEFAULT_OFFSET,
-      Math.min(
-        limit || Constants.QUERY_PAGING_DEFAULT_LIMIT,
-        Constants.QUERY_PAGING_MAX_LIMIT,
-      ),
+      Math.min(limit || Constants.QUERY_PAGING_DEFAULT_LIMIT, Constants.QUERY_PAGING_MAX_LIMIT),
     );
     return {
       utxos: await this.tokenService.renderUtxos(utxos.utxos),
@@ -46,13 +39,11 @@ export class MinterService {
     offset: number | null = null,
     limit: number | null = null,
   ) {
-    const lastProcessedHeight =
-      await this.commonService.getLastProcessedBlockHeight();
-    const tokenInfo =
-      await this.tokenService.getTokenInfoByTokenIdOrTokenAddress(
-        tokenIdOrTokenAddr,
-        TokenTypeScope.All,
-      );
+    const lastProcessedHeight = await this.commonService.getLastProcessedBlockHeight();
+    const tokenInfo = await this.tokenService.getTokenInfoByTokenIdOrTokenAddress(
+      tokenIdOrTokenAddr,
+      TokenTypeScope.All,
+    );
     let count = 0;
     let utxos = [];
     if (lastProcessedHeight !== null && tokenInfo?.minterPubKey) {

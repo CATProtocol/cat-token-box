@@ -8,13 +8,7 @@ import { TxModule } from '../tx/tx.module';
 import { CommonModule } from '../common/common.module';
 
 @Module({
-  imports: [
-    TypeOrmModule.forFeature([BlockEntity]),
-    RpcModule,
-    TxModule,
-    ConfigModule,
-    CommonModule,
-  ],
+  imports: [TypeOrmModule.forFeature([BlockEntity]), RpcModule, TxModule, ConfigModule, CommonModule],
   providers: [BlockService],
   exports: [BlockService],
 })

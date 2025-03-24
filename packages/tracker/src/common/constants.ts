@@ -37,18 +37,15 @@ export class Constants {
   // tx max 6 inputs
   static readonly CONTRACT_INPUT_MAX_COUNT = 6;
 
-  static readonly COMMIT_INPUT_WITNESS_MIN_SIZE =
-    this.CONTRACT_INPUT_WITNESS_MIN_SIZE;
+  static readonly COMMIT_INPUT_WITNESS_MIN_SIZE = this.CONTRACT_INPUT_WITNESS_MIN_SIZE;
 
-  static readonly MINTER_INPUT_WITNESS_MIN_SIZE =
-    this.CONTRACT_INPUT_WITNESS_MIN_SIZE + 2; // addr amount
+  static readonly MINTER_INPUT_WITNESS_MIN_SIZE = this.CONTRACT_INPUT_WITNESS_MIN_SIZE + 2; // addr amount
 
   static readonly MINTER_INPUT_WITNESS_ADDR_OFFSET = 0;
 
   static readonly MINTER_INPUT_WITNESS_AMOUNT_OFFSET = 1;
 
-  static readonly TOKEN_INFO_ENVELOPE =
-    /OP_0 OP_IF 636174 (OP_1|OP_2|OP_3) (.+?) OP_ENDIF/;
+  static readonly TOKEN_INFO_ENVELOPE = /OP_0 OP_IF 636174 (OP_1|OP_2|OP_3) (.+?) OP_ENDIF/;
 
   static readonly TOKEN_AMOUNT_MAX_BYTES = 4;
 
@@ -57,18 +54,15 @@ export class Constants {
 
   static readonly GUARD_ADDR_OFFSET = 0;
 
-  static readonly GUARD_AMOUNT_OFFSET =
-    this.GUARD_ADDR_OFFSET + this.CONTRACT_OUTPUT_MAX_COUNT;
+  static readonly GUARD_AMOUNT_OFFSET = this.GUARD_ADDR_OFFSET + this.CONTRACT_OUTPUT_MAX_COUNT;
 
-  static readonly GUARD_MASK_OFFSET =
-    this.GUARD_AMOUNT_OFFSET + this.CONTRACT_OUTPUT_MAX_COUNT;
+  static readonly GUARD_MASK_OFFSET = this.GUARD_AMOUNT_OFFSET + this.CONTRACT_OUTPUT_MAX_COUNT;
 
   static readonly QUERY_PAGING_DEFAULT_OFFSET = 0;
   static readonly QUERY_PAGING_DEFAULT_LIMIT = 100;
   static readonly QUERY_PAGING_MAX_LIMIT = 500;
 
-  static readonly CONTENT_TYPE_CAT721_DELEGATE_V1 =
-    'application/vnd.cat721.delegate.v1+text';
+  static readonly CONTENT_TYPE_CAT721_DELEGATE_V1 = 'application/vnd.cat721.delegate.v1+text';
 
   static readonly CONTENT_ENVELOPE = /OP_0 OP_IF 636174 (.+?) OP_ENDIF/;
 }

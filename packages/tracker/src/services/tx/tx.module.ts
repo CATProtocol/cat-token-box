@@ -8,11 +8,7 @@ import { ScheduleModule } from '@nestjs/schedule';
 import { TxOutEntity } from '../../entities/txOut.entity';
 
 @Module({
-  imports: [
-    TypeOrmModule.forFeature([TxEntity, TokenInfoEntity, TxOutEntity]),
-    CommonModule,
-    ScheduleModule.forRoot(),
-  ],
+  imports: [TypeOrmModule.forFeature([TxEntity, TokenInfoEntity, TxOutEntity]), CommonModule, ScheduleModule.forRoot()],
   providers: [TxService],
   exports: [TxService],
 })

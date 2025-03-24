@@ -17,11 +17,9 @@ export class CollectionService {
     max: Constants.CACHE_MAX_SIZE,
   });
 
-  private static readonly nftContentCache = new LRUCache<string, CachedContent>(
-    {
-      max: Constants.CACHE_MAX_SIZE,
-    },
-  );
+  private static readonly nftContentCache = new LRUCache<string, CachedContent>({
+    max: Constants.CACHE_MAX_SIZE,
+  });
 
   constructor(
     private readonly commonService: CommonService,
@@ -35,26 +33,17 @@ export class CollectionService {
     private readonly tokenInfoRepository: Repository<TokenInfoEntity>,
   ) {}
 
-  async getCollectionContent(
-    collectionIdOrAddr: string,
-  ): Promise<CachedContent | null> {
+  async getCollectionContent(collectionIdOrAddr: string): Promise<CachedContent | null> {
     const key = `${collectionIdOrAddr}`;
     let cached = CollectionService.nftContentCache.get(key);
     if (!cached) {
-      const collectionInfo =
-        await this.tokenService.getTokenInfoByTokenIdOrTokenAddress(
-          collectionIdOrAddr,
-          TokenTypeScope.NonFungible,
-        );
+      const collectionInfo = await this.tokenService.getTokenInfoByTokenIdOrTokenAddress(
+        collectionIdOrAddr,
+        TokenTypeScope.NonFungible,
+      );
       if (collectionInfo) {
         const collectionContent = await this.tokenInfoRepository.findOne({
-          select: [
-            'revealHeight',
-            'contentType',
-            'contentEncoding',
-            'contentRaw',
-            'createdAt',
-          ],
+          select: ['revealHeight', 'contentType', 'contentEncoding', 'contentRaw', 'createdAt'],
           where: { tokenId: collectionInfo.tokenId },
         });
         if (collectionContent) {
@@ -68,12 +57,10 @@ export class CollectionService {
             // parse delegate content, no need to cache here
             return this.txService.getDelegateContent(cached.raw);
           }
-          const lastProcessedHeight =
-            await this.commonService.getLastProcessedBlockHeight();
+          const lastProcessedHeight = await this.commonService.getLastProcessedBlockHeight();
           if (
             lastProcessedHeight !== null &&
-            lastProcessedHeight - collectionContent.revealHeight >=
-              Constants.CACHE_AFTER_N_BLOCKS
+            lastProcessedHeight - collectionContent.revealHeight >= Constants.CACHE_AFTER_N_BLOCKS
           ) {
             CollectionService.nftContentCache.set(key, cached);
           }
@@ -87,30 +74,20 @@ export class CollectionService {
     const key = `${collectionIdOrAddr}_${localId}`;
     let cached = CollectionService.nftInfoCache.get(key);
     if (!cached) {
-      const collectionInfo =
-        await this.tokenService.getTokenInfoByTokenIdOrTokenAddress(
-          collectionIdOrAddr,
-          TokenTypeScope.NonFungible,
-        );
+      const collectionInfo = await this.tokenService.getTokenInfoByTokenIdOrTokenAddress(
+        collectionIdOrAddr,
+        TokenTypeScope.NonFungible,
+      );
       if (collectionInfo) {
         const nftInfo = await this.nftInfoRepository.findOne({
-          select: [
-            'collectionId',
-            'localId',
-            'mintTxid',
-            'mintHeight',
-            'commitTxid',
-            'metadata',
-          ],
+          select: ['collectionId', 'localId', 'mintTxid', 'mintHeight', 'commitTxid', 'metadata'],
           where: { collectionId: collectionInfo.tokenId, localId },
         });
         if (nftInfo) {
-          const lastProcessedHeight =
-            await this.commonService.getLastProcessedBlockHeight();
+          const lastProcessedHeight = await this.commonService.getLastProcessedBlockHeight();
           if (
             lastProcessedHeight !== null &&
-            lastProcessedHeight - nftInfo.mintHeight >=
-              Constants.CACHE_AFTER_N_BLOCKS
+            lastProcessedHeight - nftInfo.mintHeight >= Constants.CACHE_AFTER_N_BLOCKS
           ) {
             CollectionService.nftInfoCache.set(key, nftInfo);
           }
@@ -121,27 +98,17 @@ export class CollectionService {
     return cached;
   }
 
-  async getNftContent(
-    collectionIdOrAddr: string,
-    localId: bigint,
-  ): Promise<CachedContent | null> {
+  async getNftContent(collectionIdOrAddr: string, localId: bigint): Promise<CachedContent | null> {
     const key = `${collectionIdOrAddr}_${localId}`;
     let cached = CollectionService.nftContentCache.get(key);
     if (!cached) {
-      const collectionInfo =
-        await this.tokenService.getTokenInfoByTokenIdOrTokenAddress(
-          collectionIdOrAddr,
-          TokenTypeScope.NonFungible,
-        );
+      const collectionInfo = await this.tokenService.getTokenInfoByTokenIdOrTokenAddress(
+        collectionIdOrAddr,
+        TokenTypeScope.NonFungible,
+      );
       if (collectionInfo) {
         const nftContent = await this.nftInfoRepository.findOne({
-          select: [
-            'mintHeight',
-            'contentType',
-            'contentEncoding',
-            'contentRaw',
-            'createdAt',
-          ],
+          select: ['mintHeight', 'contentType', 'contentEncoding', 'contentRaw', 'createdAt'],
           where: { collectionId: collectionInfo.tokenId, localId },
         });
         if (nftContent) {
@@ -155,12 +122,10 @@ export class CollectionService {
             // parse delegate content, no need to cache here
             return this.txService.getDelegateContent(cached.raw);
           }
-          const lastProcessedHeight =
-            await this.commonService.getLastProcessedBlockHeight();
+          const lastProcessedHeight = await this.commonService.getLastProcessedBlockHeight();
           if (
             lastProcessedHeight !== null &&
-            lastProcessedHeight - nftContent.mintHeight >=
-              Constants.CACHE_AFTER_N_BLOCKS
+            lastProcessedHeight - nftContent.mintHeight >= Constants.CACHE_AFTER_N_BLOCKS
           ) {
             CollectionService.nftContentCache.set(key, cached);
           }
@@ -171,13 +136,11 @@ export class CollectionService {
   }
 
   async getNftUtxo(collectionIdOrAddr: string, localId: bigint) {
-    const lastProcessedHeight =
-      await this.commonService.getLastProcessedBlockHeight();
-    const collectionInfo =
-      await this.tokenService.getTokenInfoByTokenIdOrTokenAddress(
-        collectionIdOrAddr,
-        TokenTypeScope.NonFungible,
-      );
+    const lastProcessedHeight = await this.commonService.getLastProcessedBlockHeight();
+    const collectionInfo = await this.tokenService.getTokenInfoByTokenIdOrTokenAddress(
+      collectionIdOrAddr,
+      TokenTypeScope.NonFungible,
+    );
     let utxos = [];
     if (collectionInfo && collectionInfo.tokenPubKey) {
       const where = {
@@ -191,10 +154,7 @@ export class CollectionService {
         take: 1,
       });
     }
-    const renderedUtxos = await this.tokenService.renderUtxos(
-      utxos,
-      collectionInfo,
-    );
+    const renderedUtxos = await this.tokenService.renderUtxos(utxos, collectionInfo);
     const utxo = renderedUtxos.length > 0 ? renderedUtxos[0] : null;
     return {
       utxo,

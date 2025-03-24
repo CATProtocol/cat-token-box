@@ -18,8 +18,7 @@ export class AddressController {
   })
   async getTokenBalances(@Param('ownerAddrOrPkh') ownerAddrOrPkh: string) {
     try {
-      const balances =
-        await this.addressService.getTokenBalances(ownerAddrOrPkh);
+      const balances = await this.addressService.getTokenBalances(ownerAddrOrPkh);
       return okResponse(balances);
     } catch (e) {
       return errorResponse(e);
@@ -37,8 +36,7 @@ export class AddressController {
   })
   async getCollectionBalances(@Param('ownerAddrOrPkh') ownerAddrOrPkh: string) {
     try {
-      const balances =
-        await this.addressService.getCollectionBalances(ownerAddrOrPkh);
+      const balances = await this.addressService.getCollectionBalances(ownerAddrOrPkh);
       return okResponse({
         collections: balances.balances.map((balance) => {
           return {

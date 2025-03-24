@@ -1,17 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { TxEntity } from '../../entities/tx.entity';
-import {
-  DataSource,
-  EntityManager,
-  MoreThanOrEqual,
-  Repository,
-} from 'typeorm';
-import {
-  payments,
-  Transaction,
-  TxInput,
-  crypto,
-} from '@scrypt-inc/bitcoinjs-lib';
+import { DataSource, EntityManager, MoreThanOrEqual, Repository } from 'typeorm';
+import { payments, Transaction, TxInput, crypto } from '@scrypt-inc/bitcoinjs-lib';
 import { TxOutEntity } from '../../entities/txOut.entity';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Constants } from '../../common/constants';
@@ -19,12 +9,7 @@ import { TokenInfoEntity } from '../../entities/tokenInfo.entity';
 import { NftInfoEntity } from '../../entities/nftInfo.entity';
 import { CatTxError, TransferTxError } from '../../common/exceptions';
 import { parseTokenInfoEnvelope } from '../../common/utils';
-import {
-  BlockHeader,
-  EnvelopeMarker,
-  TaprootPayment,
-  TokenInfoEnvelope,
-} from '../../common/types';
+import { BlockHeader, EnvelopeMarker, TaprootPayment, TokenInfoEnvelope } from '../../common/types';
 import { TokenMintEntity } from '../../entities/tokenMint.entity';
 import { LRUCache } from 'lru-cache';
 import { CommonService } from '../common/common.service';
@@ -35,17 +20,11 @@ import { Cron } from '@nestjs/schedule';
 export class TxService {
   private readonly logger = new Logger(TxService.name);
 
-  private static readonly taprootPaymentCache = new LRUCache<
-    string,
-    { pubkey: Buffer; redeemScript: Buffer }
-  >({
+  private static readonly taprootPaymentCache = new LRUCache<string, { pubkey: Buffer; redeemScript: Buffer }>({
     max: Constants.CACHE_MAX_SIZE,
   });
 
-  private static readonly tokenInfoCache = new LRUCache<
-    string,
-    TokenInfoEntity
-  >({
+  private static readonly tokenInfoCache = new LRUCache<string, TokenInfoEntity>({
     max: Constants.CACHE_MAX_SIZE,
   });
 
@@ -78,9 +57,7 @@ export class TxService {
     if (!this.isCatTx(tx)) {
       return;
     }
-    const payOuts = tx.outs.map((output) =>
-      this.commonService.parseTaprootOutput(output),
-    );
+    const payOuts = tx.outs.map((output) => this.commonService.parseTaprootOutput(output));
     // filter tx with Guard outputs
     if (this.commonService.searchGuardOutputs(payOuts)) {
       this.logger.log(`[OK] guard builder ${tx.getId()}`);
@@ -131,36 +108,22 @@ export class TxService {
         this.logger.log(`[OK] mint tx ${tx.getId()}`);
       } else if (guardInputs.length === 0) {
         // no minter and Guard in inputs, this is a token reveal tx
-        stateHashes = await this.processRevealTx(
-          queryRunner.manager,
-          promises,
-          tx,
-          payIns,
-          payOuts,
-          blockHeader,
-        );
+        stateHashes = await this.processRevealTx(queryRunner.manager, promises, tx, payIns, payOuts, blockHeader);
         this.logger.log(`[OK] reveal tx ${tx.getId()}`);
       }
 
-      await Promise.all([
-        ...promises,
-        this.saveTx(queryRunner.manager, tx, txIndex, blockHeader, stateHashes),
-      ]);
+      await Promise.all([...promises, this.saveTx(queryRunner.manager, tx, txIndex, blockHeader, stateHashes)]);
       await queryRunner.commitTransaction();
       return Math.ceil(Date.now() - startTs);
     } catch (e) {
       if (e instanceof TransferTxError) {
         // do not rollback for TransferTxError
-        this.logger.error(
-          `[502750] invalid transfer tx ${tx.getId()}, ${e.message}`,
-        );
+        this.logger.error(`[502750] invalid transfer tx ${tx.getId()}, ${e.message}`);
       } else {
         if (e instanceof CatTxError) {
           this.logger.log(`skip tx ${tx.getId()}, ${e.message}`);
         } else {
-          this.logger.error(
-            `process tx ${tx.getId()} error, ${e.message} ${e.stack}`,
-          );
+          this.logger.error(`process tx ${tx.getId()} error, ${e.message} ${e.stack}`);
         }
         await queryRunner.rollbackTransaction();
       }
@@ -175,18 +138,12 @@ export class TxService {
   private isCatTx(tx: Transaction) {
     if (tx.outs.length > 0) {
       // OP_RETURN OP_PUSHBYTES_24 'cat' <1 byte version> <20 bytes root_hash>
-      return Buffer.from(tx.outs[0].script)
-        .toString('hex')
-        .startsWith('6a1863617401');
+      return Buffer.from(tx.outs[0].script).toString('hex').startsWith('6a1863617401');
     }
     return false;
   }
 
-  private async updateSpent(
-    manager: EntityManager,
-    promises: Promise<any>[],
-    tx: Transaction,
-  ) {
+  private async updateSpent(manager: EntityManager, promises: Promise<any>[], tx: Transaction) {
     tx.ins.forEach((input, i) => {
       const prevTxid = Buffer.from(input.hash).reverse().toString('hex');
       const prevOutputIndex = input.index;
@@ -218,12 +175,8 @@ export class TxService {
       txid: tx.getId(),
       blockHeight: blockHeader.height,
       txIndex,
-      stateHashes: [rootHash, ...stateHashes]
-        .map((stateHash) => stateHash.toString('hex'))
-        .join(';'),
-      txHashPreimage: Buffer.from(tx.toBuffer(undefined, 0, false)).toString(
-        'hex',
-      ),
+      stateHashes: [rootHash, ...stateHashes].map((stateHash) => stateHash.toString('hex')).join(';'),
+      txHashPreimage: Buffer.from(tx.toBuffer(undefined, 0, false)).toString('hex'),
     });
   }
 
@@ -247,9 +200,7 @@ export class TxService {
         const tokenInfo = await this.getTokenInfo(xOnlyPubKey);
         if (tokenInfo) {
           if (minter.tokenInfo) {
-            throw new CatTxError(
-              'invalid mint tx, multiple minter inputs found',
-            );
+            throw new CatTxError('invalid mint tx, multiple minter inputs found');
           }
           minter = {
             minterInput: payIn,
@@ -279,12 +230,10 @@ export class TxService {
         where: { minterPubKey },
       });
       if (tokenInfo && tokenInfo.tokenPubKey) {
-        const lastProcessedHeight =
-          await this.commonService.getLastProcessedBlockHeight();
+        const lastProcessedHeight = await this.commonService.getLastProcessedBlockHeight();
         if (
           lastProcessedHeight !== null &&
-          lastProcessedHeight - tokenInfo.revealHeight >=
-            Constants.CACHE_AFTER_N_BLOCKS
+          lastProcessedHeight - tokenInfo.revealHeight >= Constants.CACHE_AFTER_N_BLOCKS
         ) {
           TxService.tokenInfoCache.set(minterPubKey, tokenInfo);
         }
@@ -302,12 +251,9 @@ export class TxService {
     blockHeader: BlockHeader,
   ) {
     // commit input
-    const { inputIndex: commitInputIndex, envelope } =
-      this.searchRevealTxCommitInput(payIns);
+    const { inputIndex: commitInputIndex, envelope } = this.searchRevealTxCommitInput(payIns);
     const commitInput = payIns[commitInputIndex];
-    const genesisTxid = Buffer.from(tx.ins[commitInputIndex].hash)
-      .reverse()
-      .toString('hex');
+    const genesisTxid = Buffer.from(tx.ins[commitInputIndex].hash).reverse().toString('hex');
     const tokenId = `${genesisTxid}_${tx.ins[commitInputIndex].index}`;
     const {
       marker,
@@ -316,8 +262,7 @@ export class TxService {
     // state hashes
     const stateHashes = commitInput.witness.slice(
       Constants.COMMIT_INPUT_WITNESS_STATE_HASHES_OFFSET,
-      Constants.COMMIT_INPUT_WITNESS_STATE_HASHES_OFFSET +
-        Constants.CONTRACT_OUTPUT_MAX_COUNT,
+      Constants.COMMIT_INPUT_WITNESS_STATE_HASHES_OFFSET + Constants.CONTRACT_OUTPUT_MAX_COUNT,
     );
     this.validateStateHashes(stateHashes);
 
@@ -345,11 +290,7 @@ export class TxService {
       manager.save(
         TxOutEntity,
         tx.outs
-          .map((_, i) =>
-            payOuts[i]?.pubkey
-              ? this.buildBaseTxOutEntity(tx, i, blockHeader, payOuts)
-              : null,
-          )
+          .map((_, i) => (payOuts[i]?.pubkey ? this.buildBaseTxOutEntity(tx, i, blockHeader, payOuts) : null))
           .filter((out) => out !== null),
       ),
     );
@@ -370,23 +311,14 @@ export class TxService {
   } {
     let commit = null;
     for (let i = 0; i < payIns.length; i++) {
-      if (
-        payIns[i] &&
-        payIns[i].witness.length >= Constants.COMMIT_INPUT_WITNESS_MIN_SIZE
-      ) {
+      if (payIns[i] && payIns[i].witness.length >= Constants.COMMIT_INPUT_WITNESS_MIN_SIZE) {
         try {
           // parse token info from commit redeem script
           const envelope = parseTokenInfoEnvelope(payIns[i].redeemScript);
-          if (
-            envelope &&
-            (envelope.marker === EnvelopeMarker.Token ||
-              envelope.marker === EnvelopeMarker.Collection)
-          ) {
+          if (envelope && (envelope.marker === EnvelopeMarker.Token || envelope.marker === EnvelopeMarker.Collection)) {
             // token info is valid here
             if (commit) {
-              throw new CatTxError(
-                'invalid reveal tx, multiple commit inputs found',
-              );
+              throw new CatTxError('invalid reveal tx, multiple commit inputs found');
             }
             commit = {
               inputIndex: i,
@@ -448,43 +380,32 @@ export class TxService {
     // ownerPubKeyHash
     const pkh = minterInput.witness[Constants.MINTER_INPUT_WITNESS_ADDR_OFFSET];
     if (!Constants.OWNER_ADDR_BYTES.includes(pkh.length)) {
-      throw new CatTxError(
-        'invalid mint tx, invalid byte length of owner pubkey hash',
-      );
+      throw new CatTxError('invalid mint tx, invalid byte length of owner pubkey hash');
     }
     const ownerPubKeyHash = pkh.toString('hex');
 
     // tokenAmount
-    const amount =
-      minterInput.witness[Constants.MINTER_INPUT_WITNESS_AMOUNT_OFFSET];
+    const amount = minterInput.witness[Constants.MINTER_INPUT_WITNESS_AMOUNT_OFFSET];
     if (amount.length > Constants.TOKEN_AMOUNT_MAX_BYTES) {
-      throw new CatTxError(
-        'invalid mint tx, invalid byte length of token amount',
-      );
+      throw new CatTxError('invalid mint tx, invalid byte length of token amount');
     }
-    const tokenAmount =
-      amount.length === 0 ? 0n : BigInt(amount.readIntLE(0, amount.length));
+    const tokenAmount = amount.length === 0 ? 0n : BigInt(amount.readIntLE(0, amount.length));
     if (tokenAmount < 0n) {
-      throw new CatTxError(
-        'invalid mint tx, token amount should be non-negative',
-      );
+      throw new CatTxError('invalid mint tx, token amount should be non-negative');
     }
     if (tokenAmount === 0n && tokenInfo.decimals >= 0) {
       throw new CatTxError('invalid mint tx, token amount should be positive');
     }
 
     // token output
-    const { tokenPubKey, outputIndex: tokenOutputIndex } =
-      this.searchMintTxTokenOutput(payOuts, tokenInfo);
+    const { tokenPubKey, outputIndex: tokenOutputIndex } = this.searchMintTxTokenOutput(payOuts, tokenInfo);
 
     // save nft info
     if (tokenInfo.decimals < 0) {
       const commitInput = this.searchMintTxCommitInput(payIns);
       if (commitInput) {
         const { inputIndex: commitInuptIndex, envelope } = commitInput;
-        const commitTxid = Buffer.from(tx.ins[commitInuptIndex].hash)
-          .reverse()
-          .toString('hex');
+        const commitTxid = Buffer.from(tx.ins[commitInuptIndex].hash).reverse().toString('hex');
         const {
           data: { metadata, content },
         } = envelope;
@@ -535,12 +456,7 @@ export class TxService {
         tx.outs
           .map((_, i) => {
             if (i <= tokenOutputIndex && payOuts[i]?.pubkey) {
-              const baseEntity = this.buildBaseTxOutEntity(
-                tx,
-                i,
-                blockHeader,
-                payOuts,
-              );
+              const baseEntity = this.buildBaseTxOutEntity(tx, i, blockHeader, payOuts);
               return i === tokenOutputIndex
                 ? {
                     ...baseEntity,
@@ -567,10 +483,7 @@ export class TxService {
    * If the minter outputs are not consecutive, throw an error.
    * If the token output pubkey differs from what it minted before, throw an error.
    */
-  private searchMintTxTokenOutput(
-    payOuts: TaprootPayment[],
-    tokenInfo: TokenInfoEntity,
-  ) {
+  private searchMintTxTokenOutput(payOuts: TaprootPayment[], tokenInfo: TokenInfoEntity) {
     let tokenOutput = {
       tokenPubKey: '',
       outputIndex: -1,
@@ -586,9 +499,7 @@ export class TxService {
         }
         if (outputPubKey === tokenInfo.minterPubKey) {
           // invalid if get a minter output again after the token output was found
-          throw new CatTxError(
-            'invalid mint tx, minter outputs are not consecutive',
-          );
+          throw new CatTxError('invalid mint tx, minter outputs are not consecutive');
         }
         if (outputPubKey === tokenOutput.tokenPubKey) {
           // invalid if get a token output again after the token output was found
@@ -607,14 +518,9 @@ export class TxService {
         }
         // potential token output here
         //
-        if (
-          tokenInfo.tokenPubKey !== null &&
-          tokenInfo.tokenPubKey !== outputPubKey
-        ) {
+        if (tokenInfo.tokenPubKey !== null && tokenInfo.tokenPubKey !== outputPubKey) {
           // invalid if get a token output that is different from the previously minted token pubkey
-          throw new CatTxError(
-            'invalid mint tx, invalid token output with a different pubkey',
-          );
+          throw new CatTxError('invalid mint tx, invalid token output with a different pubkey');
         }
         // valid token output here
         tokenOutput = {
@@ -667,8 +573,7 @@ export class TxService {
     }
     const stateHashes = this.parseStateHashes(guardInput.witness);
 
-    const tokenOutputs =
-      this.commonService.parseTransferTxTokenOutputs(guardInput);
+    const tokenOutputs = this.commonService.parseTransferTxTokenOutputs(guardInput);
 
     if (tokenOutputs.size > 0) {
       // save tx outputs
@@ -701,22 +606,15 @@ export class TxService {
 
   private validateStateHashes(stateHashes: Buffer[]) {
     for (const stateHash of stateHashes) {
-      if (
-        stateHash.length !== 0 &&
-        stateHash.length !== Constants.STATE_HASH_BYTES
-      ) {
+      if (stateHash.length !== 0 && stateHash.length !== Constants.STATE_HASH_BYTES) {
         throw new CatTxError('invalid state hash length');
       }
     }
   }
 
   private parseStateHashes(witness: Buffer[]): Buffer[] {
-    const offset =
-      witness.length + Constants.MINTER_GUARD_INPUT_WITNESS_STATE_HASHES_OFFSET;
-    const stateHashes = witness.slice(
-      offset,
-      offset + Constants.CONTRACT_OUTPUT_MAX_COUNT,
-    );
+    const offset = witness.length + Constants.MINTER_GUARD_INPUT_WITNESS_STATE_HASHES_OFFSET;
+    const stateHashes = witness.slice(offset, offset + Constants.CONTRACT_OUTPUT_MAX_COUNT);
     this.validateStateHashes(stateHashes);
     return stateHashes;
   }
@@ -739,9 +637,7 @@ export class TxService {
         const taproot = payments.p2tr({ witness: input.witness });
         cached = {
           pubkey: taproot.pubkey ? Buffer.from(taproot.pubkey) : undefined,
-          redeemScript: taproot?.redeem?.output
-            ? Buffer.from(taproot.redeem.output)
-            : undefined,
+          redeemScript: taproot?.redeem?.output ? Buffer.from(taproot.redeem.output) : undefined,
         };
         TxService.taprootPaymentCache.set(key, cached);
       }
@@ -781,11 +677,7 @@ export class TxService {
       manager.delete(TxOutEntity, { blockHeight: MoreThanOrEqual(height) }),
       // reset spent status of tx outputs
       ...txs.map((tx) => {
-        return manager.update(
-          TxOutEntity,
-          { spendTxid: tx.txid },
-          { spendTxid: null, spendInputIndex: null },
-        );
+        return manager.update(TxOutEntity, { spendTxid: tx.txid }, { spendTxid: null, spendInputIndex: null });
       }),
     ];
     if (txs.length > 0) {
@@ -821,8 +713,7 @@ export class TxService {
   @Cron('* * * * *')
   private async archiveTxOuts() {
     const startTime = Date.now();
-    const lastProcessedHeight =
-      await this.commonService.getLastProcessedBlockHeight();
+    const lastProcessedHeight = await this.commonService.getLastProcessedBlockHeight();
     if (lastProcessedHeight === null) {
       return;
     }
@@ -849,8 +740,6 @@ export class TxService {
         ),
       ]);
     });
-    this.logger.log(
-      `archived ${txOuts.length} outs in ${Math.ceil(Date.now() - startTime)} ms`,
-    );
+    this.logger.log(`archived ${txOuts.length} outs in ${Math.ceil(Date.now() - startTime)} ms`);
   }
 }

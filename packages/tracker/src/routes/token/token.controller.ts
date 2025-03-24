@@ -19,11 +19,10 @@ export class TokenController {
   })
   async getTokenInfo(@Param('tokenIdOrTokenAddr') tokenIdOrTokenAddr: string) {
     try {
-      const tokenInfo =
-        await this.tokenService.getTokenInfoByTokenIdOrTokenAddress(
-          tokenIdOrTokenAddr,
-          TokenTypeScope.Fungible,
-        );
+      const tokenInfo = await this.tokenService.getTokenInfoByTokenIdOrTokenAddress(
+        tokenIdOrTokenAddr,
+        TokenTypeScope.Fungible,
+      );
       return okResponse(tokenInfo);
     } catch (e) {
       return errorResponse(e);
@@ -119,14 +118,9 @@ export class TokenController {
     type: String,
     description: 'token id or token address',
   })
-  async getTokenMintAmount(
-    @Param('tokenIdOrTokenAddr') tokenIdOrTokenAddr: string,
-  ) {
+  async getTokenMintAmount(@Param('tokenIdOrTokenAddr') tokenIdOrTokenAddr: string) {
     try {
-      const mintCount = await this.tokenService.getTokenMintAmount(
-        tokenIdOrTokenAddr,
-        TokenTypeScope.Fungible,
-      );
+      const mintCount = await this.tokenService.getTokenMintAmount(tokenIdOrTokenAddr, TokenTypeScope.Fungible);
       return okResponse(mintCount);
     } catch (e) {
       return errorResponse(e);
@@ -144,14 +138,9 @@ export class TokenController {
     type: String,
     description: 'token id or token address',
   })
-  async getTokenCirculation(
-    @Param('tokenIdOrTokenAddr') tokenIdOrTokenAddr: string,
-  ) {
+  async getTokenCirculation(@Param('tokenIdOrTokenAddr') tokenIdOrTokenAddr: string) {
     try {
-      const circulation = await this.tokenService.getTokenCirculation(
-        tokenIdOrTokenAddr,
-        TokenTypeScope.Fungible,
-      );
+      const circulation = await this.tokenService.getTokenCirculation(tokenIdOrTokenAddr, TokenTypeScope.Fungible);
       return okResponse(circulation);
     } catch (e) {
       return errorResponse(e);
@@ -187,12 +176,7 @@ export class TokenController {
     @Query('limit') limit?: number,
   ) {
     try {
-      const r = await this.tokenService.getTokenHolders(
-        tokenIdOrTokenAddr,
-        TokenTypeScope.Fungible,
-        offset,
-        limit,
-      );
+      const r = await this.tokenService.getTokenHolders(tokenIdOrTokenAddr, TokenTypeScope.Fungible, offset, limit);
       const holders = r.holders.map((holder) => {
         return {
           ownerPubKeyHash: holder.ownerPubKeyHash,

@@ -4,12 +4,8 @@ export class Alter1727073874554 implements MigrationInterface {
   name = 'Alter1727073874554';
 
   public async up(queryRunner: QueryRunner): Promise<void> {
-    await queryRunner.query(
-      `ALTER TABLE "tx" ADD COLUMN IF NOT EXISTS "state_hashes" character varying`,
-    );
-    await queryRunner.query(
-      `ALTER TABLE "token_info" ADD COLUMN IF NOT EXISTS "first_mint_height" integer`,
-    );
+    await queryRunner.query(`ALTER TABLE "tx" ADD COLUMN IF NOT EXISTS "state_hashes" character varying`);
+    await queryRunner.query(`ALTER TABLE "token_info" ADD COLUMN IF NOT EXISTS "first_mint_height" integer`);
     await queryRunner.query(
       `CREATE INDEX IF NOT EXISTS "IDX_f455b12fb529b81794dedb7fda" ON "tx_out" ("xonly_pubkey", "owner_pkh") `,
     );
@@ -22,9 +18,7 @@ export class Alter1727073874554 implements MigrationInterface {
     await queryRunner.query(
       `CREATE INDEX IF NOT EXISTS "IDX_e89b422b5caff0c3aa27d95404" ON "token_mint" ("token_pubkey", "owner_pkh") `,
     );
-    await queryRunner.query(
-      `CREATE INDEX "IDX_899a44411763b33029cd4231cd" ON "token_info" ("first_mint_height") `,
-    );
+    await queryRunner.query(`CREATE INDEX "IDX_899a44411763b33029cd4231cd" ON "token_info" ("first_mint_height") `);
 
     // update tx.state_hashes from tx_out
     const before = Date.now();
@@ -37,22 +31,12 @@ export class Alter1727073874554 implements MigrationInterface {
     ]);
     console.log(`updateTxStateHashes ${Math.ceil(Date.now() - before)} ms`);
 
-    await queryRunner.query(
-      `DROP INDEX "public"."IDX_98f2d953553befed7ac91dcef6"`,
-    );
-    await queryRunner.query(
-      `DROP INDEX "public"."IDX_b957c010e5dc41997dbe432b5b"`,
-    );
-    await queryRunner.query(
-      `DROP INDEX "public"."IDX_6cda73ea74baf9ce0a3e51db23"`,
-    );
+    await queryRunner.query(`DROP INDEX "public"."IDX_98f2d953553befed7ac91dcef6"`);
+    await queryRunner.query(`DROP INDEX "public"."IDX_b957c010e5dc41997dbe432b5b"`);
+    await queryRunner.query(`DROP INDEX "public"."IDX_6cda73ea74baf9ce0a3e51db23"`);
   }
 
-  async updateTxStateHashes(
-    queryRunner: QueryRunner,
-    start: number,
-    end?: number,
-  ) {
+  async updateTxStateHashes(queryRunner: QueryRunner, start: number, end?: number) {
     let where = `tx.block_height >= ${start}`;
     if (end !== undefined) {
       where += ` AND tx.block_height < ${end}`;
@@ -73,34 +57,16 @@ export class Alter1727073874554 implements MigrationInterface {
   }
 
   public async down(queryRunner: QueryRunner): Promise<void> {
-    await queryRunner.query(
-      `CREATE INDEX "IDX_6cda73ea74baf9ce0a3e51db23" ON "token_mint" ("token_pubkey") `,
-    );
-    await queryRunner.query(
-      `CREATE INDEX "IDX_b957c010e5dc41997dbe432b5b" ON "tx_out" ("spend_txid") `,
-    );
-    await queryRunner.query(
-      `CREATE INDEX "IDX_98f2d953553befed7ac91dcef6" ON "tx_out" ("xonly_pubkey") `,
-    );
+    await queryRunner.query(`CREATE INDEX "IDX_6cda73ea74baf9ce0a3e51db23" ON "token_mint" ("token_pubkey") `);
+    await queryRunner.query(`CREATE INDEX "IDX_b957c010e5dc41997dbe432b5b" ON "tx_out" ("spend_txid") `);
+    await queryRunner.query(`CREATE INDEX "IDX_98f2d953553befed7ac91dcef6" ON "tx_out" ("xonly_pubkey") `);
 
-    await queryRunner.query(
-      `DROP INDEX "public"."IDX_899a44411763b33029cd4231cd"`,
-    );
-    await queryRunner.query(
-      `DROP INDEX "public"."IDX_e89b422b5caff0c3aa27d95404"`,
-    );
-    await queryRunner.query(
-      `DROP INDEX "public"."IDX_d5bf8259aef176088c980dfa41"`,
-    );
-    await queryRunner.query(
-      `DROP INDEX "public"."IDX_4bb884940e61aa867fc229d5da"`,
-    );
-    await queryRunner.query(
-      `DROP INDEX "public"."IDX_f455b12fb529b81794dedb7fda"`,
-    );
-    await queryRunner.query(
-      `ALTER TABLE "token_info" DROP COLUMN "first_mint_height"`,
-    );
+    await queryRunner.query(`DROP INDEX "public"."IDX_899a44411763b33029cd4231cd"`);
+    await queryRunner.query(`DROP INDEX "public"."IDX_e89b422b5caff0c3aa27d95404"`);
+    await queryRunner.query(`DROP INDEX "public"."IDX_d5bf8259aef176088c980dfa41"`);
+    await queryRunner.query(`DROP INDEX "public"."IDX_4bb884940e61aa867fc229d5da"`);
+    await queryRunner.query(`DROP INDEX "public"."IDX_f455b12fb529b81794dedb7fda"`);
+    await queryRunner.query(`ALTER TABLE "token_info" DROP COLUMN "first_mint_height"`);
     await queryRunner.query(`ALTER TABLE "tx" DROP COLUMN "state_hashes"`);
   }
 }

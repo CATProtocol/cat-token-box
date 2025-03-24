@@ -34,9 +34,7 @@ export function xOnlyPubKeyToAddress(xOnlyPubKey: string) {
 
 export function addressToXOnlyPubKey(addr: string) {
   try {
-    return Buffer.from(
-      payments.p2tr({ address: addr, network }).pubkey,
-    ).toString('hex');
+    return Buffer.from(payments.p2tr({ address: addr, network }).pubkey).toString('hex');
   } catch {
     return null;
   }
@@ -53,16 +51,10 @@ export function ownerAddressToPubKeyHash(ownerAddr: string) {
 }
 
 export const stringify = (data) => {
-  return JSON.stringify(
-    data,
-    (_, value) => (typeof value === 'bigint' ? value.toString() : value),
-    2,
-  );
+  return JSON.stringify(data, (_, value) => (typeof value === 'bigint' ? value.toString() : value), 2);
 };
 
-export function parseTokenInfoEnvelope(
-  redeemScript: Buffer,
-): TokenInfoEnvelope | null {
+export function parseTokenInfoEnvelope(redeemScript: Buffer): TokenInfoEnvelope | null {
   try {
     const asm = script.toASM(redeemScript || Buffer.alloc(0));
     const match = asm.match(Constants.TOKEN_INFO_ENVELOPE);
@@ -85,12 +77,7 @@ export function parseTokenInfoEnvelope(
           break;
         case EnvelopeMarker.Collection:
           const info = parseEnvelope(match[2]);
-          if (
-            info &&
-            info.metadata &&
-            info.metadata['name'] !== undefined &&
-            info.metadata['symbol'] !== undefined
-          ) {
+          if (info && info.metadata && info.metadata['name'] !== undefined && info.metadata['symbol'] !== undefined) {
             return {
               marker: EnvelopeMarker.Collection,
               data: info,
@@ -143,10 +130,7 @@ export function parseEnvelope(envelope: string): EnvelopeData | null {
       i++;
     }
   }
-  const metadata =
-    metadataHex === ''
-      ? undefined
-      : cborDecode(Buffer.from(metadataHex, 'hex'));
+  const metadata = metadataHex === '' ? undefined : cborDecode(Buffer.from(metadataHex, 'hex'));
   let content = undefined;
   if (delegate && delegate.length >= 32 && delegate.length <= 36) {
     content = {
@@ -160,7 +144,5 @@ export function parseEnvelope(envelope: string): EnvelopeData | null {
       encoding: contentEncoding,
     };
   }
-  return metadata || content
-    ? { metadata: JSON.parse(stringify(metadata)), content }
-    : null;
+  return metadata || content ? { metadata: JSON.parse(stringify(metadata)), content } : null;
 }

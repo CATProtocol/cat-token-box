@@ -14,8 +14,7 @@ export class HealthCheckController {
     try {
       const blockchainInfo = await this.commonService.getBlockchainInfo();
       return okResponse({
-        trackerBlockHeight:
-          await this.commonService.getLastProcessedBlockHeight(),
+        trackerBlockHeight: await this.commonService.getLastProcessedBlockHeight(),
         nodeBlockHeight: blockchainInfo?.blocks || null,
         latestBlockHeight: blockchainInfo?.headers || null,
       });

@@ -9,15 +9,7 @@ import { CommonModule } from '../../services/common/common.module';
 import { TokenMintEntity } from '../../entities/tokenMint.entity';
 
 @Module({
-  imports: [
-    TypeOrmModule.forFeature([
-      TokenInfoEntity,
-      TxOutEntity,
-      TxEntity,
-      TokenMintEntity,
-    ]),
-    CommonModule,
-  ],
+  imports: [TypeOrmModule.forFeature([TokenInfoEntity, TxOutEntity, TxEntity, TokenMintEntity]), CommonModule],
   providers: [TokenService],
   controllers: [TokenController],
   exports: [TokenService],
