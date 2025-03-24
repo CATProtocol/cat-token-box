@@ -6,7 +6,12 @@ import {
   MoreThanOrEqual,
   Repository,
 } from 'typeorm';
-import { payments, Transaction, TxInput, crypto } from 'bitcoinjs-lib';
+import {
+  payments,
+  Transaction,
+  TxInput,
+  crypto,
+} from '@scrypt-inc/bitcoinjs-lib';
 import { TxOutEntity } from '../../entities/txOut.entity';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Constants } from '../../common/constants';
@@ -153,7 +158,9 @@ export class TxService {
         if (e instanceof CatTxError) {
           this.logger.log(`skip tx ${tx.getId()}, ${e.message}`);
         } else {
-          this.logger.error(`process tx ${tx.getId()} error, ${e.message}`);
+          this.logger.error(
+            `process tx ${tx.getId()} error, ${e.message} ${e.stack}`,
+          );
         }
         await queryRunner.rollbackTransaction();
       }
@@ -214,7 +221,9 @@ export class TxService {
       stateHashes: [rootHash, ...stateHashes]
         .map((stateHash) => stateHash.toString('hex'))
         .join(';'),
-      txHashPreimage: Buffer.from(tx.__toBuffer()).toString('hex'),
+      txHashPreimage: Buffer.from(tx.toBuffer(undefined, 0, false)).toString(
+        'hex',
+      ),
     });
   }
 
@@ -305,7 +314,12 @@ export class TxService {
       data: { metadata, content },
     } = envelope;
     // state hashes
-    const stateHashes = this.parseStateHashes(commitInput.witness);
+    const stateHashes = commitInput.witness.slice(
+      Constants.COMMIT_INPUT_WITNESS_STATE_HASHES_OFFSET,
+      Constants.COMMIT_INPUT_WITNESS_STATE_HASHES_OFFSET +
+        Constants.CONTRACT_OUTPUT_MAX_COUNT,
+    );
+    this.validateStateHashes(stateHashes);
 
     // minter output
     const minterPubKey = this.searchRevealTxMinterOutputs(payOuts);
@@ -653,14 +667,10 @@ export class TxService {
     }
     const stateHashes = this.parseStateHashes(guardInput.witness);
 
-    if (this.commonService.isTransferGuard(guardInput)) {
-      const tokenOutputs =
-        this.commonService.parseTransferTxTokenOutputs(guardInput);
+    const tokenOutputs =
+      this.commonService.parseTransferTxTokenOutputs(guardInput);
 
-      if (blockHeader.height >= 365400) {
-        // TODO: verify the token amount in guard witness equals to it in token input
-      }
-
+    if (tokenOutputs.size > 0) {
       // save tx outputs
       promises.push(
         manager.save(
@@ -675,6 +685,7 @@ export class TxService {
         ),
       );
     }
+
     return stateHashes;
   }
 
@@ -701,7 +712,7 @@ export class TxService {
 
   private parseStateHashes(witness: Buffer[]): Buffer[] {
     const offset =
-      witness.length + Constants.CONTRACT_INPUT_WITNESS_STATE_HASHES_OFFSET;
+      witness.length + Constants.MINTER_GUARD_INPUT_WITNESS_STATE_HASHES_OFFSET;
     const stateHashes = witness.slice(
       offset,
       offset + Constants.CONTRACT_OUTPUT_MAX_COUNT,

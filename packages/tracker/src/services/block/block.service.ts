@@ -5,7 +5,7 @@ import { RpcService } from '../rpc/rpc.service';
 import { BlockEntity } from '../../entities/block.entity';
 import { InjectRepository } from '@nestjs/typeorm';
 import { DataSource, MoreThanOrEqual, Repository } from 'typeorm';
-import { Block } from 'bitcoinjs-lib';
+import { Block } from '@scrypt-inc/bitcoinjs-lib';
 import { TxService } from '../tx/tx.service';
 import { BlockHeader } from '../../common/types';
 import { Constants } from '../../common/constants';

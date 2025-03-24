@@ -5,9 +5,9 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Constants } from '../../common/constants';
 import { TaprootPayment } from '../../common/types';
-import { TxOutput, crypto } from 'bitcoinjs-lib';
+import { TxOutput } from 'bitcoinjs-lib';
 import {
-  Cat20GuardCovenant,
+  CAT20GuardCovenant,
   CAT721GuardCovenant,
 } from '@cat-protocol/cat-sdk-v2';
 
@@ -16,33 +16,20 @@ export class CommonService {
   private readonly logger = new Logger(CommonService.name);
 
   public readonly FT_GUARD_PUBKEY: string;
-  public readonly FT_TRANSFER_GUARD_SCRIPT_HASH: string;
-
   public readonly NFT_GUARD_PUBKEY: string;
-  public readonly NFT_TRANSFER_GUARD_SCRIPT_HASH: string;
 
   constructor(
     private readonly rpcService: RpcService,
     @InjectRepository(BlockEntity)
     private blockEntityRepository: Repository<BlockEntity>,
   ) {
-    const tokenGuardContractInfo = new Cat20GuardCovenant();
+    const tokenGuardContractInfo = new CAT20GuardCovenant();
     this.FT_GUARD_PUBKEY = tokenGuardContractInfo.tpubkey;
-    this.FT_TRANSFER_GUARD_SCRIPT_HASH =
-      tokenGuardContractInfo.getTapLeafContract().contractScriptHash;
     this.logger.log(`token guard xOnlyPubKey = ${this.FT_GUARD_PUBKEY}`);
-    this.logger.log(
-      `token guard transferScriptHash = ${this.FT_TRANSFER_GUARD_SCRIPT_HASH}`,
-    );
 
     const nftGuardContractInfo = new CAT721GuardCovenant();
     this.NFT_GUARD_PUBKEY = nftGuardContractInfo.tpubkey;
-    this.NFT_TRANSFER_GUARD_SCRIPT_HASH =
-      nftGuardContractInfo.getTapLeafContract().contractScriptHash;
     this.logger.log(`nft guard xOnlyPubKey = ${this.NFT_GUARD_PUBKEY}`);
-    this.logger.log(
-      `nft guard transferScriptHash = ${this.NFT_TRANSFER_GUARD_SCRIPT_HASH}`,
-    );
   }
 
   public async getLastProcessedBlock(): Promise<BlockEntity | null> {
@@ -68,19 +55,16 @@ export class CommonService {
    */
   public parseTransferTxTokenOutputs(guardInput: TaprootPayment) {
     const ownerPubKeyHashes = guardInput.witness.slice(
-      Constants.TRANSFER_GUARD_ADDR_OFFSET,
-      Constants.TRANSFER_GUARD_ADDR_OFFSET +
-        Constants.CONTRACT_OUTPUT_MAX_COUNT,
+      Constants.GUARD_ADDR_OFFSET,
+      Constants.GUARD_ADDR_OFFSET + Constants.CONTRACT_OUTPUT_MAX_COUNT,
     );
     const tokenAmounts = guardInput.witness.slice(
-      Constants.TRANSFER_GUARD_AMOUNT_OFFSET,
-      Constants.TRANSFER_GUARD_AMOUNT_OFFSET +
-        Constants.CONTRACT_OUTPUT_MAX_COUNT,
+      Constants.GUARD_AMOUNT_OFFSET,
+      Constants.GUARD_AMOUNT_OFFSET + Constants.CONTRACT_OUTPUT_MAX_COUNT,
     );
     const masks = guardInput.witness.slice(
-      Constants.TRANSFER_GUARD_MASK_OFFSET,
-      Constants.TRANSFER_GUARD_MASK_OFFSET +
-        Constants.CONTRACT_OUTPUT_MAX_COUNT,
+      Constants.GUARD_MASK_OFFSET,
+      Constants.GUARD_MASK_OFFSET + Constants.CONTRACT_OUTPUT_MAX_COUNT,
     );
     const tokenOutputs = new Map<
       number,
@@ -155,28 +139,8 @@ export class CommonService {
     });
   }
 
-  public isTransferGuard(guardInput: TaprootPayment): boolean {
-    return (
-      this.isFtTransferGuard(guardInput) || this.isNftTransferGuard(guardInput)
-    );
-  }
-
-  public guardScriptHash(guardInput: TaprootPayment): string {
-    return Buffer.from(
-      crypto.hash160(guardInput?.redeemScript || Buffer.alloc(0)),
-    ).toString('hex');
-  }
-
-  public isFtTransferGuard(guardInput: TaprootPayment): boolean {
-    return (
-      this.guardScriptHash(guardInput) === this.FT_TRANSFER_GUARD_SCRIPT_HASH
-    );
-  }
-
-  public isNftTransferGuard(guardInput: TaprootPayment): boolean {
-    return (
-      this.guardScriptHash(guardInput) === this.NFT_TRANSFER_GUARD_SCRIPT_HASH
-    );
+  public isFungibleGuard(guardInput: TaprootPayment): boolean {
+    return this.FT_GUARD_PUBKEY === guardInput?.pubkey?.toString('hex');
   }
 
   public async getRawTx(

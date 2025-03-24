@@ -52,6 +52,14 @@ export function ownerAddressToPubKeyHash(ownerAddr: string) {
   }
 }
 
+export const stringify = (data) => {
+  return JSON.stringify(
+    data,
+    (_, value) => (typeof value === 'bigint' ? value.toString() : value),
+    2,
+  );
+};
+
 export function parseTokenInfoEnvelope(
   redeemScript: Buffer,
 ): TokenInfoEnvelope | null {
@@ -62,7 +70,7 @@ export function parseTokenInfoEnvelope(
       switch (match[1]) {
         case EnvelopeMarker.Token:
           const cborBuffer = Buffer.from(match[2].replaceAll(' ', ''), 'hex');
-          const metadata = cborDecode(cborBuffer);
+          const metadata = JSON.parse(stringify(cborDecode(cborBuffer)));
           if (
             metadata &&
             metadata['name'] !== undefined &&
@@ -152,5 +160,7 @@ export function parseEnvelope(envelope: string): EnvelopeData | null {
       encoding: contentEncoding,
     };
   }
-  return metadata || content ? { metadata, content } : null;
+  return metadata || content
+    ? { metadata: JSON.parse(stringify(metadata)), content }
+    : null;
 }

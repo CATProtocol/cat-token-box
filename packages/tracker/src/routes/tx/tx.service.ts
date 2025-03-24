@@ -37,10 +37,10 @@ export class TxService {
     }
     const outputs = [];
     for (const guardInput of guardInputs) {
-      if (this.commonService.isTransferGuard(guardInput)) {
-        const tokenOutputs =
-          this.commonService.parseTransferTxTokenOutputs(guardInput);
-        const isFungible = this.commonService.isFtTransferGuard(guardInput);
+      const tokenOutputs =
+        this.commonService.parseTransferTxTokenOutputs(guardInput);
+      if (tokenOutputs.size > 0) {
+        const isFungible = this.commonService.isFungibleGuard(guardInput);
         outputs.push(
           ...(await Promise.all(
             [...tokenOutputs.keys()].map(async (i) => {
