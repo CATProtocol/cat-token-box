@@ -12,12 +12,9 @@ import {
 } from 'src/common';
 import { ConfigService } from './configService';
 import { join } from 'path';
-import {
-  DefaultSigner,
-  btc,
-  Signer,
-  PSBTOptions,
-} from '@cat-protocol/cat-sdk-v2';
+import * as bitcoinjs from '@scrypt-inc/bitcoinjs-lib';
+
+import { DefaultSigner, Signer, PSBTOptions } from '@scrypt-inc/scrypt-ts-btc';
 import ECPairFactory from 'ecpair';
 const bip32 = BIP32Factory(ecc);
 const ECPair = ECPairFactory(ecc);
@@ -155,7 +152,7 @@ export class WalletService implements Signer {
 
   getPrivateKey(derivePath?: string): Buffer {
     const mnemonic = this.getMnemonic();
-    const network = btc.Networks.mainnet;
+    const network = bitcoinjs.networks.bitcoin;
     return derivePrivateKey(
       mnemonic,
       derivePath || this.getAccountPath(),
@@ -221,35 +218,9 @@ export class WalletService implements Signer {
 function derivePrivateKey(
   mnemonic: string,
   path: string,
-  network: btc.Network,
+  network: bitcoinjs.Network,
 ): BIP32Interface {
   const seed = bip39.mnemonicToSeedSync(mnemonic);
-  const mainnet = {
-    messagePrefix: '\x18Bitcoin Signed Message:\n',
-    bech32: 'bc',
-    bip32: {
-      public: 0x0488b21e,
-      private: 0x0488ade4,
-    },
-    pubKeyHash: 0x00,
-    scriptHash: 0x05,
-    wif: 0x80,
-  };
-  const testnet = {
-    messagePrefix: '\x18Bitcoin Signed Message:\n',
-    bech32: 'tb',
-    bip32: {
-      public: 0x043587cf,
-      private: 0x04358394,
-    },
-    pubKeyHash: 0x6f,
-    scriptHash: 0xc4,
-    wif: 0xef,
-  };
-
-  const root = bip32.fromSeed(
-    seed,
-    network === btc.Networks.mainnet ? mainnet : testnet,
-  );
+  const root = bip32.fromSeed(seed, network);
   return root.derivePath(path);
 }

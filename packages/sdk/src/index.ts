@@ -8,5 +8,8 @@ export * from './lib/constants';
 export * from './contracts';
 export * from './lib/utils';
 export * from './lib/commit';
+export * from './lib/provider';
+export * from './features/cat20';
+
 
 loadArtifacts();

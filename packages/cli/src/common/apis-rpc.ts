@@ -1,4 +1,4 @@
-import { UTXO } from 'scrypt-ts';
+import { UTXO } from '@scrypt-inc/scrypt-ts-btc';
 import { Decimal } from 'decimal.js';
 import { logerror } from './log';
 import { ConfigService } from 'src/providers';

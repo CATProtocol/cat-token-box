@@ -31,14 +31,13 @@ export async function deploy(
 > {
     const pubKey = await signer.getPublicKey();
     const address = await signer.getAddress();
-    const feeAddress = await signer.getAddress();
-    changeAddress = changeAddress || feeAddress;
+    changeAddress = changeAddress || address;
     let sigRequests = [];
 
     const { revealTxVSize } = estimateDeployTxVSizes(metadata, address, pubKey, changeAddress, feeRate);
 
     const commitTxOutputsAmount = revealTxVSize * feeRate + Postage.MINTER_POSTAGE;
-    const utxos = await utxoProvider.getUtxos(feeAddress);
+    const utxos = await utxoProvider.getUtxos(address);
 
     const { tokenId, tokenAddr, minterAddr, commitPsbt, revealPsbt, newFeeUtxo } = buildCommitAndRevealTxs(
         metadata,
@@ -77,7 +76,6 @@ export async function deploy(
             tokenAddr,
             metadata,
             feeRate,
-            feeAddress,
             changeAddress,
             address,
             pubKey,
@@ -203,7 +201,6 @@ async function buildPremineTx(
     tokenAddr: string,
     metadata: OpenMinterCat20Meta,
     feeRate: number,
-    feeAddress: string,
     changeAddress: string,
     preminterAddress: string,
     preminterPubKey: string,
@@ -223,18 +220,6 @@ async function buildPremineTx(
         remainingCount: (metadata.max - metadata.premine) / metadata.limit,
     }).bindToUtxo(revealPsbt.getStatefulCovenantUtxo(1));
 
-    const estimatedVSize = CAT20OpenMinterCovenant.buildMintTx(
-        minterPreTxHex,
-        spentMinterTxHex,
-        initialMinter,
-        tokenReceiver,
-        [getDummyUtxo(feeAddress)],
-        feeRate,
-        changeAddress,
-        undefined,
-        preminterAddress,
-        preminterPubKey,
-    ).estimateVSize();
 
     return CAT20OpenMinterCovenant.buildMintTx(
         minterPreTxHex,
@@ -244,7 +229,6 @@ async function buildPremineTx(
         [feeUtxo],
         feeRate,
         changeAddress,
-        estimatedVSize,
         preminterAddress,
         preminterPubKey,
     );

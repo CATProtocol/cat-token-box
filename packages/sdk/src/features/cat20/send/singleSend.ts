@@ -19,7 +19,7 @@ import { ExtPsbt } from '@scrypt-inc/scrypt-ts-btc';
 import { CAT20Covenant, CAT20GuardCovenant, TracedCAT20Token } from '../../../covenants';
 import { Postage } from '../../../lib/constants';
 import { catToXOnly, filterFeeUtxos, isP2TR, pubKeyPrefix, uint8ArrayToHex } from '../../../lib/utils';
-import { Psbt } from '@scrypt-inc/bitcoinjs-lib';
+import { Psbt, address as Address } from '@scrypt-inc/bitcoinjs-lib';
 import { CAT20, CAT20Guard, CAT20State } from '../../../contracts';
 
 /**
@@ -188,8 +188,7 @@ function buildSendTx(
     sendPsbt
         .addCovenantInput(guard)
         .spendUTXO([guardPsbt.getUtxo(2)])
-        .change(changeAddress, feeRate)
-        .seal();
+
 
     const guardInputIndex = inputTokens.length;
     const _isP2TR = isP2TR(changeAddress);
@@ -237,11 +236,14 @@ function buildSendTx(
                     tokenScriptIndexArray[index] = 0n;
                 }
             });
+
+            const ownerAddrOrScripts = tokenOwners.map((ownerAddr, oidx) => {
+                const output = curPsbt.txOutputs[oidx + 1];
+                return ownerAddr || (output ? uint8ArrayToHex(output.script) : (sendPsbt.isSealed ? '' : uint8ArrayToHex(Address.toOutputScript(changeAddress))))
+            }) as unknown as FixedArray<ByteString, typeof STATE_OUTPUT_COUNT_MAX>;
+
             contract.unlock(
-                tokenOwners.map((ownerAddr, oidx) => {
-                    const output = curPsbt.txOutputs[oidx + 1];
-                    return ownerAddr || (output ? uint8ArrayToHex(output.script) : '');
-                }) as unknown as FixedArray<ByteString, typeof STATE_OUTPUT_COUNT_MAX>,
+                ownerAddrOrScripts,
                 tokenAmounts as unknown as FixedArray<Int32, typeof STATE_OUTPUT_COUNT_MAX>,
                 tokenScriptIndexArray,
                 curPsbt.getOutputSatoshisList(),
@@ -250,5 +252,7 @@ function buildSendTx(
             );
         },
     });
+    sendPsbt.change(changeAddress, feeRate)
+    .seal();
     return sendPsbt;
 }

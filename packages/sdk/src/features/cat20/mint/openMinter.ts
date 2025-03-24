@@ -57,7 +57,6 @@ export async function mint(
         utxos,
         feeRate,
         changeAddress,
-        undefined,
         address,
         metadata.preminerAddr ? pubkey : undefined,
     );

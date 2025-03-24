@@ -6,7 +6,7 @@ import { WalletCommand } from './commands/wallet/wallet.command';
 import { ConfigService, SpendService, WalletService } from './providers';
 import { RetryQuestions } from './questions/retry-send.question';
 import { VersionCommand } from './commands/version.command';
-import { AirdropCommand } from './commands/airdrop/airdrop.command';
+//import { AirdropCommand } from './commands/airdrop/airdrop.command';
 
 @Module({
   imports: [],
@@ -20,7 +20,7 @@ import { AirdropCommand } from './commands/airdrop/airdrop.command';
     DeployCommand,
     MintCommand,
     SendCommand,
-    AirdropCommand,
+    //AirdropCommand,
     ...WalletCommand.registerWithSubCommands(),
   ],
 })

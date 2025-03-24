@@ -13,7 +13,6 @@
     }
   },
   "scripts": {
-    "prebuild": "npm run clean && npm run compile",
     "postbuild": "node ./scripts/fixArtifacts.mjs",
     "prepublishOnly": "npm run build",
     "build:cjs": "tsc -p tsconfig.cjs.json",

@@ -1,12 +1,12 @@
-import { UTXO } from 'scrypt-ts';
 import {
   ChainProvider,
-  MempolChainProvider,
-  MempoolUtxoProvider,
-  RPCChainProvider,
-  RPCUtxoProvider,
+  MempoolProvider,
+  RPCProvider,
+  UTXO,
   UtxoProvider,
-} from '@cat-protocol/cat-sdk-v2';
+  UtxoQueryOptions,
+} from '@scrypt-inc/scrypt-ts-btc';
+
 import { ConfigService } from './configService';
 import { WalletService } from './walletService';
 export class FractalChainProvider implements ChainProvider {
@@ -17,15 +17,18 @@ export class FractalChainProvider implements ChainProvider {
     public wallet: WalletService,
   ) {
     if (config.getRpc() !== null) {
-      this.chainProvider = new RPCChainProvider(
+      this.chainProvider = new RPCProvider(
         config.getRpcUrl(null),
         wallet.getWalletName(),
         config.getRpcUser(),
         config.getRpcPassword(),
       );
     } else {
-      this.chainProvider = new MempolChainProvider(config.getNetwork());
+      this.chainProvider = new MempoolProvider(config.getNetwork());
     }
+  }
+  getFeeRate(): Promise<number> {
+    return this.chainProvider.getFeeRate();
   }
   async getConfirmations(txId: string): Promise<number> {
     return this.chainProvider.getConfirmations(txId);
@@ -48,28 +51,24 @@ export class FractalUtxoProvider implements UtxoProvider {
     public wallet: WalletService,
   ) {
     if (config.getRpc() !== null) {
-      this.utxoProvider = new RPCUtxoProvider(
+      this.utxoProvider = new RPCProvider(
         config.getRpcUrl(null),
         wallet.getWalletName(),
         config.getRpcUser(),
         config.getRpcPassword(),
       );
     } else {
-      this.utxoProvider = new MempoolUtxoProvider(config.getNetwork());
+      this.utxoProvider = new MempoolProvider(config.getNetwork());
     }
+  }
+  getUtxos(address: string, options?: UtxoQueryOptions): Promise<UTXO[]> {
+    return this.utxoProvider.getUtxos(address, options);
   }
   markSpent(txId: string, vout: number): void {
     this.utxoProvider.markSpent(txId, vout);
   }
   addNewUTXO(utxo: UTXO): void {
     this.utxoProvider.addNewUTXO(utxo);
-  }
-
-  async getUtxos(
-    address: string,
-    options?: { total?: number; maxCnt?: number },
-  ): Promise<UTXO[]> {
-    return this.utxoProvider.getUtxos(address, options);
   }
 }
 

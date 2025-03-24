@@ -1,4 +1,4 @@
-import { UTXO } from 'scrypt-ts';
+import { UTXO } from '@scrypt-inc/scrypt-ts-btc';
 import fetch from 'node-fetch-cjs';
 
 import {
@@ -10,8 +10,8 @@ import {
 } from './apis-rpc';
 import { logerror } from './log';
 import { ConfigService, WalletService } from 'src/providers';
-import { btc } from '@cat-protocol/cat-sdk-v2';
 
+import * as bitcoinjs from '@scrypt-inc/bitcoinjs-lib';
 export const getFeeRate = async function (
   config: ConfigService,
   wallet: WalletService,
@@ -46,9 +46,9 @@ export const getFeeRate = async function (
 
 export const getFractalUtxos = async function (
   config: ConfigService,
-  address: btc.Address,
+  address: string,
 ): Promise<UTXO[]> {
-  const script = new btc.Script(address).toHex();
+  const script = bitcoinjs.address.toOutputScript(address);
 
   const url = `${config.getOpenApiHost()}/v1/indexer/address/${address}/utxo-data?cursor=0&size=16`;
   const utxos: Array<any> = await fetch(
@@ -98,17 +98,13 @@ export const getFractalUtxos = async function (
 export const getUtxos = async function (
   config: ConfigService,
   wallet: WalletService,
-  address: btc.Address | string,
+  address: string,
 ): Promise<UTXO[]> {
-  if (typeof address === 'string') {
-    address = btc.Address.fromString(address);
-  }
-
   if (config.useRpc()) {
     const utxos = await rpc_listunspent(
       config,
       wallet.getWalletName(),
-      address.toString(),
+      address,
     );
     if (utxos instanceof Error) {
       return [];
@@ -119,8 +115,7 @@ export const getUtxos = async function (
   if (config.isFractalNetwork() && !config.useRpc() && config.getApiKey()) {
     return getFractalUtxos(config, address);
   }
-
-  const script = new btc.Script(address).toHex();
+  const script = bitcoinjs.address.toOutputScript(address);
 
   const url = `${config.getMempoolApiHost()}/api/address/${address}/utxo`;
   const utxos: Array<any> = await fetch(url, config.withProxy())

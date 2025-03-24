@@ -4,10 +4,10 @@ import {
   getTokenMinter,
   logerror,
   getTokenMinterCount,
-  isOpenMinter,
   unScaleByDecimals,
   MinterType,
   getTokens,
+  isCAT20V2OpenMinter,
 } from 'src/common';
 import {
   ConfigService,
@@ -26,14 +26,12 @@ import {
 import {
   mint,
   OpenMinterCat20Meta,
-  Cat20MinterUtxo,
   Cat20TokenInfo,
   mergeCat20Utxo,
-  UtxoProvider,
-  ChainProvider,
   toTokenAddress,
-  btc,
+  CAT20OpenMinterUtxo,
 } from '@cat-protocol/cat-sdk-v2';
+import { Addr, ChainProvider, UtxoProvider } from '@scrypt-inc/scrypt-ts-btc';
 
 interface MintCommandOptions extends BoardcastCommandOptions {
   id: string;
@@ -59,7 +57,7 @@ export class MintCommand extends BoardcastCommand {
   }
 
   fixAmount = (
-    minter: Cat20MinterUtxo,
+    minter: CAT20OpenMinterUtxo,
     scaledMetadata: OpenMinterCat20Meta,
     amount?: bigint,
   ) => {
@@ -179,7 +177,7 @@ export class MintCommand extends BoardcastCommand {
             continue;
           }
 
-          if (isOpenMinter(token.metadata.minterMd5)) {
+          if (isCAT20V2OpenMinter(token.metadata.minterMd5)) {
             amount = this.fixAmount(minter, scaledMetadata, amount);
 
             if (amount === null) {
@@ -193,7 +191,7 @@ export class MintCommand extends BoardcastCommand {
               minter,
               token.tokenId,
               token.metadata,
-              toTokenAddress(address),
+              Addr(toTokenAddress(address)),
               address,
               feeRate,
             );
@@ -221,7 +219,7 @@ export class MintCommand extends BoardcastCommand {
     tokenInfo: Cat20TokenInfo<OpenMinterCat20Meta>,
     utxoProvider: UtxoProvider,
     chainProvider: ChainProvider,
-    address: btc.Addres,
+    address: string,
   ) {
     const cat20Utxos = await getTokens(
       this.configService,
@@ -246,7 +244,7 @@ export class MintCommand extends BoardcastCommand {
       );
 
       cat20Utxos.forEach((cat20Utxo) => {
-        this.spendSerivce.addSpend(cat20Utxo.utxo);
+        this.spendSerivce.addSpend(cat20Utxo);
       });
 
       return result.cat20Utxos;
@@ -270,7 +268,7 @@ export class MintCommand extends BoardcastCommand {
     return true;
   }
 
-  async getFeeUTXOs(address: btc.Address) {
+  async getFeeUTXOs(address: string) {
     let feeUtxos = await getUtxos(
       this.configService,
       this.walletService,

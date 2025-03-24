@@ -1,10 +1,12 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { UTXO } from 'scrypt-ts';
+import { UTXO } from '@scrypt-inc/scrypt-ts-btc';
 import { ConfigService } from './configService';
 import { join } from 'path';
 import { existsSync, readFileSync, writeFileSync } from 'fs';
 import { logerror } from 'src/common';
-import { bitcoinjs, getTxId } from '@cat-protocol/cat-sdk-v2';
+import { getTxId } from '@cat-protocol/cat-sdk-v2';
+
+import * as bitcoinjs from '@scrypt-inc/bitcoinjs-lib';
 
 @Injectable()
 export class SpendService {

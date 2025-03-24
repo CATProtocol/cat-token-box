@@ -21,7 +21,8 @@ import {
   mergeCat20Utxo,
   pick,
   toTokenAddress,
-  btc,
+  isP2TR,
+  isP2WPKH,
 } from '@cat-protocol/cat-sdk-v2';
 
 interface SendCommandOptions extends BoardcastCommandOptions {
@@ -60,20 +61,17 @@ export class SendCommand extends BoardcastCommand {
         throw new Error(`No token metadata found for tokenId: ${options.id}`);
       }
 
-      let receiver: btc.Address;
+      let receiver: string;
       let amount: bigint;
       try {
-        receiver = btc.Address.fromString(inputs[0]);
+        receiver = inputs[0];
 
-        if (
-          receiver.type !== 'taproot' &&
-          receiver.type !== 'witnesspubkeyhash'
-        ) {
-          console.error(`Invalid address type: ${receiver.type}`);
+        if (!isP2TR(receiver) && !isP2WPKH(receiver)) {
+          console.error(`Invalid address type: ${receiver}`);
           return;
         }
       } catch (error) {
-        console.error(`Invalid receiver address: "${inputs[0]}" `);
+        console.error(`Invalid receiver address: "${receiver}" `);
         return;
       }
 
@@ -117,9 +115,9 @@ export class SendCommand extends BoardcastCommand {
 
   async send(
     tokenInfo: Cat20TokenInfo<OpenMinterCat20Meta>,
-    receiver: btc.Address,
+    receiver: string,
     amount: bigint,
-    address: btc.Address,
+    address: string,
   ) {
     const feeRate = await this.getFeeRate();
 

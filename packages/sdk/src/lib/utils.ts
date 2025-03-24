@@ -29,7 +29,7 @@ export function addressToLocking(_address: string): string {
     return uint8ArrayToHex(address.toOutputScript(_address));
 }
 
-export function scriptToP2tr(script: Buffer): {
+export function scriptToP2tr(script: Uint8Array): {
     p2trLockingScript: string;
     tapScript: string;
     cblock: string;

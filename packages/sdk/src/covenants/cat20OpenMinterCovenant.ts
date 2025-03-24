@@ -178,7 +178,6 @@ export class CAT20OpenMinterCovenant extends StatefulCovenant<CAT20OpenMinterSta
         feeUtxos: UTXO[],
         feeRate: number,
         changeAddress: string,
-        estimatedVSize?: number,
         preminterAddress?: string,
         preminerPubKey?: string,
     ) {
@@ -203,6 +202,10 @@ export class CAT20OpenMinterCovenant extends StatefulCovenant<CAT20OpenMinterSta
 
         const token = spentMinter.createToken(tokenReceiver);
 
+        const minterInputIndex = 0;
+
+        const backTraceInfo = getBackTraceInfo_(spentMinterTxHex, spentMinterPreTxHex, minterInputIndex);
+
         mintTx
             // add token output
             .addCovenantOutput(token, Postage.TOKEN_POSTAGE)
@@ -210,13 +213,8 @@ export class CAT20OpenMinterCovenant extends StatefulCovenant<CAT20OpenMinterSta
             .addCovenantInput(spentMinter)
             // add fees
             .spendUTXO(feeUtxos)
-            // add change output
-            .change(changeAddress, feeRate, estimatedVSize)
-            .seal();
-        const minterInputIndex = 0;
 
-        const backTraceInfo = getBackTraceInfo_(spentMinterTxHex, spentMinterPreTxHex, minterInputIndex);
-
+  
         mintTx.updateCovenantInput(minterInputIndex, spentMinter, {
             invokeMethod: (contract: CAT20OpenMinter, curPsbt: ExtPsbt) => {
                 contract.mint(
@@ -230,7 +228,9 @@ export class CAT20OpenMinterCovenant extends StatefulCovenant<CAT20OpenMinterSta
                     backTraceInfo,
                 );
             },
-        });
+        })
+        .change(changeAddress, feeRate)
+        .seal();
         return mintTx;
     }
 
