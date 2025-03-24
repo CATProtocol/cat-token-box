@@ -305,12 +305,8 @@ export class TxService {
       data: { metadata, content },
     } = envelope;
     // state hashes
-    const stateHashes = commitInput.witness.slice(
-      Constants.CONTRACT_INPUT_WITNESS_STATE_HASHES_OFFSET,
-      Constants.CONTRACT_INPUT_WITNESS_STATE_HASHES_OFFSET +
-        Constants.CONTRACT_OUTPUT_MAX_COUNT,
-    );
-    this.validateStateHashes(stateHashes);
+    const stateHashes = this.parseStateHashes(commitInput.witness);
+
     // minter output
     const minterPubKey = this.searchRevealTxMinterOutputs(payOuts);
     // save token info
@@ -433,12 +429,7 @@ export class TxService {
     if (minterInput.witness.length < Constants.MINTER_INPUT_WITNESS_MIN_SIZE) {
       throw new CatTxError('invalid mint tx, invalid minter witness field');
     }
-    const stateHashes = minterInput.witness.slice(
-      Constants.CONTRACT_INPUT_WITNESS_STATE_HASHES_OFFSET,
-      Constants.CONTRACT_INPUT_WITNESS_STATE_HASHES_OFFSET +
-        Constants.CONTRACT_OUTPUT_MAX_COUNT,
-    );
-    this.validateStateHashes(stateHashes);
+    const stateHashes = this.parseStateHashes(minterInput.witness);
 
     // ownerPubKeyHash
     const pkh = minterInput.witness[Constants.MINTER_INPUT_WITNESS_ADDR_OFFSET];
@@ -660,20 +651,14 @@ export class TxService {
     if (guardInput.witness.length < Constants.GUARD_INPUT_WITNESS_MIN_SIZE) {
       throw new CatTxError('invalid transfer tx, invalid guard witness field');
     }
-    const stateHashes = guardInput.witness.slice(
-      Constants.CONTRACT_INPUT_WITNESS_STATE_HASHES_OFFSET,
-      Constants.CONTRACT_INPUT_WITNESS_STATE_HASHES_OFFSET +
-        Constants.CONTRACT_OUTPUT_MAX_COUNT,
-    );
-    this.validateStateHashes(stateHashes);
+    const stateHashes = this.parseStateHashes(guardInput.witness);
 
     if (this.commonService.isTransferGuard(guardInput)) {
       const tokenOutputs =
         this.commonService.parseTransferTxTokenOutputs(guardInput);
 
       if (blockHeader.height >= 365400) {
-        // verify the token amount in guard witness equals to it in token input
-        // TODO: await this.verifyGuardTokenAmount(guardInput, tx);
+        // TODO: verify the token amount in guard witness equals to it in token input
       }
 
       // save tx outputs
@@ -691,73 +676,6 @@ export class TxService {
       );
     }
     return stateHashes;
-  }
-
-  public async verifyGuardTokenAmount(
-    guardInput: TaprootPayment,
-    tx: Transaction,
-  ) {
-    if (
-      guardInput.witness.length <
-      Constants.TRANSFER_GUARD_INPUT_WITNESS_MIN_SIZE
-    ) {
-      throw new TransferTxError(
-        'invalid transfer tx, invalid transfer guard witness field',
-      );
-    }
-    const timeBefore = Date.now();
-    const tokenScript =
-      guardInput.witness[
-        Constants.TRANSFER_GUARD_INPUT_TOKEN_SCRIPT_OFFSET
-      ].toString('hex');
-    const tokenAmounts = guardInput.witness.slice(
-      Constants.TRANSFER_GUARD_INPUT_AMOUNT_OFFSET,
-      Constants.TRANSFER_GUARD_INPUT_AMOUNT_OFFSET +
-        Constants.CONTRACT_INPUT_MAX_COUNT,
-    );
-    await Promise.all(
-      tokenAmounts.map(async (amount, i) => {
-        const tokenAmount =
-          amount.length === 0 ? 0n : BigInt(amount.readIntLE(0, amount.length));
-        if (tokenAmount === 0n) {
-          return Promise.resolve();
-        }
-        const input = tx.ins[i];
-        const prevTxid = Buffer.from(input.hash).reverse().toString('hex');
-        const prevOutputIndex = input.index;
-        const prevout = `${prevTxid}:${prevOutputIndex}`;
-        return this.txOutEntityRepository
-          .findOne({
-            where: {
-              txid: prevTxid,
-              outputIndex: prevOutputIndex,
-            },
-          })
-          .then((prevOutput) => {
-            if (!prevOutput) {
-              this.logger.error(`prevout ${prevout} not found`);
-              throw new TransferTxError(
-                'invalid transfer tx, token input prevout is missing',
-              );
-            }
-            if (prevOutput.lockingScript !== tokenScript) {
-              this.logger.error(`prevout ${prevout} token script mismatches`);
-              throw new TransferTxError(
-                'invalid transfer tx, token script in guard not equal to it in token input',
-              );
-            }
-            if (BigInt(prevOutput.tokenAmount) !== tokenAmount) {
-              this.logger.error(
-                `prevout ${prevout} token amount mismatches, ${prevOutput.tokenAmount} !== ${tokenAmount}`,
-              );
-              throw new TransferTxError(
-                'invalid transfer tx, token amount in guard not equal to it in token input',
-              );
-            }
-          });
-      }),
-    );
-    this.logger.debug(`verifyGuardTokenAmount: ${Date.now() - timeBefore} ms`);
   }
 
   /**
@@ -779,6 +697,17 @@ export class TxService {
         throw new CatTxError('invalid state hash length');
       }
     }
+  }
+
+  private parseStateHashes(witness: Buffer[]): Buffer[] {
+    const offset =
+      witness.length + Constants.CONTRACT_INPUT_WITNESS_STATE_HASHES_OFFSET;
+    const stateHashes = witness.slice(
+      offset,
+      offset + Constants.CONTRACT_OUTPUT_MAX_COUNT,
+    );
+    this.validateStateHashes(stateHashes);
+    return stateHashes;
   }
 
   /**
