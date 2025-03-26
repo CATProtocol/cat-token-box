@@ -3,22 +3,26 @@ import {
     ByteString,
     ExtPsbt,
     Int32,
+    Ripemd160,
     StatefulCovenantUtxo,
     uint8ArrayToHex,
 } from '@scrypt-inc/scrypt-ts-btc';
 import {
     addrToP2trLockingScript,
     CAT20ClosedMinterState,
+    CAT20Covenant,
     Cat20TokenInfo,
     ClosedMinterCat20Meta,
     Postage,
     toTokenAddress,
+    TracedCAT20Token,
 } from '../../src';
 import { deploy } from './testCAT20/features/deploy';
 import { testSigner } from './testSigner';
 import { testChainProvider, testUtxoProvider } from './testProvider';
 import { mint } from './testCAT20/features/mint';
 import { singleSend } from '../../src/features/cat20/send/singleSend';
+import { CAT20Utxo } from '../../src/lib/provider';
 
 export interface CAT20ClosedMinterUtxo extends StatefulCovenantUtxo {
     state: CAT20ClosedMinterState;
@@ -109,5 +113,47 @@ export class TestCAT20Generater {
 
     async mintTokenToHash160(hash: string, amount: Int32) {
         return this.mintThenTransfer(hash, amount);
+    }
+}
+
+
+
+
+export type TestCat20 = {
+    generater: TestCAT20Generater,
+    tracedUtxos: TracedCAT20Token[],
+}
+
+export async function createCat20(
+    amountList: bigint[],
+    toAddress: string,
+    symbol: string,
+): Promise<TestCat20> {
+    const metadata = {
+        name: `cat20_${symbol}`,
+        symbol: `cat20_${symbol}`,
+        decimals: 2,
+        max: 21000000n,
+        limit: 1000n,
+        premine: 3150000n,
+        preminerAddr: Ripemd160(toTokenAddress(toAddress)),
+        minterMd5: '',
+    }
+    const cat20Generater = await TestCAT20Generater.init(metadata);
+    const utxoList: CAT20Utxo[]  = []
+    for (let i = 0; i < amountList.length; i++) {
+        const utxo = await cat20Generater.mintTokenToAddr(toAddress, amountList[i])
+        utxoList.push(utxo)
+    }
+    const tracedUtxos = await CAT20Covenant.backtrace(utxoList.map(v => {
+        return {
+            minterAddr: cat20Generater.deployInfo.minterAddr,
+            ...v,
+        }
+    }), testChainProvider)
+
+    return {
+        generater: cat20Generater,
+        tracedUtxos,
     }
 }
