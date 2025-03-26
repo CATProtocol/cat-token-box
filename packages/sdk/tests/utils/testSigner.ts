@@ -1,3 +1,6 @@
 import { DefaultSigner } from '@scrypt-inc/scrypt-ts-btc';
+import { ErrorDefaultSigner, ErrorPair } from './errorSigner';
 
-export const testSigner = new DefaultSigner();
+const pair = new ErrorPair();
+export const testSigner = new DefaultSigner(pair);
+export const testErrorSigner = new ErrorDefaultSigner(pair);
