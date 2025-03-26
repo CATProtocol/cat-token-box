@@ -116,19 +116,12 @@ export class TestCAT20Generater {
     }
 }
 
-
-
-
 export type TestCat20 = {
-    generater: TestCAT20Generater,
-    tracedUtxos: TracedCAT20Token[],
-}
+    generater: TestCAT20Generater;
+    tracedUtxos: TracedCAT20Token[];
+};
 
-export async function createCat20(
-    amountList: bigint[],
-    toAddress: string,
-    symbol: string,
-): Promise<TestCat20> {
+export async function createCat20(amountList: bigint[], toAddress: string, symbol: string): Promise<TestCat20> {
     const metadata = {
         name: `cat20_${symbol}`,
         symbol: `cat20_${symbol}`,
@@ -138,22 +131,25 @@ export async function createCat20(
         premine: 3150000n,
         preminerAddr: Ripemd160(toTokenAddress(toAddress)),
         minterMd5: '',
-    }
+    };
     const cat20Generater = await TestCAT20Generater.init(metadata);
-    const utxoList: CAT20Utxo[]  = []
+    const utxoList: CAT20Utxo[] = [];
     for (let i = 0; i < amountList.length; i++) {
-        const utxo = await cat20Generater.mintTokenToAddr(toAddress, amountList[i])
-        utxoList.push(utxo)
+        const utxo = await cat20Generater.mintTokenToAddr(toAddress, amountList[i]);
+        utxoList.push(utxo);
     }
-    const tracedUtxos = await CAT20Covenant.backtrace(utxoList.map(v => {
-        return {
-            minterAddr: cat20Generater.deployInfo.minterAddr,
-            ...v,
-        }
-    }), testChainProvider)
+    const tracedUtxos = await CAT20Covenant.backtrace(
+        utxoList.map((v) => {
+            return {
+                minterAddr: cat20Generater.deployInfo.minterAddr,
+                ...v,
+            };
+        }),
+        testChainProvider,
+    );
 
     return {
         generater: cat20Generater,
         tracedUtxos,
-    }
+    };
 }

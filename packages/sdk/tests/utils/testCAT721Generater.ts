@@ -67,8 +67,8 @@ export class TestCAT721Generater {
             [Ripemd160(addr)],
             await testChainProvider.getFeeRate(),
         );
-        this.minterTx = mintInfo.mintTx
-        this.minterUtxo = mintInfo.minterUtxo
+        this.minterTx = mintInfo.mintTx;
+        this.minterUtxo = mintInfo.minterUtxo;
         return transferInfo.newCAT721Utxos[0];
     }
 
@@ -82,13 +82,10 @@ export class TestCAT721Generater {
     }
 }
 
-
-
-
 export type TestCat721 = {
     generater: TestCAT721Generater;
     tracedUtxos: TracedCAT721Nft[];
-}
+};
 export async function createCat721(symbol: string, nftCount: number, toAddress: string): Promise<TestCat721> {
     const metadata = {
         name: `cat721_${symbol}`,
@@ -96,22 +93,25 @@ export async function createCat721(symbol: string, nftCount: number, toAddress: 
         max: 10000n,
         minterMd5: '',
         description: '',
-    }
+    };
     const cat721Generater = await TestCAT721Generater.init(metadata);
-    
-    const utxos: CAT721Utxo[] = []
+
+    const utxos: CAT721Utxo[] = [];
     for (let i = 0; i < nftCount; i++) {
         const utxo = await cat721Generater.mintNFtToAddr(toAddress);
-        utxos.push(utxo)
+        utxos.push(utxo);
     }
-    const tracedUtxos = await CAT721Covenant.backtrace(utxos.map(utxo => {
-        return {
-            minterAddr: cat721Generater.deployInfo.minterAddr,
-            ...utxo,
-        }
-    }), testChainProvider)
+    const tracedUtxos = await CAT721Covenant.backtrace(
+        utxos.map((utxo) => {
+            return {
+                minterAddr: cat721Generater.deployInfo.minterAddr,
+                ...utxo,
+            };
+        }),
+        testChainProvider,
+    );
     return {
         generater: cat721Generater,
         tracedUtxos,
-    }
+    };
 }

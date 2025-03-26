@@ -220,7 +220,6 @@ async function buildPremineTx(
         remainingCount: (metadata.max - metadata.premine) / metadata.limit,
     }).bindToUtxo(revealPsbt.getStatefulCovenantUtxo(1));
 
-
     return CAT20OpenMinterCovenant.buildMintTx(
         minterPreTxHex,
         spentMinterTxHex,

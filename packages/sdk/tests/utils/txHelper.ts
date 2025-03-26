@@ -1,7 +1,4 @@
-
-import { ByteString, ExtPsbt, FixedArray, satoshiToHex } from "@scrypt-inc/scrypt-ts-btc";
-
-
+import { ByteString, ExtPsbt, FixedArray, satoshiToHex } from '@scrypt-inc/scrypt-ts-btc';
 
 export function applyArray<T, COUNT extends number>(
     changesArray: T[],
@@ -14,5 +11,5 @@ export function applyArray<T, COUNT extends number>(
 }
 
 export function getOutputSatoshisList(psbt: ExtPsbt): ByteString[] {
-    return psbt.txOutputs.map(output => satoshiToHex(output.value))
+    return psbt.txOutputs.map((output) => satoshiToHex(output.value));
 }

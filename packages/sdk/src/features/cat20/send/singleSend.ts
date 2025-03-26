@@ -185,10 +185,7 @@ function buildSendTx(
         sendPsbt.addCovenantInput(inputToken);
     }
 
-    sendPsbt
-        .addCovenantInput(guard)
-        .spendUTXO([guardPsbt.getUtxo(2)])
-
+    sendPsbt.addCovenantInput(guard).spendUTXO([guardPsbt.getUtxo(2)]);
 
     const guardInputIndex = inputTokens.length;
     const _isP2TR = isP2TR(changeAddress);
@@ -239,7 +236,14 @@ function buildSendTx(
 
             const ownerAddrOrScripts = tokenOwners.map((ownerAddr, oidx) => {
                 const output = curPsbt.txOutputs[oidx + 1];
-                return ownerAddr || (output ? uint8ArrayToHex(output.script) : (sendPsbt.isSealed ? '' : uint8ArrayToHex(Address.toOutputScript(changeAddress))))
+                return (
+                    ownerAddr ||
+                    (output
+                        ? uint8ArrayToHex(output.script)
+                        : sendPsbt.isSealed
+                        ? ''
+                        : uint8ArrayToHex(Address.toOutputScript(changeAddress)))
+                );
             }) as unknown as FixedArray<ByteString, typeof STATE_OUTPUT_COUNT_MAX>;
 
             contract.unlock(
@@ -252,7 +256,6 @@ function buildSendTx(
             );
         },
     });
-    sendPsbt.change(changeAddress, feeRate)
-    .seal();
+    sendPsbt.change(changeAddress, feeRate).seal();
     return sendPsbt;
 }

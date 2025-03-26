@@ -11,5 +11,4 @@ export * from './lib/commit';
 export * from './lib/provider';
 export * from './features/cat20';
 
-
 loadArtifacts();

@@ -212,25 +212,25 @@ export class CAT20OpenMinterCovenant extends StatefulCovenant<CAT20OpenMinterSta
             // add minter input
             .addCovenantInput(spentMinter)
             // add fees
-            .spendUTXO(feeUtxos)
+            .spendUTXO(feeUtxos);
 
-  
-        mintTx.updateCovenantInput(minterInputIndex, spentMinter, {
-            invokeMethod: (contract: CAT20OpenMinter, curPsbt: ExtPsbt) => {
-                contract.mint(
-                    token.state,
-                    splitAmountList,
-                    isPremining ? (isP2TR(preminterAddress) ? '' : pubKeyPrefix(preminerPubKey)) : '',
-                    (isPremining ? catToXOnly(preminerPubKey, isP2TR(preminterAddress)) : '') as PubKey,
-                    (isPremining ? curPsbt.getSig(minterInputIndex, { publicKey: preminerPubKey }) : '') as Sig,
-                    satoshiToHex(BigInt(Postage.MINTER_POSTAGE)),
-                    satoshiToHex(BigInt(Postage.TOKEN_POSTAGE)),
-                    backTraceInfo,
-                );
-            },
-        })
-        .change(changeAddress, feeRate)
-        .seal();
+        mintTx
+            .updateCovenantInput(minterInputIndex, spentMinter, {
+                invokeMethod: (contract: CAT20OpenMinter, curPsbt: ExtPsbt) => {
+                    contract.mint(
+                        token.state,
+                        splitAmountList,
+                        isPremining ? (isP2TR(preminterAddress) ? '' : pubKeyPrefix(preminerPubKey)) : '',
+                        (isPremining ? catToXOnly(preminerPubKey, isP2TR(preminterAddress)) : '') as PubKey,
+                        (isPremining ? curPsbt.getSig(minterInputIndex, { publicKey: preminerPubKey }) : '') as Sig,
+                        satoshiToHex(BigInt(Postage.MINTER_POSTAGE)),
+                        satoshiToHex(BigInt(Postage.TOKEN_POSTAGE)),
+                        backTraceInfo,
+                    );
+                },
+            })
+            .change(changeAddress, feeRate)
+            .seal();
         return mintTx;
     }
 
