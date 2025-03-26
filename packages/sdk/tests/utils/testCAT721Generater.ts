@@ -6,6 +6,8 @@ import { testChainProvider, testUtxoProvider } from './testProvider';
 import { deploy } from './testCAT721/features/deploy';
 import { mint } from './testCAT721/features/mint';
 import { singleSendNft } from '../../src/features/cat721/send/singleSend';
+import { CAT721Utxo } from '../../src/lib/provider';
+import { CAT721Covenant, TracedCAT721Nft } from '../../src/covenants/cat721Covenant';
 
 export interface CAT721ClosedMinterUtxo extends StatefulCovenantUtxo {
     state: CAT721ClosedMinterState;
@@ -65,6 +67,8 @@ export class TestCAT721Generater {
             [Ripemd160(addr)],
             await testChainProvider.getFeeRate(),
         );
+        this.minterTx = mintInfo.mintTx
+        this.minterUtxo = mintInfo.minterUtxo
         return transferInfo.newCAT721Utxos[0];
     }
 
@@ -75,5 +79,39 @@ export class TestCAT721Generater {
 
     async mintNftToHash160(hash: string) {
         return this.mintThenTransfer(hash);
+    }
+}
+
+
+
+
+export type TestCat721 = {
+    generater: TestCAT721Generater;
+    tracedUtxos: TracedCAT721Nft[];
+}
+export async function createCat721(symbol: string, nftCount: number, toAddress: string): Promise<TestCat721> {
+    const metadata = {
+        name: `cat721_${symbol}`,
+        symbol: `cat721_${symbol}`,
+        max: 10000n,
+        minterMd5: '',
+        description: '',
+    }
+    const cat721Generater = await TestCAT721Generater.init(metadata);
+    
+    const utxos: CAT721Utxo[] = []
+    for (let i = 0; i < nftCount; i++) {
+        const utxo = await cat721Generater.mintNFtToAddr(toAddress);
+        utxos.push(utxo)
+    }
+    const tracedUtxos = await CAT721Covenant.backtrace(utxos.map(utxo => {
+        return {
+            minterAddr: cat721Generater.deployInfo.minterAddr,
+            ...utxo,
+        }
+    }), testChainProvider)
+    return {
+        generater: cat721Generater,
+        tracedUtxos,
     }
 }
