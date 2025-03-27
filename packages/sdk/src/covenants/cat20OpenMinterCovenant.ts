@@ -212,7 +212,8 @@ export class CAT20OpenMinterCovenant extends StatefulCovenant<CAT20OpenMinterSta
             // add minter input
             .addCovenantInput(spentMinter)
             // add fees
-            .spendUTXO(feeUtxos);
+            .spendUTXO(feeUtxos)
+            .change(changeAddress, feeRate);
 
         mintTx
             .updateCovenantInput(minterInputIndex, spentMinter, {
@@ -229,7 +230,6 @@ export class CAT20OpenMinterCovenant extends StatefulCovenant<CAT20OpenMinterSta
                     );
                 },
             })
-            .change(changeAddress, feeRate)
             .seal();
         return mintTx;
     }

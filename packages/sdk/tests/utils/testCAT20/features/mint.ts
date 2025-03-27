@@ -58,18 +58,7 @@ export async function mint(
         tokenScript: token.lockingScriptHex,
     };
     const utxos = await utxoProvider.getUtxos(address);
-    const estimatedVSize = CAT20ClosedMinterCovenant.buildMintTx(
-        minterPreTxHex,
-        spentMinterTxHex,
-        minterCovenant,
-        tokenReceiver,
-        tokenAmount,
-        utxos,
-        feeRate,
-        changeAddress,
-        changeAddress,
-        pubkey,
-    ).estimateVSize();
+
 
     const mintPsbt = CAT20ClosedMinterCovenant.buildMintTx(
         minterPreTxHex,
@@ -82,7 +71,6 @@ export async function mint(
         changeAddress,
         address,
         pubkey,
-        estimatedVSize,
     );
 
     const signedMintPsbt = await signer.signPsbt(mintPsbt.toHex(), mintPsbt.psbtOptions());

@@ -10,5 +10,6 @@ export * from './lib/utils';
 export * from './lib/commit';
 export * from './lib/provider';
 export * from './features/cat20';
+export * from './features/cat721';
 
 loadArtifacts();

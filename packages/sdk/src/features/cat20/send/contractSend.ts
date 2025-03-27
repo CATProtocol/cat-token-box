@@ -1,6 +1,7 @@
 import {
     ByteString,
     ChainProvider,
+    emptyOutputByteStrings,
     ExtPsbt,
     fill,
     FixedArray,
@@ -179,7 +180,6 @@ function buildSendTx(
         .addCovenantInput(guard)
         .spendUTXO([guardPsbt.getUtxo(2)])
         .change(changeAddress, feeRate)
-        .seal();
 
     const guardInputIndex = inputTokens.length;
     // unlock tokens
@@ -227,6 +227,16 @@ function buildSendTx(
                     tokenScriptIndexArray[index] = 0n;
                 }
             });
+
+            const outputSatoshisList = curPsbt.getOutputSatoshisList();
+            const outputSatoshis = emptyOutputByteStrings().map((emtpyStr, i) => {
+                if (outputSatoshisList[i + 1]) {
+                  return outputSatoshisList[i + 1];
+                } else {
+                  return emtpyStr;
+                }
+              }) as FixedArray<ByteString, typeof STATE_OUTPUT_COUNT_MAX>;
+
             contract.unlock(
                 tokenOwners.map((ownerAddr, oidx) => {
                     const output = curPsbt.txOutputs[oidx + 1];
@@ -234,11 +244,11 @@ function buildSendTx(
                 }) as unknown as FixedArray<ByteString, typeof STATE_OUTPUT_COUNT_MAX>,
                 tokenAmounts as unknown as FixedArray<Int32, typeof STATE_OUTPUT_COUNT_MAX>,
                 tokenScriptIndexArray,
-                curPsbt.getOutputSatoshisList(),
+                outputSatoshis,
                 cat20StateArray,
                 BigInt(curPsbt.txOutputs.length - 1),
             );
         },
-    });
+    }).seal();
     return sendPsbt;
 }

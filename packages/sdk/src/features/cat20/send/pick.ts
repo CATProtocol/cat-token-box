@@ -41,6 +41,27 @@ export function pick(tokens: Array<CAT20Utxo>, amount: bigint): Array<CAT20Utxo>
     return [];
 }
 
+
+
+/**
+ * Select CAT20 UTXOs for burn
+ * @param tokens Cat20 UTXOs
+ * @param amount the number of tokens to burn.
+ * @returns
+ */
+export function burnPick(tokens: Array<CAT20Utxo>, amount: bigint): Array<CAT20Utxo> {
+    const t = tokens.find((token) => {
+        return token.state.amount == amount;
+    });
+
+    // if found a token utxo contains enough token amount
+    if (t) {
+        return [t];
+    }
+
+    return [];
+}
+
 /**
  * Select CAT20 UTXOs in sequence from all CAT20 UTXOs such that the cumulative number of tokens equals the specified amount.
  * @param tokens Cat20 UTXOs

@@ -6,8 +6,8 @@ import { expect, use } from 'chai';
 import chaiAsPromised from 'chai-as-promised';
 import { isP2TR, scriptToP2tr, toTokenAddress, toXOnly } from '../../../../src/lib/utils';
 import { testChainProvider, testUtxoProvider } from '../../../utils/testProvider';
-import { getCatCommitScript } from '../../../../src/lib/commit';
-import { CAT721MerkleLeaf, HEIGHT, MerkleProof, OpenMinterCat721Meta, Postage, ProofNodePos } from '../../../../src';
+import { getCatNFTCommitScript } from '../../../../src/lib/commit';
+import { CAT721MerkleLeaf, HEIGHT, MerkleProof, OpenMinterCat721Meta, ProofNodePos } from '../../../../src';
 import { bvmVerify, ExtPsbt, Ripemd160, UTXO } from '@scrypt-inc/scrypt-ts-btc';
 import {
     CAT721OpenMinterCovenant,
@@ -15,15 +15,14 @@ import {
 } from '../../../../src/covenants/cat721OpenMinterCovenant';
 import { loadAllArtifacts } from '../utils';
 import { testSigner } from '../../../../tests/utils/testSigner';
-import { deploy } from '../../../../src/features/cat721/deploy/cat721OpenMinter';
-import { randomBytes } from 'crypto';
+import { deployNft } from '../../../../src/features/cat721/deploy/cat721OpenMinter';
 import { CAT721OpenMinterUtxo } from '../../../../src/lib/provider';
-import { mint } from '../../../../src/features/cat721/mint/cat721OpenMinter';
+import { mintNft } from '../../../../src/features/cat721/mint/cat721OpenMinter';
 
 use(chaiAsPromised);
 
 const createDummyCommitScript = function (pubkeyX: string, localId: number): CAT721MerkleLeaf {
-    const commitScript = getCatCommitScript(pubkeyX, { localId });
+    const commitScript = getCatNFTCommitScript(pubkeyX, { localId: BigInt(localId) });
     const lockingScript = Buffer.from(commitScript, 'hex');
     const { p2trLockingScript: p2trCommit } = scriptToP2tr(lockingScript);
     return {
@@ -39,16 +38,6 @@ const generateCollectionLeaf = function (pubkeyX: string, max: number) {
         nftMerkleLeafList.push(createDummyCommitScript(pubkeyX, index));
     }
     return nftMerkleLeafList;
-};
-
-const getDummyCommitUtxo = function (address: string, commitScript: string, satoshis?: number): UTXO {
-    return {
-        address: address,
-        txId: randomBytes(32).toString('hex'),
-        outputIndex: 0,
-        script: commitScript,
-        satoshis: satoshis || 9007199254740991,
-    };
 };
 
 describe('Test the features for `CAT721OpenMinterCovenant`', () => {
@@ -82,7 +71,7 @@ describe('Test the features for `CAT721OpenMinterCovenant`', () => {
             generateCollectionLeaf(pubkeyX, Number(collectionMax)),
             HEIGHT,
         );
-        const deployResult = await deploy(
+        const deployResult = await deployNft(
             testSigner,
             testUtxoProvider,
             testChainProvider,
@@ -120,16 +109,24 @@ describe('Test the features for `CAT721OpenMinterCovenant`', () => {
                 };
                 const updateLeafInfo = nftOpenMinterMerkleTreeData.updateLeaf(newLeaf, index);
                 const merkleInfo = nftOpenMinterMerkleTreeData.getMerklePath(index);
-                const commitUtxo = getDummyCommitUtxo(
-                    await testSigner.getAddress(),
-                    oldLeaf.commitScript,
-                    Postage.METADATA_POSTAGE,
-                );
+                // const commitUtxo = getDummyCommitUtxo(
+                //     await testSigner.getAddress(),
+                //     oldLeaf.commitScript,
+                //     Postage.METADATA_POSTAGE,
+                // );
                 const minterUtxo: CAT721OpenMinterUtxo = {
                     ...minterInstance.utxo!,
                     state: minterInstance.state!,
                 };
-                const { mintTx, minter } = await mint(
+                const nft = {
+                    contentType: '',
+                    contentBody: '',
+                    nftmetadata: {
+                        localId: minterInstance.state.nextLocalId,
+                    },
+                };
+
+                const { mintTx, minter } = await mintNft(
                     testSigner,
                     testUtxoProvider,
                     testChainProvider,
@@ -137,7 +134,7 @@ describe('Test the features for `CAT721OpenMinterCovenant`', () => {
                     merkleInfo.neighbor as MerkleProof,
                     merkleInfo.neighborType as ProofNodePos,
                     updateLeafInfo.merkleRoot,
-                    commitUtxo,
+                    nft,
                     collectionId,
                     metadata,
                     toTokenAddress(address),

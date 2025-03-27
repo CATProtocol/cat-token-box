@@ -14,6 +14,7 @@ import {
     Int32,
     STATE_OUTPUT_COUNT_MAX,
     uint8ArrayToHex,
+    emptyOutputByteStrings,
 } from '@scrypt-inc/scrypt-ts-btc';
 import { CAT20Covenant, CAT20GuardCovenant, TracedCAT20Token } from '../../../covenants';
 import { Postage } from '../../../lib/constants';
@@ -159,7 +160,7 @@ function buildBurnTx(
             value: BigInt(0),
         })
         .change(changeAddress, feeRate)
-        .seal();
+
 
     const guardInputIndex = inputTokens.length;
 
@@ -210,6 +211,16 @@ function buildBurnTx(
                     tokenScriptIndexArray[index] = 0n;
                 }
             });
+
+            const outputSatoshisList = curPsbt.getOutputSatoshisList();
+            const outputSatoshis = emptyOutputByteStrings().map((emtpyStr, i) => {
+                if (outputSatoshisList[i + 1]) {
+                    return outputSatoshisList[i + 1];
+                } else {
+                    return emtpyStr;
+                }
+                }) as FixedArray<ByteString, typeof STATE_OUTPUT_COUNT_MAX>;
+
             contract.unlock(
                 tokenOwners.map((ownerAddr, oidx) => {
                     const output = curPsbt.txOutputs[oidx + 1];
@@ -217,11 +228,11 @@ function buildBurnTx(
                 }) as unknown as FixedArray<ByteString, typeof STATE_OUTPUT_COUNT_MAX>,
                 tokenAmounts as unknown as FixedArray<Int32, typeof STATE_OUTPUT_COUNT_MAX>,
                 tokenScriptIndexArray,
-                curPsbt.getOutputSatoshisList(),
+                outputSatoshis,
                 cat20StateArray,
                 BigInt(curPsbt.txOutputs.length - 1),
             );
         },
-    });
+    }).seal();
     return sendPsbt;
 }

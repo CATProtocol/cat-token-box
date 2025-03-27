@@ -13,6 +13,7 @@ import {
     PubKey,
     FixedArray,
     Ripemd160,
+    emptyOutputByteStrings,
 } from '@scrypt-inc/scrypt-ts-btc';
 import { CAT721Utxo, getUtxos, processExtPsbts } from '../../../lib/provider';
 import { ExtPsbt } from '@scrypt-inc/scrypt-ts-btc';
@@ -135,7 +136,6 @@ function buildSendTx(
         .addCovenantInput(guard)
         .spendUTXO([guardPsbt.getUtxo(2)])
         .change(changeAddress, feeRate)
-        .seal();
 
     const guardInputIndex = inputNfts.length;
     const _isP2TR = isP2TR(changeAddress);
@@ -185,6 +185,15 @@ function buildSendTx(
                     nftScriptIndexArray[index] = 0n;
                 }
             });
+
+            const outputSatoshisList = curPsbt.getOutputSatoshisList();
+            const outputSatoshis = emptyOutputByteStrings().map((emtpyStr, i) => {
+                if (outputSatoshisList[i + 1]) {
+                    return outputSatoshisList[i + 1];
+                } else {
+                    return emtpyStr;
+                }
+                }) as FixedArray<ByteString, typeof STATE_OUTPUT_COUNT_MAX>;
             contract.unlock(
                 nftOwners.map((ownerAddr, oidx) => {
                     const output = curPsbt.txOutputs[oidx + 1];
@@ -192,11 +201,11 @@ function buildSendTx(
                 }) as unknown as FixedArray<ByteString, typeof STATE_OUTPUT_COUNT_MAX>,
                 nftLocalIds as unknown as FixedArray<Int32, typeof STATE_OUTPUT_COUNT_MAX>,
                 nftScriptIndexArray,
-                curPsbt.getOutputSatoshisList(),
+                outputSatoshis,
                 cat721StateArray,
                 BigInt(curPsbt.txOutputs.length - 1),
             );
         },
-    });
+    }).seal();
     return sendPsbt;
 }

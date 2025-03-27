@@ -13,6 +13,7 @@ import {
     UtxoProvider,
     PubKey,
     FixedArray,
+    emptyOutputByteStrings,
 } from '@scrypt-inc/scrypt-ts-btc';
 import { CAT20Utxo } from '../../../lib/provider';
 import { ExtPsbt } from '@scrypt-inc/scrypt-ts-btc';
@@ -185,7 +186,9 @@ function buildSendTx(
         sendPsbt.addCovenantInput(inputToken);
     }
 
-    sendPsbt.addCovenantInput(guard).spendUTXO([guardPsbt.getUtxo(2)]);
+    sendPsbt.addCovenantInput(guard)
+        .spendUTXO([guardPsbt.getUtxo(2)])
+        .change(changeAddress, feeRate);
 
     const guardInputIndex = inputTokens.length;
     const _isP2TR = isP2TR(changeAddress);
@@ -246,16 +249,25 @@ function buildSendTx(
                 );
             }) as unknown as FixedArray<ByteString, typeof STATE_OUTPUT_COUNT_MAX>;
 
+            const outputSatoshisList = curPsbt.getOutputSatoshisList();
+            const outputSatoshis = emptyOutputByteStrings().map((emtpyStr, i) => {
+                if (outputSatoshisList[i + 1]) {
+                    return outputSatoshisList[i + 1];
+                } else {
+                    return emtpyStr;
+                }
+                }) as FixedArray<ByteString, typeof STATE_OUTPUT_COUNT_MAX>;
+
             contract.unlock(
                 ownerAddrOrScripts,
                 tokenAmounts as unknown as FixedArray<Int32, typeof STATE_OUTPUT_COUNT_MAX>,
                 tokenScriptIndexArray,
-                curPsbt.getOutputSatoshisList(),
+                outputSatoshis,
                 cat20StateArray,
                 BigInt(curPsbt.txOutputs.length - 1),
             );
         },
     });
-    sendPsbt.change(changeAddress, feeRate).seal();
+    sendPsbt.seal();
     return sendPsbt;
 }

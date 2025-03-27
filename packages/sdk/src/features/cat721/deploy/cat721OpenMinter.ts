@@ -15,7 +15,7 @@ import { processExtPsbts } from '../../../lib/provider';
  * @param changeAddress the address to receive change satoshis, use the signer address as the default
  * @returns the genesis transaction, the token reveal transaction and the premine transaction
  */
-export async function deploy(
+export async function deployNft(
     signer: Signer,
     utxoProvider: UtxoProvider,
     chainProvider: ChainProvider,

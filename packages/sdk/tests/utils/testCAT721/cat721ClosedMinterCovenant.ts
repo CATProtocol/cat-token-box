@@ -165,7 +165,6 @@ export class CAT721ClosedMinterCovenant extends StatefulCovenant<CAT721ClosedMin
         changeAddress: string,
         address: string,
         pubKey: string,
-        estimatedVSize?: number,
     ): { mintTx: ExtPsbt; minterUtxo: CAT721ClosedMinterUtxo; cat721Utxo: CAT721Utxo } {
         if (!spentMinter.state) {
             throw new Error('Minter state is not available');
@@ -190,7 +189,7 @@ export class CAT721ClosedMinterCovenant extends StatefulCovenant<CAT721ClosedMin
             // add fees
             .spendUTXO(feeUtxos)
             // add change output
-            .change(changeAddress, feeRate, estimatedVSize)
+            .change(changeAddress, feeRate)
             .seal();
 
         const minterInputIndex = 0;

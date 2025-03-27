@@ -14,6 +14,7 @@ import {
     Int32,
     STATE_OUTPUT_COUNT_MAX,
     uint8ArrayToHex,
+    emptyOutputByteStrings,
 } from '@scrypt-inc/scrypt-ts-btc';
 import { Postage } from '../../../lib/constants';
 import { catToXOnly, isP2TR, pubKeyPrefix } from '../../../lib/utils';
@@ -164,6 +165,16 @@ function buildBurnTx(
             const nftOwners = fill(toByteString(''), STATE_OUTPUT_COUNT_MAX);
             const nftLocalIds = fill(-1n, STATE_OUTPUT_COUNT_MAX);
             const nftScriptIndexArray = fill(-1n, STATE_OUTPUT_COUNT_MAX);
+
+            const outputSatoshisList = curPsbt.getOutputSatoshisList();
+            const outputSatoshis = emptyOutputByteStrings().map((emtpyStr, i) => {
+                if (outputSatoshisList[i + 1]) {
+                    return outputSatoshisList[i + 1];
+                } else {
+                    return emtpyStr;
+                }
+                }) as FixedArray<ByteString, typeof STATE_OUTPUT_COUNT_MAX>;
+
             contract.unlock(
                 nftOwners.map((ownerAddr, oidx) => {
                     const output = curPsbt.txOutputs[oidx + 1];
@@ -171,7 +182,7 @@ function buildBurnTx(
                 }) as unknown as FixedArray<ByteString, typeof STATE_OUTPUT_COUNT_MAX>,
                 nftLocalIds as unknown as FixedArray<Int32, typeof STATE_OUTPUT_COUNT_MAX>,
                 nftScriptIndexArray,
-                curPsbt.getOutputSatoshisList(),
+                outputSatoshis,
                 cat721StateArray,
                 BigInt(curPsbt.txOutputs.length - 1),
             );

@@ -149,7 +149,6 @@ export class CAT20ClosedMinterCovenant extends StatefulCovenant<CAT20ClosedMinte
         changeAddress: string,
         address: string,
         pubKey: string,
-        estimatedVSize?: number,
     ) {
         if (!spentMinter.state) {
             throw new Error('Minter state is not available');
@@ -168,7 +167,7 @@ export class CAT20ClosedMinterCovenant extends StatefulCovenant<CAT20ClosedMinte
             // add fees
             .spendUTXO(feeUtxos)
             // add change output
-            .change(changeAddress, feeRate, estimatedVSize)
+            .change(changeAddress, feeRate)
             .seal();
 
         const minterInputIndex = 0;

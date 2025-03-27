@@ -9,12 +9,13 @@ import {
     UTXO,
     UtxoProvider,
 } from '@scrypt-inc/scrypt-ts-btc';
-import { MerkleProof, ProofNodePos } from '../../../../src/contracts';
-import { CAT721OpenMinterCovenant } from '../../../../src/covenants/cat721OpenMinterCovenant';
-import { OpenMinterCat721Meta } from '../../../../src/lib/metadata';
-import { CAT721OpenMinterUtxo, processExtPsbts } from '../../../../src/lib/provider';
+import { MerkleProof, ProofNodePos } from '../../../contracts';
+import { CAT721OpenMinterCovenant } from '../../../covenants/cat721OpenMinterCovenant';
+import { OpenMinterCat721Meta } from '../../../lib/metadata';
+import { CAT721OpenMinterUtxo, processExtPsbts } from '../../../lib/provider';
+import { createNft } from './nft';
 
-export async function mint(
+export async function mintNft(
     signer: Signer,
     utxoProvider: UtxoProvider,
     chainProvider: ChainProvider,
@@ -22,7 +23,11 @@ export async function mint(
     proof: MerkleProof,
     proofNodePos: ProofNodePos,
     nextMerkleRoot: string,
-    commitUtxo: UTXO,
+    nft: {
+        contentType: string,
+        contentBody: string,
+        nftmetadata: object,
+    },
     collectionId: string,
     metadata: OpenMinterCat721Meta,
     nftReceiver: ByteString,
@@ -36,6 +41,8 @@ export async function mint(
     const address = await signer.getAddress();
     const pubkey = await signer.getPublicKey();
 
+
+
     // fetch minter preTx
     const minterInputIndex = 0;
     const spentMinterTxHex = await chainProvider.getRawTransaction(minterUtxo.txId);
@@ -46,30 +53,37 @@ export async function mint(
         minterUtxo,
     );
 
+
     const utxos = await utxoProvider.getUtxos(address);
 
+    const { commitPsbt, nftCommitScript, cblock } = await createNft(signer, nft, utxos, feeRate);
+
+    const commitUtxo = commitPsbt.getUtxo(0)
+    const feeUTXO: UTXO = commitPsbt.getChangeUTXO()
     const { mintTx: mintPsbt, nextMinter } = CAT721OpenMinterCovenant.buildMintTx(
         minterPreTxHex,
         spentMinterTxHex,
         minterCovenant,
         Ripemd160(nftReceiver),
+        nftCommitScript,
+        cblock,
         commitUtxo,
         proof,
         proofNodePos,
         nextMerkleRoot,
-        utxos,
+        [feeUTXO],
         feeRate,
         changeAddress,
-        undefined,
         address,
-        metadata.preminerAddr ? pubkey : undefined,
+        pubkey,
     );
     const {
         psbts: [mintTx],
-    } = await processExtPsbts(signer, utxoProvider, chainProvider, [mintPsbt]);
+    } = await processExtPsbts(signer, utxoProvider, chainProvider, [commitPsbt, mintPsbt]);
     return {
         mintTxId: mintTx.unsignedTx.getId(),
         mintTx: mintPsbt,
         minter: nextMinter,
     };
+
 }
