@@ -7,15 +7,22 @@ import {
   addrToP2trLockingScript,
   p2trLockingScriptToAddr,
   CAT20OpenMinterCovenant,
+  Cat721NftInfo,
+  Cat721Metadata,
+  CAT721OpenMinterUtxo,
+  CAT721OpenMinterMerkleTreeData,
+  CAT721OpenMinterState,
+  CAT721OpenMinterCovenant,
+  CAT721Utxo,
 } from '@cat-protocol/cat-sdk-v2';
 import { isCAT20V2OpenMinter } from './minterFinder';
-import { getTokenContractP2TR } from './utils';
+import { getCat20ContractP2TR, getCat721ContractP2TR } from './utils';
 import { findTokenInfoById, scaleMetadata } from 'src/token';
 import { logerror } from './log';
 import { ConfigService, SpendService } from 'src/providers';
 import fetch from 'node-fetch-cjs';
-import { ChainProvider, uint8ArrayToHex } from '@scrypt-inc/scrypt-ts-btc';
-import * as bitcoinjs from '@scrypt-inc/bitcoinjs-lib';
+import { ChainProvider } from '@scrypt-inc/scrypt-ts-btc';
+
 export const getTokenInfo = async function (
   config: ConfigService,
   id: string,
@@ -50,7 +57,7 @@ export const getTokenInfo = async function (
           const minterP2TR = addrToP2trLockingScript(token.minterAddr);
           const network = config.getNetwork();
           tokenAddrTmp = p2trLockingScriptToAddr(
-            getTokenContractP2TR(minterP2TR),
+            getCat20ContractP2TR(minterP2TR),
             network,
           );
         }
@@ -128,28 +135,6 @@ export const getTokenMinter = async function (
     .then((res) => res.json())
     .then((res: any) => {
       if (res.code === 0) {
-        // return {
-        //   utxos: [
-        //     {
-        //       utxo: {
-        //         txId: 'f545a2220ec29c28f6c5f5d22775daff75fa91c5e5c2d4147b3c9a7ea4f64cc7',
-        //         outputIndex: 1,
-        //         script:
-        //           '51201b7140556377727404b41aa92c7c83baebcec553a62977ea43fdb04cca104fc1',
-        //         satoshis: 331,
-        //       },
-        //       txoStateHashes: [
-        //         '5ed5b8a0fae49a06b5e50e622612c4c0e876ab54',
-        //         'a90ba4e2d7aec935e2f091069e636b3e24de4dca',
-        //         'fbeb78dd6a67074eab6682a4e129f1c414adfe67',
-        //         '',
-        //         '',
-        //       ],
-        //       txHashPreimage:
-        //         '020000000296f1791c7adc8b418ebac6f1263ae576f538818ae3c22dc1167057ca9fe8a4e60100000000ffffffff96f1791c7adc8b418ebac6f1263ae576f538818ae3c22dc1167057ca9fe8a4e60400000000fdffffff0500000000000000001a6a1863617401e1e04aff2fc71b218d8da0ae22d94a9760ea53d54b010000000000002251201b7140556377727404b41aa92c7c83baebcec553a62977ea43fdb04cca104fc14b010000000000002251201b7140556377727404b41aa92c7c83baebcec553a62977ea43fdb04cca104fc14a01000000000000225120277428e2c9bd8bf8ebc4a52ec7bf0080be3538165e7bb44b323c5e2ae7090c67001af50b0000000022512095dd2038a862d8f9327939bc43d182185e4e678a34136276ca52bf4b5355fa3c00000000',
-        //     },
-        //   ],
-        // };
         return res.data;
       } else {
         throw new Error(res.msg);
@@ -349,5 +334,174 @@ export const getTrackerStatus = async function (config: ConfigService): Promise<
     .catch((e) => {
       logerror(`fetch tracker status failed`, e);
       return e;
+    });
+};
+
+export const getCollectionInfo = async function (
+  config: ConfigService,
+  id: string,
+): Promise<Cat721NftInfo<Cat721Metadata> | null> {
+  const url = `${config.getTracker()}/api/collections/${id}`;
+  return fetch(url, config.withProxy())
+    .then((res) => res.json())
+    .then((res: any) => {
+      if (res.code === 0) {
+        if (res.data === null) {
+          return null;
+        }
+        const collection = res.data;
+        if (collection.metadata.max) {
+          // convert string to  bigint
+          collection.metadata.max = BigInt(collection.metadata.max);
+        }
+
+        if (collection.metadata.premine) {
+          // convert string to  bigint
+          collection.metadata.premine = BigInt(collection.metadata.premine);
+        }
+
+        if (!collection.collectionAddr) {
+          const minterP2TR = addrToP2trLockingScript(collection.minterAddr);
+          const network = config.getNetwork();
+          collection.collectionAddr = p2trLockingScriptToAddr(
+            getCat721ContractP2TR(minterP2TR),
+            network,
+          );
+        }
+        return collection;
+      } else {
+        throw new Error(res.msg);
+      }
+    })
+    .catch((e) => {
+      logerror(`get collection info failed!`, e);
+      return null;
+    });
+};
+
+const fetchNftOpenMinterState = async function (
+  chainProvider: ChainProvider,
+  collectionInfo: Cat721NftInfo<Cat721Metadata>,
+  txId: string,
+  vout: number,
+  collectionMerkleTree: CAT721OpenMinterMerkleTreeData,
+): Promise<CAT721OpenMinterState | null> {
+  const nftP2TR = addrToP2trLockingScript(collectionInfo.collectionAddr);
+  if (txId === collectionInfo.revealTxid) {
+    return {
+      merkleRoot: collectionMerkleTree.merkleRoot,
+      nextLocalId: 0n,
+      nftScript: nftP2TR,
+    };
+  }
+
+  const txhex = await chainProvider.getRawTransaction(txId);
+  const utxo = CAT721OpenMinterCovenant.utxoFromMintTx(
+    txhex,
+    vout,
+    collectionInfo.metadata.max,
+    collectionMerkleTree,
+  );
+  return utxo.state;
+};
+
+export const getNFTMinter = async function (
+  config: ConfigService,
+  spendSerivce: SpendService,
+  chainProvider: ChainProvider,
+  collectionInfo: Cat721NftInfo<Cat721Metadata>,
+  collectionMerkleTree: CAT721OpenMinterMerkleTreeData,
+): Promise<CAT721OpenMinterUtxo | null> {
+  const url = `${config.getTracker()}/api/minters/${collectionInfo.collectionId}/utxos?limit=100&offset=${0}`;
+  return fetch(url, config.withProxy())
+    .then((res) => res.json())
+    .then((res: any) => {
+      if (res.code === 0) {
+        return res.data;
+      } else {
+        throw new Error(res.msg);
+      }
+    })
+    .then(({ utxos: utxos }) => {
+      return Promise.all(
+        utxos
+          .filter((utxoData) => spendSerivce.isUnspent(utxoData.utxo))
+          .map(async (utxoData) => {
+            const data = await fetchNftOpenMinterState(
+              chainProvider,
+              collectionInfo,
+              utxoData.utxo.txId,
+              utxoData.utxo.outputIndex,
+              collectionMerkleTree,
+            );
+
+            if (data === null) {
+              throw new Error(
+                `fetch open minter state failed, minter: ${collectionInfo.minterAddr}, txId: ${utxoData.utxo.txId}`,
+              );
+            }
+
+            if (typeof utxoData.utxo.satoshis === 'string') {
+              utxoData.utxo.satoshis = parseInt(utxoData.utxo.satoshis);
+            }
+
+            const minterUtxo: CAT721OpenMinterUtxo = {
+              ...utxoData.utxo,
+              txoStateHashes: utxoData.txoStateHashes as any,
+              txHashPreimage: utxoData.txHashPreimage,
+              state: data,
+            };
+            return minterUtxo;
+          }),
+      );
+    })
+    .then((minters) => {
+      return minters[0] || null;
+    })
+    .catch((e) => {
+      logerror(`fetch minters failed, minter: ${collectionInfo.minterAddr}`, e);
+      return null;
+    });
+};
+
+export const getNft = async function (
+  config: ConfigService,
+  collection: Cat721NftInfo<Cat721Metadata>,
+  localId: bigint,
+): Promise<CAT721Utxo | null> {
+  const url = `${config.getTracker()}/api/collections/${collection.collectionId}/localId/${localId}/utxo`;
+  return fetch(url, config.withProxy())
+    .then((res) => res.json())
+    .then((res: any) => {
+      if (res.code === 0) {
+        return res.data;
+      } else {
+        throw new Error(res.msg);
+      }
+    })
+    .then(({ utxo: data }) => {
+      if (!data) {
+        return null;
+      }
+
+      if (typeof data.utxo.satoshis === 'string') {
+        data.utxo.satoshis = parseInt(data.utxo.satoshis);
+      }
+
+      const r: CAT721Utxo = {
+        ...data.utxo,
+        txoStateHashes: data.txoStateHashes,
+        txHashPreimage: data.txHashPreimage,
+        state: {
+          ownerAddr: data.state.address,
+          localId: BigInt(data.state.localId),
+        },
+      };
+
+      return r;
+    })
+    .catch((e) => {
+      logerror(`fetch CAT721Utxo failed:`, e);
+      return null;
     });
 };

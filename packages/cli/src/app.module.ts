@@ -6,7 +6,11 @@ import { WalletCommand } from './commands/wallet/wallet.command';
 import { ConfigService, SpendService, WalletService } from './providers';
 import { RetryQuestions } from './questions/retry-send.question';
 import { VersionCommand } from './commands/version.command';
-//import { AirdropCommand } from './commands/airdrop/airdrop.command';
+import { BurnCommand } from './commands/burn/burn.command';
+import { BurnConfirmQuestion } from './questions/burn-confirm.question';
+import { DeployNftCommand } from './commands/deployNft/deployNft.command';
+import { MintNftCommand } from './commands/mintNft/mintNft.command';
+import { SendNftCommand } from './commands/sendNft/sendNft.command';
 
 @Module({
   imports: [],
@@ -17,10 +21,14 @@ import { VersionCommand } from './commands/version.command';
     SpendService,
     VersionCommand,
     RetryQuestions,
+    BurnConfirmQuestion,
     DeployCommand,
+    DeployNftCommand,
     MintCommand,
+    MintNftCommand,
     SendCommand,
-    //AirdropCommand,
+    SendNftCommand,
+    BurnCommand,
     ...WalletCommand.registerWithSubCommands(),
   ],
 })

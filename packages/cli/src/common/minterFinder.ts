@@ -15,3 +15,7 @@ export function isOpenMinterV1(md5: string) {
 export function isCAT20V2OpenMinter(md5: string) {
   return MinterType.CAT20_V2_OPEN_MINTER === md5;
 }
+
+export function isCAT721OpenMinter(md5: string) {
+  return MinterType.CAT721_OPEN_MINTER === md5;
+}

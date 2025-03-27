@@ -3,5 +3,6 @@ export enum MinterType {
   OPEN_MINTER_V2 = 'a6c2e92d74a23c07bb6220b676c6cb9b',
 
   CAT20_V2_OPEN_MINTER = '90c76a83bf6fd911af0589f169e3e9a9',
+  CAT721_OPEN_MINTER = '28e9aa03398ba06b3a43ede2816ae186',
   UNKOWN_MINTER = 'unkown_minter',
 }

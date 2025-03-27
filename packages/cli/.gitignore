@@ -62,5 +62,6 @@ tokens.json
 spends.json
 metadata.json
 metadata*.json
+collections.json
 .npmrc
 loopmint.js
