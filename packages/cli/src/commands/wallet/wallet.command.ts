@@ -4,13 +4,20 @@ import { CreateCommand } from './create.command';
 import { BalanceCommand } from './balance.command';
 import { ImportCommand } from './import.command';
 import { logerror } from 'src/common';
+import { BalanceNftCommand } from './balanceNft.command';
 interface WalletCommandOptions {}
 
 @Command({
   name: 'wallet',
   arguments: '<subcommand>',
   description: 'Wallet commands',
-  subCommands: [AddressCommand, CreateCommand, BalanceCommand, ImportCommand],
+  subCommands: [
+    AddressCommand,
+    CreateCommand,
+    BalanceCommand,
+    ImportCommand,
+    BalanceNftCommand,
+  ],
 })
 export class WalletCommand extends CommandRunner {
   async run(

@@ -505,3 +505,82 @@ export const getNft = async function (
       return null;
     });
 };
+
+export const getNfts = async function (
+  config: ConfigService,
+  collection: Cat721NftInfo<Cat721Metadata>,
+  ownerAddress: string,
+  spendService: SpendService | null = null,
+): Promise<Array<CAT721Utxo>> {
+  const url = `${config.getTracker()}/api/collections/${collection.collectionId}/addresses/${ownerAddress}/utxos`;
+  return fetch(url, config.withProxy())
+    .then((res) => res.json())
+    .then((res: any) => {
+      if (res.code === 0) {
+        return res.data;
+      } else {
+        throw new Error(res.msg);
+      }
+    })
+    .then(({ utxos, trackerBlockHeight }) => {
+      let cat721Utxos: Array<CAT721Utxo> = utxos.map((data) => {
+        if (typeof data.utxo.satoshis === 'string') {
+          data.utxo.satoshis = parseInt(data.utxo.satoshis);
+        }
+
+        const r: CAT721Utxo = {
+          ...data.utxo,
+          txoStateHashes: data.txoStateHashes,
+          txHashPreimage: data.txHashPreimage,
+          state: {
+            ownerAddr: data.state.address,
+            localId: BigInt(data.state.localId),
+          },
+        };
+
+        return r;
+      });
+
+      if (spendService) {
+        cat721Utxos = cat721Utxos.filter((utxo) => {
+          return spendService.isUnspent(utxo);
+        });
+
+        if (trackerBlockHeight - spendService.blockHeight() > 100) {
+          spendService.reset();
+        }
+        spendService.updateBlockHeight(trackerBlockHeight);
+      }
+
+      return cat721Utxos;
+    })
+    .catch((e) => {
+      logerror(`fetch CAT721Utxo failed:`, e);
+      return null;
+    });
+};
+
+export const getCollectionsByOwner = async function (
+  config: ConfigService,
+  ownerAddress: string,
+): Promise<Array<string>> {
+  const url = `${config.getTracker()}/api/addresses/${ownerAddress}/collections`;
+  return fetch(url, config.withProxy())
+    .then((res) => res.json())
+    .then((res: any) => {
+      if (res.code === 0) {
+        return res.data;
+      } else {
+        throw new Error(res.msg);
+      }
+    })
+    .then(({ collections }) => {
+      return collections.map((collection) => {
+        return collection.collectionId;
+      });
+    })
+    .catch((e) => {
+      logerror(`fetch collections failed:`, e);
+      return [];
+    });
+};
