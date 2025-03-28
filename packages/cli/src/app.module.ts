@@ -11,6 +11,9 @@ import { BurnConfirmQuestion } from './questions/burn-confirm.question';
 import { DeployNftCommand } from './commands/deployNft/deployNft.command';
 import { MintNftCommand } from './commands/mintNft/mintNft.command';
 import { SendNftCommand } from './commands/sendNft/sendNft.command';
+import { BurnNftConfirmQuestion } from './questions/burnNft-confirm.question';
+import { BurnNftCommand } from './commands/burnNft/burnNft.command';
+import { AirdropCommand } from './commands/airdrop/airdrop.command';
 
 @Module({
   imports: [],
@@ -22,6 +25,7 @@ import { SendNftCommand } from './commands/sendNft/sendNft.command';
     VersionCommand,
     RetryQuestions,
     BurnConfirmQuestion,
+    BurnNftConfirmQuestion,
     DeployCommand,
     DeployNftCommand,
     MintCommand,
@@ -29,6 +33,8 @@ import { SendNftCommand } from './commands/sendNft/sendNft.command';
     SendCommand,
     SendNftCommand,
     BurnCommand,
+    BurnNftCommand,
+    AirdropCommand,
     ...WalletCommand.registerWithSubCommands(),
   ],
 })

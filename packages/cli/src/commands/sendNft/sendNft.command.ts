@@ -13,11 +13,10 @@ import {
 } from '../boardcast.command';
 import {
   toTokenAddress,
-  isP2TR,
-  isP2WPKH,
   Cat721NftInfo,
   Cat721Metadata,
   singleSendNft,
+  validteSupportedAddress,
 } from '@cat-protocol/cat-sdk-v2';
 import { findCollectionInfoById } from 'src/collection';
 import { Ripemd160 } from '@scrypt-inc/scrypt-ts-btc';
@@ -65,7 +64,7 @@ export class SendNftCommand extends BoardcastCommand {
       try {
         receiver = inputs[0];
 
-        if (!isP2TR(receiver) && !isP2WPKH(receiver)) {
+        if (!validteSupportedAddress(receiver)) {
           console.error(`Invalid address type: ${receiver}`);
           return;
         }

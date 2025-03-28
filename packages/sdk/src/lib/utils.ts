@@ -175,21 +175,12 @@ export function catToXOnly(pubKeyHex: string, isP2TR: boolean): string {
     }
 }
 
-// export function validteSupportedAddress(address: string): btc.Address {
-//     try {
-//         const addr = btc.Address.fromString(address);
-//         if (
-//             addr.type === btc.Address.PayToTaproot ||
-//             addr.type === btc.Address.PayToWitnessPublicKeyHash ||
-//             addr.type === btc.Address.PayToWitnessScriptHash
-//         ) {
-//             return addr;
-//         }
-//         throw new Error(`Unsupported address type ${addr.type}, only support p2tr and p2wpkh`);
-//     } catch (e) {
-//         throw new Error(`Invalid address ${address}`);
-//     }
-// }
+export function validteSupportedAddress(address: string): boolean {
+    try {
+        return isP2TR(address) || isP2WPKH(address) || isP2WSH(address)
+    } catch (e) { /* empty */ }
+    return false;
+}
 
 export function toTokenAddress(_address: string): ByteString {
     const lockingScript = uint8ArrayToHex(address.toOutputScript(_address));
@@ -344,6 +335,10 @@ export function isP2TR(scriptOrAddr: Buffer | string) {
 
 export function isP2WPKH(scriptOrAddr: Buffer | string) {
     return isPaymentFactory(payments.p2wpkh)(scriptOrAddr);
+}
+
+export function isP2WSH(scriptOrAddr: Buffer | string) {
+    return isPaymentFactory(payments.p2wsh)(scriptOrAddr);
 }
 
 export function script2Addr(script: Buffer) {

@@ -136,7 +136,19 @@ Sending 1.11 CAT tokens to bc1pmc274s6lalf6afrll2e23m2qmk50dwaj6srjupe5vyu4dcy66
 in txid: 94e3254c1237ba7cd42eaeeae713c646ee5dd1cd6c4dd6ef07241d5336cd2aa7
 ```
 
-5. Airdrop
+5. Burn token
+
+```bash
+yarn cli burn -i [tokenId] [amount]
+```
+You should see an output similar to:
+
+```
+1.00 CAT tokens burn 
+in txid: 4ba0e1406ab023a86a3ebb35fd698af1483b1db410caaa86236c9753ac788735
+```
+
+6. Airdrop token
 
 ```bash
 yarn cli airdrop -i [tokenId] -f airdrop.csv
@@ -154,7 +166,7 @@ onProcess: 6/499, txid: 5f6502b17bfaa080a6002cabc6123e1900c67dc347bcaaffe49bc320
 onProcess: 7/499, txid: abf0ecf83d2fb124b98ce27cdb16ee0ac77f2f73a9721185c7be430299b0451f
 ```
 
-csv file format should be:
+csv file `airdrop.csv` format should be:
 
 ```
 1,bc1p6evveuszz3uw727y4f7aue2xy78vxklyqv0xz67cknnzf7vp5fzs5vyy59
@@ -198,21 +210,6 @@ yarn cli deployNft --metadata=metadata.json
 ```
 
 `metadata.json`:
-
-- closed mint:
-
-
-```json
-{
-    "name": "LCAT",
-    "symbol": "LCAT",
-    "description": "this is a cat721 nft collection",
-    "max": "10"
-}
-```
-
-- open mint:
-
 
 ```json
 {
@@ -263,6 +260,16 @@ Sending LCAT:0 nft  to bc1ppresfm876y9ddn3fgw2zr0wj0pl3zanslje9nfpznq3kc90q46rqv
 in txid: 277eb0198b4fed9a03845d279cf58fc3289e8a68abdd36981381accb8c24ef52
 ```
 
+5. Burn nft
+
+```bash
+yarn cli burnNft -i b74d9d31d92794abd38296d2f8c61a1f7dca040f8b967de46973b62ed1c8e026_0 -l 0
+```
+
+```
+Nft LCAT:0 nft burn
+in txid: f4895f978059a02d1efb5ea8b626181f5722d43d5d841efa77dc3e3d6daa4901
+```
 
 -----------------
 

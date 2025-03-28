@@ -24,7 +24,6 @@ import {
   CAT721MerkleLeaf,
   catToXOnly,
   isP2TR,
-  isP2WPKH,
   MerkleProof,
   mintNft,
   ProofNodePos,
@@ -34,7 +33,6 @@ import {
 interface MintNftCommandOptions extends BoardcastCommandOptions {
   id: string;
   resource: string;
-  owner?: string;
   type?: string;
 }
 
@@ -208,45 +206,6 @@ export class MintNftCommand extends BoardcastCommand {
     }
 
     return val;
-  }
-
-  @Option({
-    flags: '-o, --owner [owner]',
-    description: 'mint nft into a owner',
-  })
-  parseOwner(val: string): string {
-    if (!val) {
-      logerror("owner can't be empty!", new Error());
-      process.exit(0);
-    }
-    const HEX_Exp = /^#[0-9A-Fa-f]{20}$/i;
-    if (HEX_Exp.test(val)) {
-      return val;
-    }
-
-    try {
-      if (isP2TR(val) || isP2WPKH(val)) {
-        return toTokenAddress(val);
-      } else {
-        console.error(`Invalid owner address type: "${val}" `);
-      }
-    } catch (error) {
-      console.error(`Invalid owner address: "${val}" `);
-    }
-    return;
-  }
-
-  @Option({
-    flags: '-s, --stop [stopId]',
-    description: 'stop minting at a localId',
-  })
-  parseStopId(val: string): bigint {
-    if (!val) {
-      logerror("owner can't be empty!", new Error());
-      process.exit(0);
-    }
-
-    return BigInt(val);
   }
 
   async getFeeUTXOs(address: string) {

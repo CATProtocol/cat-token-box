@@ -119,7 +119,6 @@ function buildBurnTx(
             value: BigInt(0),
         })
         .change(changeAddress, feeRate)
-        .seal();
 
     const guardInputIndex = inputNfts.length;
 
@@ -187,6 +186,7 @@ function buildBurnTx(
                 BigInt(curPsbt.txOutputs.length - 1),
             );
         },
-    });
+    })
+    .seal();
     return sendPsbt;
 }
