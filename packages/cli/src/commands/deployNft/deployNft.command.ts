@@ -22,7 +22,6 @@ import {
 import {
   Cat721Metadata,
   deployNft,
-  CAT721ClosedMinter,
   catToXOnly,
   isP2TR,
   CAT721OpenMinter,
@@ -326,25 +325,5 @@ export class DeployNftCommand extends BoardcastCommand {
       logerror('Invalid token premine!', error);
       process.exit(0);
     }
-  }
-
-  @Option({
-    flags: '--openMint [openMint]',
-    name: 'openMint',
-    description: 'openMint nft',
-  })
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  parseOpenMint(_val: string): boolean {
-    return true;
-  }
-
-  @Option({
-    flags: '--parallel [parallel]',
-    name: 'parallel',
-    description: 'parallel closed mint',
-  })
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  parseParallel(_val: string): boolean {
-    return true;
   }
 }

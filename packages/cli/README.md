@@ -51,8 +51,10 @@ Your address is bc1plfkwa8r7tt8vvtwu0wgy2m70d6cs7gwswtls0shpv9vn6h4qe7gqjjjf86
 
 Deposit some satoshis to your address.
 
+## CAT20
 
-5. Show token balances
+
+1. Show token balances
 
 ```bash
 yarn cli wallet balances
@@ -68,7 +70,7 @@ You should see an output similar to:
 ┴──────────────────────────────────────────────────────────────────────┴────────┴─────────┘
 ```
 
-6. Deploy token
+2. Deploy token
 
 - deploy with a metadata json:
 
@@ -107,7 +109,7 @@ Reveal txid: 9a3fcb5a8344f53f2ba580f7d488469346bff9efe7780fbbf8d3490e3a3a0cd7
 > **Note:** `max` * 10^`decimals` must be less than 2^31, since Bitcoin Script only supports 32-bit signed integers. We plan to support 64 or higher bit in the future.
 
 
-7. Mint token
+3. Mint token
 
 When `amount` is not specified, `limit` number of tokens will be minted.
 ```bash
@@ -122,7 +124,7 @@ Minting 5.00 CAT tokens in txid: 4659529141de4996ad8482910ef3e0cf63665c39e62b86f
 > **Note:** There is a slight chance you happen to use the same minter UTXO with another user who is also minting at the same time, and your mint attempt fails due to [UTXO contention](https://catprotocol.org/cat20#parallel-mint). Just retry till you succeed.
 
 
-8. Send token
+4. Send token
 
 ```bash
 yarn cli send -i [tokenId] [receiver] [amount]
@@ -134,7 +136,7 @@ Sending 1.11 CAT tokens to bc1pmc274s6lalf6afrll2e23m2qmk50dwaj6srjupe5vyu4dcy66
 in txid: 94e3254c1237ba7cd42eaeeae713c646ee5dd1cd6c4dd6ef07241d5336cd2aa7
 ```
 
-9. Airdrop
+5. Airdrop
 
 ```bash
 yarn cli airdrop -i [tokenId] -f airdrop.csv
@@ -167,9 +169,103 @@ csv file format should be:
 
 Each line contains an amount and an address field.
 
+# CAT721
+
+1. Show nfts
+
+```bash
+yarn cli wallet balancesNft -i c1a1a777a52f765ebfa295a35c12280279edd46073d41f4767602f819f574f82_0
+```
+
+You should see an output similar to:
+
+```
+┌────────────────────────────────────────────────────────────────────────┬────────┐
+│ nft                                                                    │ symbol │
+┼────────────────────────────────────────────────────────────────────────┼────────┤
+│ 'c1a1a777a52f765ebfa295a35c12280279edd46073d41f4767602f819f574f82_0:1' │ 'LCAT' │
+│ 'c1a1a777a52f765ebfa295a35c12280279edd46073d41f4767602f819f574f82_0:0' │ 'LCAT' │
+┴────────────────────────────────────────────────────────────────────────┴────────┘
+```
+
+2. Deploy a collection
+
+- deploy with a metadata json:
+
+
+```bash
+yarn cli deployNft --metadata=metadata.json
+```
+
+`metadata.json`:
+
+- closed mint:
+
+
+```json
+{
+    "name": "LCAT",
+    "symbol": "LCAT",
+    "description": "this is a cat721 nft collection",
+    "max": "10"
+}
+```
+
+- open mint:
+
+
+```json
+{
+    "name": "LCAT",
+    "symbol": "LCAT",
+    "description": "this is a cat721 nft collection",
+    "premine": "0",
+    "max": "10"
+}
+```
+
+- deploy with command line options:
+
+```bash
+yarn cli deployNft --name=LCAT --symbol=LCAT --max=10 --premine=0
+```
+
+You should see an output similar to:
+
+```
+Nft collection LCAT has been deployed.
+CollectionId: c1a1a777a52f765ebfa295a35c12280279edd46073d41f4767602f819f574f82_0
+Genesis txid: c1a1a777a52f765ebfa295a35c12280279edd46073d41f4767602f819f574f82
+Reveal txid: d7871b55f88545e0fb4df2a793fea77d0717a7bb7cab3d22a59b72ddb5b51265
+```
+
+
+3. Mint nft
+
+```bash
+yarn cli mintNft -i [collectionId]
+```
+You should see an output similar to:
+
+```
+Minting LCAT NFT in txid: ef9d98eeae21c6bd8aa172cc1d78d9e4e3749a7632e4119f2f2484396f95f5cb ...
+```
+
+4. Send nft
+
+```bash
+yarn cli sendNft -i [collectionId] -l [localId] [receiver]
+```
+You should see an output similar to:
+
+```
+Sending LCAT:0 nft  to bc1ppresfm876y9ddn3fgw2zr0wj0pl3zanslje9nfpznq3kc90q46rqvm9k07 
+in txid: 277eb0198b4fed9a03845d279cf58fc3289e8a68abdd36981381accb8c24ef52
+```
+
 
 -----------------
 
-### FeeRate
+## FeeRate
 
 `deploy`, `mint`, and `send` commands can all specify a fee rate via option `--fee-rate`.
