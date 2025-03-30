@@ -1,4 +1,5 @@
-import { ByteString, ExtPsbt, FixedArray, satoshiToHex } from '@scrypt-inc/scrypt-ts-btc';
+import { ByteString, ExtPsbt, FixedArray } from '@scrypt-inc/scrypt-ts-btc';
+import { satoshiToHex } from '../../src';
 
 export function applyArray<T, COUNT extends number>(
     changesArray: T[],

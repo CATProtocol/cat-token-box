@@ -41,8 +41,6 @@ export function pick(tokens: Array<CAT20Utxo>, amount: bigint): Array<CAT20Utxo>
     return [];
 }
 
-
-
 /**
  * Select CAT20 UTXOs for burn
  * @param tokens Cat20 UTXOs

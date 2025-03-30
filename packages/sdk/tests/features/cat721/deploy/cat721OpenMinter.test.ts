@@ -8,7 +8,7 @@ import { isP2TR, scriptToP2tr, toTokenAddress, toXOnly } from '../../../../src/l
 import { testChainProvider, testUtxoProvider } from '../../../utils/testProvider';
 import { getCatNFTCommitScript } from '../../../../src/lib/commit';
 import { CAT721MerkleLeaf, HEIGHT, MerkleProof, OpenMinterCat721Meta, ProofNodePos } from '../../../../src';
-import { bvmVerify, ExtPsbt, Ripemd160, UTXO } from '@scrypt-inc/scrypt-ts-btc';
+import { bvmVerify, ExtPsbt, Ripemd160 } from '@scrypt-inc/scrypt-ts-btc';
 import {
     CAT721OpenMinterCovenant,
     CAT721OpenMinterMerkleTreeData,

@@ -1,14 +1,14 @@
-import { FixedArray, GUARD_TOKEN_TYPE_MAX, Int32, StructObject, TX_INPUT_COUNT_MAX } from '@scrypt-inc/scrypt-ts-btc';
+import { FixedArray, GUARD_TOKEN_TYPE_MAX, Int32, TX_INPUT_COUNT_MAX } from '@scrypt-inc/scrypt-ts-btc';
 import { ByteString } from '@scrypt-inc/scrypt-ts-btc';
 
-export interface CAT20State extends StructObject {
+export type CAT20State = {
     // owner address
     ownerAddr: ByteString;
     // token amount
     amount: Int32;
-}
+};
 
-export interface CAT20GuardConstState extends StructObject {
+export type CAT20GuardConstState = {
     // state hash for each input of curTx
     // the input could come from a token output or any other type of contract outputs
     inputStateHashes: FixedArray<ByteString, typeof TX_INPUT_COUNT_MAX>;
@@ -45,17 +45,17 @@ export interface CAT20GuardConstState extends StructObject {
     // the input #1 and #4 is a token contract with script tokenScripts[0] = 'token1Script'
     // the input #2 and #3 is a token contract with script tokenScripts[1] = 'token2Script'
     tokenScriptIndexes: FixedArray<Int32, typeof TX_INPUT_COUNT_MAX>;
-}
+};
 
-export interface CAT20ClosedMinterState extends StructObject {
+export type CAT20ClosedMinterState = {
     tokenScript: ByteString;
-}
+};
 
-export interface CAT20OpenMinterState extends StructObject {
+export type CAT20OpenMinterState = {
     // token script
     tokenScript: ByteString;
     // first-time mint flag
     hasMintedBefore: boolean;
     // remaining mint count
     remainingCount: Int32;
-}
+};

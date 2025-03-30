@@ -5,22 +5,29 @@ import {
     SupportedNetwork,
     UTXO,
     Ripemd160,
-    getBackTraceInfo_,
+    getBackTraceInfo,
     ExtPsbt,
     hexToUint8Array,
     PubKey,
-    satoshiToHex,
     uint8ArrayToHex,
     hash160,
     toXOnly,
-    byteStringToBigInt,
     StateHashes,
     Int32,
 } from '@scrypt-inc/scrypt-ts-btc';
 import { getCatCollectionCommitScript } from '../lib/commit';
 import { Postage } from '../lib/constants';
 import { OpenMinterCat721Meta } from '../lib/metadata';
-import { outpoint2ByteString, isP2TR, scriptToP2tr, toTokenAddress, catToXOnly, pubKeyPrefix } from '../lib/utils';
+import {
+    outpoint2ByteString,
+    isP2TR,
+    scriptToP2tr,
+    toTokenAddress,
+    catToXOnly,
+    pubKeyPrefix,
+    satoshiToHex,
+    byteStringToBigInt,
+} from '../lib/utils';
 import { CAT721MerkleLeaf, CAT721OpenMinterState, MerkleProof, ProofNodePos } from '../contracts';
 import { CAT721OpenMinter } from '../contracts/cat721/minters/cat721OpenMinter';
 import { CAT721Covenant } from './cat721Covenant';
@@ -204,7 +211,7 @@ export class CAT721OpenMinterMerkleTreeData {
         for (let i = 1; i < this.height; i++) {
             prevHash = this.hashNodes[i - 1];
             curHash = [];
-            for (let j = 0; j < prevHash.length;) {
+            for (let j = 0; j < prevHash.length; ) {
                 if (j + 1 < prevHash.length) {
                     curHash.push(hash160(prevHash[j] + prevHash[j + 1]));
                 } else {
@@ -404,11 +411,11 @@ export class CAT721OpenMinterCovenant extends StatefulCovenant<CAT721OpenMinterS
             // add fees
             .spendUTXO(feeUtxos)
             // add change output
-            .change(changeAddress, feeRate)
+            .change(changeAddress, feeRate);
 
         const minterInputIndex = 0;
 
-        const backTraceInfo = getBackTraceInfo_(spentMinterTxHex, spentMinterPreTxHex, minterInputIndex);
+        const backTraceInfo = getBackTraceInfo(spentMinterTxHex, spentMinterPreTxHex, minterInputIndex);
 
         mintTx.updateCovenantInput(minterInputIndex, spentMinter, {
             invokeMethod: (contract: CAT721OpenMinter, curPsbt: ExtPsbt) => {
@@ -467,11 +474,7 @@ export class CAT721OpenMinterCovenant extends StatefulCovenant<CAT721OpenMinterS
         return new CAT721Covenant(this.address, { localId, ownerAddr: receiverAddr });
     }
 
-    static updateMerkleTree(
-        collectionMerkleTree: CAT721OpenMinterMerkleTreeData,
-        max: Int32,
-        nextLocalId: Int32,
-    ) {
+    static updateMerkleTree(collectionMerkleTree: CAT721OpenMinterMerkleTreeData, max: Int32, nextLocalId: Int32) {
         for (let i = 0n; i < max; i++) {
             if (i < nextLocalId) {
                 const oldLeaf = collectionMerkleTree.getLeaf(Number(i));
@@ -485,7 +488,12 @@ export class CAT721OpenMinterCovenant extends StatefulCovenant<CAT721OpenMinterS
         }
     }
 
-    static utxoFromMintTx(txHex: string, outputIndex: number, max: Int32, collectionMerkleTree: CAT721OpenMinterMerkleTreeData): CAT721OpenMinterUtxo {
+    static utxoFromMintTx(
+        txHex: string,
+        outputIndex: number,
+        max: Int32,
+        collectionMerkleTree: CAT721OpenMinterMerkleTreeData,
+    ): CAT721OpenMinterUtxo {
         const tx = Transaction.fromHex(txHex);
         const minterOutput = tx.outs[outputIndex];
         if (!minterOutput) {
@@ -493,14 +501,13 @@ export class CAT721OpenMinterCovenant extends StatefulCovenant<CAT721OpenMinterS
         }
         const witness = tx.ins[0].witness;
         const witnessHexList = witness.map((v) => uint8ArrayToHex(v));
-  
-        const nftScript = witnessHexList[82]
-        const merkleRoot = witnessHexList[83]
+
+        const nftScript = witnessHexList[82];
+        // const merkleRoot = witnessHexList[83];
         const nextLocalId = byteStringToBigInt(witnessHexList[84]) + 1n;
         const txoStateHashes = witnessHexList.slice(witnessHexList.length - 20 - 5, witnessHexList.length - 20);
 
         CAT721OpenMinterCovenant.updateMerkleTree(collectionMerkleTree, max, nextLocalId);
-
 
         const state: CAT721OpenMinterState = {
             nftScript: nftScript,
@@ -519,9 +526,7 @@ export class CAT721OpenMinterCovenant extends StatefulCovenant<CAT721OpenMinterS
             state: state,
         };
         return cat721MinterUtxo;
-
     }
-
 }
 
 // export function pubKeyPrefix(pubKeyHex: string): string {

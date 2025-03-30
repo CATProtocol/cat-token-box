@@ -1,10 +1,8 @@
 import {
     ByteString,
     ChainProvider,
-    emptyOutputByteStrings,
     fill,
     FixedArray,
-    getTxId,
     Int32,
     STATE_OUTPUT_COUNT_MAX,
     StatefulCovenant,
@@ -12,7 +10,7 @@ import {
     SupportedNetwork,
     TX_INPUT_COUNT_MAX,
 } from '@scrypt-inc/scrypt-ts-btc';
-import { addrToP2trLockingScript, CAT20, CAT20Guard, CAT20State } from '..';
+import { addrToP2trLockingScript, CAT20, CAT20Guard, CAT20State, emptyOutputByteStrings, getTxId } from '..';
 import { CAT20GuardCovenant } from './cat20GuardCovenant';
 import { CAT20Utxo } from '../lib/provider';
 import { Transaction } from '@scrypt-inc/bitcoinjs-lib';

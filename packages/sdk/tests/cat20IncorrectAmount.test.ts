@@ -9,7 +9,7 @@ import { catToXOnly, getDummyUtxo, isP2TR, pubKeyPrefix } from '../src/lib/utils
 import {
     PubKey,
     ExtPsbt,
-    getBackTraceInfo_,
+    getBackTraceInfo,
     fill,
     toByteString,
     STATE_OUTPUT_COUNT_MAX,
@@ -146,7 +146,7 @@ describe('Test incorrect amount for cat20', () => {
                         },
                         guardState,
                         BigInt(guardInputIndex),
-                        getBackTraceInfo_(utxo.trace.prevTxHex, utxo.trace.prevPrevTxHex, utxo.trace.prevTxInput),
+                        getBackTraceInfo(utxo.trace.prevTxHex, utxo.trace.prevPrevTxHex, utxo.trace.prevTxInput),
                     );
                 },
             });

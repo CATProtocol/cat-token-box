@@ -1,8 +1,7 @@
 import {
-    bigintToByteString,
     ByteString,
     ExtPsbt,
-    getBackTraceInfo_,
+    getBackTraceInfo,
     hexToUint8Array,
     Int32,
     PubKey,
@@ -12,6 +11,7 @@ import {
 } from '@scrypt-inc/scrypt-ts-btc';
 import { LEAF_VERSION_TAPSCRIPT } from '@scrypt-inc/bitcoinjs-lib';
 import {
+    bigintToByteString,
     ClosedMinterCat721Meta,
     getCatCommitScript,
     isP2TR,
@@ -194,7 +194,7 @@ export class CAT721ClosedMinterCovenant extends StatefulCovenant<CAT721ClosedMin
 
         const minterInputIndex = 0;
         const nftState = nft.state!;
-        const backTraceInfo = getBackTraceInfo_(spentMinterTxHex, spentMinterPreTxHex, minterInputIndex);
+        const backTraceInfo = getBackTraceInfo(spentMinterTxHex, spentMinterPreTxHex, minterInputIndex);
 
         mintTx.updateCovenantInput(minterInputIndex, spentMinter, {
             invokeMethod: (contract: CAT721ClosedMinter, curPsbt) => {

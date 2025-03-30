@@ -5,6 +5,7 @@ import {
     len,
     method,
     NFT_GUARD_COLLECTION_TYPE_MAX,
+    Ripemd160,
     STATE_HASH_BYTE_LEN,
     StateLib,
     TX_INPUT_COUNT_MAX,
@@ -14,7 +15,7 @@ import { CAT721GuardConstState } from './types';
 
 export class CAT721GuardStateLib extends StateLib<CAT721GuardConstState> {
     @method()
-    static checkState(_state: CAT721GuardConstState): void {
+    static formalCheckState(_state: CAT721GuardConstState): Ripemd160 {
         CAT721GuardStateLib.checkNftScriptsUniq(_state.nftScripts);
 
         for (let i = 0; i < NFT_GUARD_COLLECTION_TYPE_MAX; i++) {
@@ -29,6 +30,7 @@ export class CAT721GuardStateLib extends StateLib<CAT721GuardConstState> {
             const scriptIndex = _state.nftScriptIndexes[i];
             assert(scriptIndex >= -1 && scriptIndex < NFT_GUARD_COLLECTION_TYPE_MAX);
         }
+        return CAT721GuardStateLib.stateHash(_state);
     }
 
     @method()

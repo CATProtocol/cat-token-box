@@ -1,9 +1,10 @@
 import { Psbt, Transaction } from '@scrypt-inc/bitcoinjs-lib';
-import { ChainProvider, ExtPsbt, getTxId, markSpent, Ripemd160, Signer, UtxoProvider } from '@scrypt-inc/scrypt-ts-btc';
+import { ChainProvider, ExtPsbt, markSpent, Ripemd160, Signer, UtxoProvider } from '@scrypt-inc/scrypt-ts-btc';
 import { OpenMinterCat20Meta } from '../../../lib/metadata';
 import { CAT20OpenMinterUtxo } from '../../../lib/provider';
 import { CAT20OpenMinterState } from '../../../contracts';
 import { CAT20OpenMinterCovenant } from '../../../covenants';
+import { getTxId } from '../../../lib/utils';
 
 /**
  * Mint CAT20 tokens in a single transaction.

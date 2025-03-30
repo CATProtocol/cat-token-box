@@ -1,15 +1,6 @@
 import { Psbt, Transaction } from '@scrypt-inc/bitcoinjs-lib';
-import {
-    ByteString,
-    ChainProvider,
-    ExtPsbt,
-    getTxId,
-    Int32,
-    markSpent,
-    Signer,
-    UtxoProvider,
-} from '@scrypt-inc/scrypt-ts-btc';
-import { CAT20Covenant } from '../../../../src';
+import { ByteString, ChainProvider, ExtPsbt, Int32, markSpent, Signer, UtxoProvider } from '@scrypt-inc/scrypt-ts-btc';
+import { CAT20Covenant, getTxId } from '../../../../src';
 import { CAT20ClosedMinterUtxo } from '../../testCAT20Generater';
 import { CAT20Utxo } from '../../../../src/lib/provider';
 import { CAT20ClosedMinterCovenant } from '../cat20ClosedMinterCovenant';
@@ -58,7 +49,6 @@ export async function mint(
         tokenScript: token.lockingScriptHex,
     };
     const utxos = await utxoProvider.getUtxos(address);
-
 
     const mintPsbt = CAT20ClosedMinterCovenant.buildMintTx(
         minterPreTxHex,

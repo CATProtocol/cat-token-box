@@ -1,8 +1,7 @@
 import {
-    bigintToByteString,
     ByteString,
     ExtPsbt,
-    getBackTraceInfo_,
+    getBackTraceInfo,
     hexToUint8Array,
     PubKey,
     StatefulCovenant,
@@ -24,6 +23,7 @@ import {
     toTokenAddress,
     toXOnly,
 } from '../../../src';
+import { bigintToByteString } from '../../../src/lib/utils';
 
 export class CAT20ClosedMinterCovenant extends StatefulCovenant<CAT20ClosedMinterState> {
     readonly tokenScript: ByteString;
@@ -172,7 +172,7 @@ export class CAT20ClosedMinterCovenant extends StatefulCovenant<CAT20ClosedMinte
 
         const minterInputIndex = 0;
         const tokenState = token.state!;
-        const backTraceInfo = getBackTraceInfo_(spentMinterTxHex, spentMinterPreTxHex, minterInputIndex);
+        const backTraceInfo = getBackTraceInfo(spentMinterTxHex, spentMinterPreTxHex, minterInputIndex);
 
         mintTx.updateCovenantInput(minterInputIndex, spentMinter, {
             invokeMethod: (contract: CAT20ClosedMinter, curPsbt) => {

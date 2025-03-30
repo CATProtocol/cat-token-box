@@ -25,7 +25,7 @@ import { CAT721GuardCovenant } from '../src/covenants/cat721GuardCovenant';
 import { catToXOnly, getDummyUtxo, isP2TR, pubKeyPrefix } from '../src/lib/utils';
 import {
     fill,
-    getBackTraceInfo_,
+    getBackTraceInfo,
     PubKey,
     STATE_OUTPUT_COUNT_MAX,
     toByteString,
@@ -94,7 +94,7 @@ describe('Test Incorrect BacktraceInfo', () => {
         cat20.tracedUtxos.forEach((utxo, inputIndex) => {
             psbt.updateCovenantInput(inputIndex, utxo.token, {
                 invokeMethod: (contract: CAT20, curPsbt: ExtPsbt) => {
-                    const incorrectBacktraceInfo = getBackTraceInfo_(
+                    const incorrectBacktraceInfo = getBackTraceInfo(
                         utxo.trace.prevTxHex,
                         utxo.trace.prevTxHex,
                         utxo.trace.prevTxInput,
@@ -199,7 +199,7 @@ describe('Test Incorrect BacktraceInfo', () => {
         cat721.tracedUtxos.forEach((utxo, inputIndex) => {
             psbt.updateCovenantInput(inputIndex, utxo.nft, {
                 invokeMethod: (contract: CAT721, curPsbt: ExtPsbt) => {
-                    const incorrectBacktraceInfo = getBackTraceInfo_(
+                    const incorrectBacktraceInfo = getBackTraceInfo(
                         utxo.trace.prevTxHex,
                         utxo.trace.prevPrevTxHex,
                         // error input index

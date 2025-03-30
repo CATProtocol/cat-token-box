@@ -2,7 +2,7 @@ import {
     ByteString,
     ChainProvider,
     fill,
-    getBackTraceInfo_,
+    getBackTraceInfo,
     Int32,
     markSpent,
     Signer,
@@ -13,13 +13,19 @@ import {
     UtxoProvider,
     PubKey,
     FixedArray,
-    emptyOutputByteStrings,
 } from '@scrypt-inc/scrypt-ts-btc';
 import { CAT20Utxo } from '../../../lib/provider';
 import { ExtPsbt } from '@scrypt-inc/scrypt-ts-btc';
 import { CAT20Covenant, CAT20GuardCovenant, TracedCAT20Token } from '../../../covenants';
 import { Postage } from '../../../lib/constants';
-import { catToXOnly, filterFeeUtxos, isP2TR, pubKeyPrefix, uint8ArrayToHex } from '../../../lib/utils';
+import {
+    catToXOnly,
+    emptyOutputByteStrings,
+    filterFeeUtxos,
+    isP2TR,
+    pubKeyPrefix,
+    uint8ArrayToHex,
+} from '../../../lib/utils';
 import { Psbt, address as Address } from '@scrypt-inc/bitcoinjs-lib';
 import { CAT20, CAT20Guard, CAT20State } from '../../../contracts';
 
@@ -186,7 +192,8 @@ function buildSendTx(
         sendPsbt.addCovenantInput(inputToken);
     }
 
-    sendPsbt.addCovenantInput(guard)
+    sendPsbt
+        .addCovenantInput(guard)
         .spendUTXO([guardPsbt.getUtxo(2)])
         .change(changeAddress, feeRate);
 
@@ -207,7 +214,7 @@ function buildSendTx(
                     },
                     guard.state,
                     BigInt(guardInputIndex),
-                    getBackTraceInfo_(
+                    getBackTraceInfo(
                         tracableTokens[i].trace.prevTxHex,
                         tracableTokens[i].trace.prevPrevTxHex,
                         tracableTokens[i].trace.prevTxInput,
@@ -256,7 +263,7 @@ function buildSendTx(
                 } else {
                     return emtpyStr;
                 }
-                }) as FixedArray<ByteString, typeof STATE_OUTPUT_COUNT_MAX>;
+            }) as FixedArray<ByteString, typeof STATE_OUTPUT_COUNT_MAX>;
 
             contract.unlock(
                 ownerAddrOrScripts,
