@@ -70,6 +70,7 @@ The development tools have been significantly improved to simplify the contract 
 | Token State Access             | Indirect                            | Direct with `InputStateProof`       |
 | Token Transfer Support         | Limited                             | Supports 4 types                    |
 | Contract Size                  | Larger                              | Smaller                             |
+| Lines of code in contracts     | ~3200+ Lines                        | ~ 1300+ Lines                       |
 
 ---
 
