@@ -107,7 +107,7 @@ export class CAT721Guard extends SmartContract<CAT721GuardConstState> {
                 // this is a non-nft input
                 assert(!this.state.nftBurnMasks[Number(i)]);
             }
-            if (i < this.ctx.inputCount) {
+            if (nftScriptIndex != -1n || i == this.ctx.inputIndexVal) {
                 this.checkInputStateHash(
                     i,
                     i !== this.ctx.inputIndexVal ? this.state.inputStateHashes[Number(i)] : thisStateHash,

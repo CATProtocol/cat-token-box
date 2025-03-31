@@ -98,7 +98,7 @@ export class CAT20Guard extends SmartContract<CAT20GuardConstState> {
                 );
                 tokenScriptIndexMax = tokenScriptIndex > tokenScriptIndexMax ? tokenScriptIndex : tokenScriptIndexMax;
             }
-            if (i < this.ctx.inputCount) {
+            if (tokenScriptIndex != -1n || i == this.ctx.inputIndexVal) {
                 this.checkInputStateHash(
                     i,
                     i !== this.ctx.inputIndexVal ? this.state.inputStateHashes[Number(i)] : thisStateHash,
