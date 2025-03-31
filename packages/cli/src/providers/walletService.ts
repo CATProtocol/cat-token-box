@@ -4,7 +4,6 @@ import * as ecc from '@bitcoinerlab/secp256k1';
 import { Inject, Injectable } from '@nestjs/common';
 import { existsSync, readFileSync, writeFileSync } from 'fs';
 import {
-  AddressType,
   logerror,
   rpc_create_watchonly_wallet,
   rpc_importdescriptors,
@@ -14,7 +13,7 @@ import { ConfigService } from './configService';
 import { join } from 'path';
 import * as bitcoinjs from '@scrypt-inc/bitcoinjs-lib';
 
-import { DefaultSigner, Signer, PSBTOptions } from '@scrypt-inc/scrypt-ts-btc';
+import { DefaultSigner, Signer, SignOptions } from '@scrypt-inc/scrypt-ts-btc';
 import ECPairFactory from 'ecpair';
 const bip32 = BIP32Factory(ecc);
 const ECPair = ECPairFactory(ecc);
@@ -38,7 +37,7 @@ export class WalletService implements Signer {
 
     return this.signer.getPublicKey();
   }
-  signPsbt(psbtHex: string, options?: PSBTOptions): Promise<string> {
+  signPsbt(psbtHex: string, options?: SignOptions): Promise<string> {
     if (this.signer === null) {
       throw new Error('wallet unload!');
     }
@@ -46,7 +45,7 @@ export class WalletService implements Signer {
     return this.signer.signPsbt(psbtHex, options);
   }
   signPsbts(
-    reqs: { psbtHex: string; options?: PSBTOptions }[],
+    reqs: { psbtHex: string; options?: SignOptions }[],
   ): Promise<string[]> {
     if (this.signer === null) {
       throw new Error('wallet unload!');
@@ -109,7 +108,7 @@ export class WalletService implements Signer {
       this.checkWalletJson(wallet);
       this.wallet = wallet;
       const ketPair = ECPair.fromPrivateKey(this.getPrivateKey());
-      this.signer = new DefaultSigner(ketPair, this.getAddressType());
+      this.signer = new DefaultSigner(ketPair, this.configService.getNetwork());
       return wallet;
     } catch (error) {
       logerror(`parse wallet file failed!`, error);
@@ -125,14 +124,6 @@ export class WalletService implements Signer {
   getWalletName() {
     return this.wallet.name;
   }
-
-  getAddressType = () => {
-    const wallet = this.getWallet();
-    if (wallet === null) {
-      throw new Error("run 'create wallet' command to create a wallet.");
-    }
-    return wallet.addressType || AddressType.P2TR;
-  };
 
   getAccountPath = () => {
     const wallet = this.getWallet();
