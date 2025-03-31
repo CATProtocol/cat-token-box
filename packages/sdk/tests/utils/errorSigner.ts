@@ -1,4 +1,4 @@
-import { hash256, hexToUint8Array, PSBTOptions, Signer, toXOnly, uint8ArrayToHex } from '@scrypt-inc/scrypt-ts-btc';
+import { hash256, hexToUint8Array, SignOptions, Signer, toXOnly, uint8ArrayToHex } from '@scrypt-inc/scrypt-ts-btc';
 import * as ecc from '@bitcoinerlab/secp256k1';
 import ECPairFactory, { ECPairInterface } from 'ecpair';
 import * as bitcoinjs from '@scrypt-inc/bitcoinjs-lib';
@@ -48,7 +48,7 @@ export class ErrorDefaultSigner implements Signer {
         return Promise.resolve(uint8ArrayToHex(this.keyPair.publicKey));
     }
 
-    async signPsbt(psbtHex: string, options?: PSBTOptions): Promise<string> {
+    async signPsbt(psbtHex: string, options?: SignOptions): Promise<string> {
         const psbt = bitcoinjs.Psbt.fromHex(psbtHex);
         const { output } = bitcoinjs.payments.p2tr({
             address: this.getP2TRAddress(),
@@ -133,7 +133,7 @@ export class ErrorDefaultSigner implements Signer {
         }
         return Promise.resolve(psbt.toHex());
     }
-    signPsbts(reqs: { psbtHex: string; options?: PSBTOptions }[]): Promise<string[]> {
+    signPsbts(reqs: { psbtHex: string; options?: SignOptions }[]): Promise<string[]> {
         return Promise.all(reqs.map((req) => this.signPsbt(req.psbtHex, req.options)));
     }
 

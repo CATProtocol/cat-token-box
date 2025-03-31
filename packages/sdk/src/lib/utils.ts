@@ -1,8 +1,10 @@
 import {
     ByteString,
+    fill,
     hash160,
     Outpoint,
     OWNER_ADDR_P2WPKH_BYTE_LEN,
+    STATE_OUTPUT_COUNT_MAX,
     TAPROOT_ONLY_SCRIPT_SPENT_KEY,
     toByteString,
     TX_P2TR_OUTPUT_SCRIPT_BYTE_LEN,
@@ -19,7 +21,9 @@ import {
     address,
     LEAF_VERSION_TAPSCRIPT,
     script,
+    bn,
 } from '@scrypt-inc/bitcoinjs-lib';
+import * as tools from 'uint8array-tools';
 import { randomBytes } from 'crypto';
 import { encodingLength, encode } from 'varuint-bitcoin';
 
@@ -177,8 +181,10 @@ export function catToXOnly(pubKeyHex: string, isP2TR: boolean): string {
 
 export function validteSupportedAddress(address: string): boolean {
     try {
-        return isP2TR(address) || isP2WPKH(address) || isP2WSH(address)
-    } catch (e) { /* empty */ }
+        return isP2TR(address) || isP2WPKH(address) || isP2WSH(address);
+    } catch (e) {
+        /* empty */
+    }
     return false;
 }
 
@@ -357,4 +363,34 @@ export function filterFeeUtxos(utxos: UTXO[]): UTXO[] {
 
 export function sumUtxosSatoshi(utxos: UTXO[]): number {
     return utxos.reduce((acc, utxo) => acc + utxo.satoshis, 0);
+}
+
+export const emptyString = toByteString('');
+
+export const emptyOutputByteStrings = function () {
+    return fill(emptyString, STATE_OUTPUT_COUNT_MAX);
+};
+
+export function satoshiToHex(value: bigint): string {
+    const bf = new Uint8Array(8);
+    tools.writeUInt64(bf, 0, value, 'LE');
+    return uint8ArrayToHex(bf);
+}
+
+export function byteStringToBigInt(a: ByteString): bigint {
+    const n = bn.buf2BN(hexToUint8Array(a), false);
+    return n;
+}
+
+export function bigintToByteString(n: bigint, size: bigint): ByteString {
+    let hex = n.toString(16);
+    hex = hex.padStart(Number(size) * 2, '0');
+
+    if (hex.length > Number(size) * 2) {
+        throw new Error(`bigint out of range, bigint: ${n}, size: ${size}`);
+    }
+
+    // to little endian
+    const le = tools.fromHex(hex).reverse();
+    return tools.toHex(le);
 }

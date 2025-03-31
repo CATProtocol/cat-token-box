@@ -43,7 +43,7 @@ export class CAT721 extends SmartContract<CAT721State> {
         CAT721StateLib.checkState(this.state);
         const cat721StateHash = CAT721StateLib.stateHash(this.state);
 
-        CAT721GuardStateLib.checkState(guardInfo);
+        CAT721GuardStateLib.formalCheckState(guardInfo);
         const guardStateHash = CAT721GuardStateLib.stateHash(guardInfo);
         this.checkInputStateHash(guardInputIndex, guardStateHash);
 

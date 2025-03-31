@@ -9,7 +9,7 @@ import { loadAllArtifacts } from './features/cat20/utils';
 import { testSigner } from './utils/testSigner';
 import { createCat20, TestCat20 } from './utils/testCAT20Generater';
 import { catToXOnly, getDummyUtxo, isP2TR, pubKeyPrefix } from '../src/lib/utils';
-import { fill, getBackTraceInfo_, PubKey, toByteString } from '@scrypt-inc/scrypt-ts-btc';
+import { fill, getBackTraceInfo, PubKey, toByteString } from '@scrypt-inc/scrypt-ts-btc';
 import { applyArray, getOutputSatoshisList } from './utils/txHelper';
 
 use(chaiAsPromised);
@@ -126,7 +126,7 @@ describe('Test ExtPsbt inputCount/outputCount exceed limit', () => {
                             },
                             guardState,
                             BigInt(guardInputIndex),
-                            getBackTraceInfo_(utxo.trace.prevTxHex, utxo.trace.prevPrevTxHex, utxo.trace.prevTxInput),
+                            getBackTraceInfo(utxo.trace.prevTxHex, utxo.trace.prevPrevTxHex, utxo.trace.prevTxInput),
                         );
                     },
                 });

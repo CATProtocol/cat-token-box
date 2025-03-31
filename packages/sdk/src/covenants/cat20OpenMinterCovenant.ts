@@ -6,22 +6,29 @@ import {
     UTXO,
     fill,
     Ripemd160,
-    getBackTraceInfo_,
+    getBackTraceInfo,
     FixedArray,
     ExtPsbt,
     hexToUint8Array,
     Int32,
     PubKey,
     Sig,
-    satoshiToHex,
     uint8ArrayToHex,
-    byteStringToBigInt,
     StateHashes,
 } from '@scrypt-inc/scrypt-ts-btc';
 import { getCatCommitScript } from '../lib/commit';
 import { Postage } from '../lib/constants';
 import { OpenMinterCat20Meta, scaleUpAmounts } from '../lib/metadata';
-import { outpoint2ByteString, isP2TR, scriptToP2tr, toTokenAddress, pubKeyPrefix, catToXOnly } from '../lib/utils';
+import {
+    outpoint2ByteString,
+    isP2TR,
+    scriptToP2tr,
+    toTokenAddress,
+    pubKeyPrefix,
+    catToXOnly,
+    satoshiToHex,
+    byteStringToBigInt,
+} from '../lib/utils';
 import { CAT20Covenant } from './cat20Covenant';
 import { CAT20OpenMinterState } from '../contracts';
 import { CAT20OpenMinter } from '../contracts/cat20/minters/cat20OpenMinter';
@@ -204,7 +211,7 @@ export class CAT20OpenMinterCovenant extends StatefulCovenant<CAT20OpenMinterSta
 
         const minterInputIndex = 0;
 
-        const backTraceInfo = getBackTraceInfo_(spentMinterTxHex, spentMinterPreTxHex, minterInputIndex);
+        const backTraceInfo = getBackTraceInfo(spentMinterTxHex, spentMinterPreTxHex, minterInputIndex);
 
         mintTx
             // add token output

@@ -9,7 +9,7 @@ import { catToXOnly, getDummyUtxo, isP2TR, pubKeyPrefix } from '../src/lib/utils
 import {
     ExtPsbt,
     fill,
-    getBackTraceInfo_,
+    getBackTraceInfo,
     Int32,
     PubKey,
     STATE_OUTPUT_COUNT_MAX,
@@ -290,7 +290,7 @@ describe('Test multiple cat20 & cat721 token types transfer/burn in a single txn
                                 },
                                 cat20GuardState,
                                 BigInt(cat20GuardInputIndex),
-                                getBackTraceInfo_(
+                                getBackTraceInfo(
                                     cat20.utxo.trace.prevTxHex,
                                     cat20.utxo.trace.prevPrevTxHex,
                                     cat20.utxo.trace.prevTxInput,
@@ -364,7 +364,7 @@ describe('Test multiple cat20 & cat721 token types transfer/burn in a single txn
                                 },
                                 cat721GuardState,
                                 BigInt(cat721GuardInputIndex),
-                                getBackTraceInfo_(
+                                getBackTraceInfo(
                                     cat721.utxo.trace.prevTxHex,
                                     cat721.utxo.trace.prevPrevTxHex,
                                     cat721.utxo.trace.prevTxInput,

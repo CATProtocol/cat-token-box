@@ -19,7 +19,7 @@ import {
     isP2TR,
     pubKeyPrefix,
 } from '../src';
-import { ExtPsbt, getBackTraceInfo_, PubKey } from '@scrypt-inc/scrypt-ts-btc';
+import { ExtPsbt, getBackTraceInfo, PubKey } from '@scrypt-inc/scrypt-ts-btc';
 import { CAT20Covenant, Postage } from '../src';
 import { loadAllArtifacts } from './features/cat20/utils';
 
@@ -74,7 +74,7 @@ describe('Test the guard input, fake or missing', async () => {
                         },
                         guardState,
                         BigInt(2),
-                        getBackTraceInfo_(
+                        getBackTraceInfo(
                             cat20.tracedUtxos[0].trace.prevTxHex,
                             cat20.tracedUtxos[0].trace.prevPrevTxHex,
                             cat20.tracedUtxos[0].trace.prevTxInput,
@@ -94,7 +94,7 @@ describe('Test the guard input, fake or missing', async () => {
                         },
                         guardState,
                         BigInt(2),
-                        getBackTraceInfo_(
+                        getBackTraceInfo(
                             cat20.tracedUtxos[1].trace.prevTxHex,
                             cat20.tracedUtxos[1].trace.prevPrevTxHex,
                             cat20.tracedUtxos[1].trace.prevTxInput,
@@ -148,7 +148,7 @@ describe('Test the guard input, fake or missing', async () => {
                         },
                         guardState,
                         BigInt(2),
-                        getBackTraceInfo_(
+                        getBackTraceInfo(
                             cat721.tracedUtxos[0].trace.prevTxHex,
                             cat721.tracedUtxos[0].trace.prevPrevTxHex,
                             cat721.tracedUtxos[0].trace.prevTxInput,
@@ -168,7 +168,7 @@ describe('Test the guard input, fake or missing', async () => {
                         },
                         guardState,
                         BigInt(2),
-                        getBackTraceInfo_(
+                        getBackTraceInfo(
                             cat721.tracedUtxos[1].trace.prevTxHex,
                             cat721.tracedUtxos[1].trace.prevPrevTxHex,
                             cat721.tracedUtxos[1].trace.prevTxInput,

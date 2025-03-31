@@ -8,17 +8,16 @@ import {
     UtxoProvider,
     ExtPsbt,
     PubKey,
-    getBackTraceInfo_,
+    getBackTraceInfo,
     ByteString,
     FixedArray,
     Int32,
     STATE_OUTPUT_COUNT_MAX,
     uint8ArrayToHex,
-    emptyOutputByteStrings,
 } from '@scrypt-inc/scrypt-ts-btc';
 import { CAT20Covenant, CAT20GuardCovenant, TracedCAT20Token } from '../../../covenants';
 import { Postage } from '../../../lib/constants';
-import { catToXOnly, filterFeeUtxos, isP2TR, pubKeyPrefix } from '../../../lib/utils';
+import { catToXOnly, emptyOutputByteStrings, filterFeeUtxos, isP2TR, pubKeyPrefix } from '../../../lib/utils';
 import { CAT20Utxo } from '../../../lib/provider';
 import { CAT20, CAT20Guard, CAT20State } from '../../../contracts';
 import { Psbt } from '@scrypt-inc/bitcoinjs-lib';
@@ -159,8 +158,7 @@ function buildBurnTx(
             script: sendPsbt.stateHashRootScript,
             value: BigInt(0),
         })
-        .change(changeAddress, feeRate)
-
+        .change(changeAddress, feeRate);
 
     const guardInputIndex = inputTokens.length;
 
@@ -180,7 +178,7 @@ function buildBurnTx(
                     },
                     guard.state,
                     BigInt(guardInputIndex),
-                    getBackTraceInfo_(
+                    getBackTraceInfo(
                         tracableTokens[i].trace.prevTxHex,
                         tracableTokens[i].trace.prevPrevTxHex,
                         tracableTokens[i].trace.prevTxInput,
@@ -201,38 +199,40 @@ function buildBurnTx(
     });
 
     // unlock guard
-    sendPsbt.updateCovenantInput(guardInputIndex, guard, {
-        invokeMethod: (contract: CAT20Guard, curPsbt: ExtPsbt) => {
-            const tokenOwners = outputTokens.map((output) => output?.state!.ownerAddr || '');
-            const tokenAmounts = outputTokens.map((output) => output?.state!.amount || 0n);
-            const tokenScriptIndexArray = fill(-1n, STATE_OUTPUT_COUNT_MAX);
-            outputTokens.forEach((value, index) => {
-                if (value) {
-                    tokenScriptIndexArray[index] = 0n;
-                }
-            });
+    sendPsbt
+        .updateCovenantInput(guardInputIndex, guard, {
+            invokeMethod: (contract: CAT20Guard, curPsbt: ExtPsbt) => {
+                const tokenOwners = outputTokens.map((output) => output?.state!.ownerAddr || '');
+                const tokenAmounts = outputTokens.map((output) => output?.state!.amount || 0n);
+                const tokenScriptIndexArray = fill(-1n, STATE_OUTPUT_COUNT_MAX);
+                outputTokens.forEach((value, index) => {
+                    if (value) {
+                        tokenScriptIndexArray[index] = 0n;
+                    }
+                });
 
-            const outputSatoshisList = curPsbt.getOutputSatoshisList();
-            const outputSatoshis = emptyOutputByteStrings().map((emtpyStr, i) => {
-                if (outputSatoshisList[i + 1]) {
-                    return outputSatoshisList[i + 1];
-                } else {
-                    return emtpyStr;
-                }
+                const outputSatoshisList = curPsbt.getOutputSatoshisList();
+                const outputSatoshis = emptyOutputByteStrings().map((emtpyStr, i) => {
+                    if (outputSatoshisList[i + 1]) {
+                        return outputSatoshisList[i + 1];
+                    } else {
+                        return emtpyStr;
+                    }
                 }) as FixedArray<ByteString, typeof STATE_OUTPUT_COUNT_MAX>;
 
-            contract.unlock(
-                tokenOwners.map((ownerAddr, oidx) => {
-                    const output = curPsbt.txOutputs[oidx + 1];
-                    return ownerAddr || (output ? uint8ArrayToHex(output.script) : '');
-                }) as unknown as FixedArray<ByteString, typeof STATE_OUTPUT_COUNT_MAX>,
-                tokenAmounts as unknown as FixedArray<Int32, typeof STATE_OUTPUT_COUNT_MAX>,
-                tokenScriptIndexArray,
-                outputSatoshis,
-                cat20StateArray,
-                BigInt(curPsbt.txOutputs.length - 1),
-            );
-        },
-    }).seal();
+                contract.unlock(
+                    tokenOwners.map((ownerAddr, oidx) => {
+                        const output = curPsbt.txOutputs[oidx + 1];
+                        return ownerAddr || (output ? uint8ArrayToHex(output.script) : '');
+                    }) as unknown as FixedArray<ByteString, typeof STATE_OUTPUT_COUNT_MAX>,
+                    tokenAmounts as unknown as FixedArray<Int32, typeof STATE_OUTPUT_COUNT_MAX>,
+                    tokenScriptIndexArray,
+                    outputSatoshis,
+                    cat20StateArray,
+                    BigInt(curPsbt.txOutputs.length - 1),
+                );
+            },
+        })
+        .seal();
     return sendPsbt;
 }

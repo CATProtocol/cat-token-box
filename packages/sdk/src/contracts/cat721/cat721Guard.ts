@@ -22,7 +22,7 @@ import { CAT721StateLib } from './cat721State';
 import { CAT721GuardStateLib } from './cat721GuardState';
 
 export class CAT721Guard extends SmartContract<CAT721GuardConstState> {
-    @method()
+    @method({ autoCheckInputStateHash: false })
     public unlock(
         // the logic is the same as cat20 guard
         ownerAddrOrScripts: FixedArray<ByteString, typeof STATE_OUTPUT_COUNT_MAX>,
@@ -51,7 +51,7 @@ export class CAT721Guard extends SmartContract<CAT721GuardConstState> {
         assert(this.state.inputStateHashes[Number(this.ctx.inputIndexVal)] == toByteString(''));
 
         // check state
-        CAT721GuardStateLib.checkState(this.state);
+        const thisStateHash = CAT721GuardStateLib.formalCheckState(this.state);
 
         // how many different types of nft in curTx inputs
         let inputNftTypes = 0n;
@@ -94,7 +94,7 @@ export class CAT721Guard extends SmartContract<CAT721GuardConstState> {
                 assert(nftScript == this.ctx.spentScripts[Number(i)]);
                 const cat721StateHash = CAT721StateLib.stateHash(cat721States[Number(i)]);
                 assert(this.state.inputStateHashes[Number(i)] == cat721StateHash);
-                this.checkInputStateHash(i, cat721StateHash);
+                // this.checkInputStateHash(i, cat721StateHash);
                 nftScriptIndexMax = nftScriptIndex > nftScriptIndexMax ? nftScriptIndex : nftScriptIndexMax;
                 if (!this.state.nftBurnMasks[Number(i)]) {
                     // this nft is not burned
@@ -106,6 +106,12 @@ export class CAT721Guard extends SmartContract<CAT721GuardConstState> {
             } else {
                 // this is a non-nft input
                 assert(!this.state.nftBurnMasks[Number(i)]);
+            }
+            if (nftScriptIndex != -1n || i == this.ctx.inputIndexVal) {
+                this.checkInputStateHash(
+                    i,
+                    i !== this.ctx.inputIndexVal ? this.state.inputStateHashes[Number(i)] : thisStateHash,
+                );
             }
         }
         assert(nftScriptIndexMax >= 0n && nftScriptIndexMax == inputNftTypes - 1n);

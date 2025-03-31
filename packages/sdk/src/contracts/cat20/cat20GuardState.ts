@@ -5,6 +5,7 @@ import {
     GUARD_TOKEN_TYPE_MAX,
     len,
     method,
+    Ripemd160,
     STATE_HASH_BYTE_LEN,
     StateLib,
     TX_INPUT_COUNT_MAX,
@@ -14,7 +15,7 @@ import { CAT20GuardConstState } from './types';
 
 export class CAT20GuardStateLib extends StateLib<CAT20GuardConstState> {
     @method()
-    static checkState(_state: CAT20GuardConstState): void {
+    static formalCheckState(_state: CAT20GuardConstState): Ripemd160 {
         CAT20GuardStateLib.checkTokenScriptsUniq(_state.tokenScripts);
 
         for (let i = 0; i < GUARD_TOKEN_TYPE_MAX; i++) {
@@ -32,6 +33,7 @@ export class CAT20GuardStateLib extends StateLib<CAT20GuardConstState> {
             const scriptIndex = _state.tokenScriptIndexes[i];
             assert(scriptIndex >= -1 && scriptIndex < GUARD_TOKEN_TYPE_MAX);
         }
+        return CAT20GuardStateLib.stateHash(_state);
     }
 
     /**

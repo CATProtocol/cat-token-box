@@ -2,7 +2,7 @@ import {
     ByteString,
     ChainProvider,
     fill,
-    getBackTraceInfo_,
+    getBackTraceInfo,
     Int32,
     Signer,
     STATE_OUTPUT_COUNT_MAX,
@@ -15,12 +15,11 @@ import {
     Ripemd160,
     Sig,
     hash160,
-    emptyOutputByteStrings,
 } from '@scrypt-inc/scrypt-ts-btc';
 import { CAT721Utxo, getUtxos, processExtPsbts } from '../../../lib/provider';
 import { ExtPsbt } from '@scrypt-inc/scrypt-ts-btc';
 import { Postage } from '../../../lib/constants';
-import { uint8ArrayToHex } from '../../../lib/utils';
+import { emptyOutputByteStrings, uint8ArrayToHex } from '../../../lib/utils';
 import { CAT721, CAT721Guard, CAT721State } from '../../../contracts';
 import { CAT721Covenant, TracedCAT721Nft } from '../../../covenants/cat721Covenant';
 import { CAT721GuardCovenant } from '../../../covenants/cat721GuardCovenant';
@@ -137,7 +136,7 @@ function buildSendTx(
     sendPsbt
         .addCovenantInput(guard)
         .spendUTXO([guardPsbt.getUtxo(2)])
-        .change(changeAddress, feeRate)
+        .change(changeAddress, feeRate);
 
     const guardInputIndex = inputNfts.length;
     // unlock tokens
@@ -156,7 +155,7 @@ function buildSendTx(
                     },
                     guard.state,
                     BigInt(guardInputIndex),
-                    getBackTraceInfo_(
+                    getBackTraceInfo(
                         tracableNfts[i].trace.prevTxHex,
                         tracableNfts[i].trace.prevPrevTxHex,
                         tracableNfts[i].trace.prevTxInput,
@@ -175,40 +174,42 @@ function buildSendTx(
         }
     });
     // unlock guard
-    sendPsbt.updateCovenantInput(guardInputIndex, guard, {
-        invokeMethod: (contract: CAT721Guard, curPsbt: ExtPsbt) => {
-            const nftOwners = outputNfts.map((output) => output?.state!.ownerAddr || '');
-            const nftLocalIds = outputNfts.map((output) =>
-                output?.state!.localId >= 0n ? output?.state!.localId : -1n,
-            );
-            const nftScriptIndexArray = fill(-1n, STATE_OUTPUT_COUNT_MAX);
-            outputNfts.forEach((value, index) => {
-                if (value) {
-                    nftScriptIndexArray[index] = 0n;
-                }
-            });
+    sendPsbt
+        .updateCovenantInput(guardInputIndex, guard, {
+            invokeMethod: (contract: CAT721Guard, curPsbt: ExtPsbt) => {
+                const nftOwners = outputNfts.map((output) => output?.state!.ownerAddr || '');
+                const nftLocalIds = outputNfts.map((output) =>
+                    output?.state!.localId >= 0n ? output?.state!.localId : -1n,
+                );
+                const nftScriptIndexArray = fill(-1n, STATE_OUTPUT_COUNT_MAX);
+                outputNfts.forEach((value, index) => {
+                    if (value) {
+                        nftScriptIndexArray[index] = 0n;
+                    }
+                });
 
-            const outputSatoshisList = curPsbt.getOutputSatoshisList();
-            const outputSatoshis = emptyOutputByteStrings().map((emtpyStr, i) => {
-                if (outputSatoshisList[i + 1]) {
-                    return outputSatoshisList[i + 1];
-                } else {
-                    return emtpyStr;
-                }
+                const outputSatoshisList = curPsbt.getOutputSatoshisList();
+                const outputSatoshis = emptyOutputByteStrings().map((emtpyStr, i) => {
+                    if (outputSatoshisList[i + 1]) {
+                        return outputSatoshisList[i + 1];
+                    } else {
+                        return emtpyStr;
+                    }
                 }) as FixedArray<ByteString, typeof STATE_OUTPUT_COUNT_MAX>;
 
-            contract.unlock(
-                nftOwners.map((ownerAddr, oidx) => {
-                    const output = curPsbt.txOutputs[oidx + 1];
-                    return ownerAddr || (output ? uint8ArrayToHex(output.script) : '');
-                }) as unknown as FixedArray<ByteString, typeof STATE_OUTPUT_COUNT_MAX>,
-                nftLocalIds as unknown as FixedArray<Int32, typeof STATE_OUTPUT_COUNT_MAX>,
-                nftScriptIndexArray,
-                outputSatoshis,
-                cat721StateArray,
-                BigInt(curPsbt.txOutputs.length - 1),
-            );
-        },
-    }).seal();
+                contract.unlock(
+                    nftOwners.map((ownerAddr, oidx) => {
+                        const output = curPsbt.txOutputs[oidx + 1];
+                        return ownerAddr || (output ? uint8ArrayToHex(output.script) : '');
+                    }) as unknown as FixedArray<ByteString, typeof STATE_OUTPUT_COUNT_MAX>,
+                    nftLocalIds as unknown as FixedArray<Int32, typeof STATE_OUTPUT_COUNT_MAX>,
+                    nftScriptIndexArray,
+                    outputSatoshis,
+                    cat721StateArray,
+                    BigInt(curPsbt.txOutputs.length - 1),
+                );
+            },
+        })
+        .seal();
     return sendPsbt;
 }

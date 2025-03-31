@@ -1,9 +1,7 @@
 import {
     ChainProvider,
-    emptyOutputByteStrings,
     fill,
     FixedArray,
-    getTxId,
     Ripemd160,
     STATE_OUTPUT_COUNT_MAX,
     StatefulCovenant,
@@ -11,7 +9,7 @@ import {
     SupportedNetwork,
     TX_INPUT_COUNT_MAX,
 } from '@scrypt-inc/scrypt-ts-btc';
-import { addrToP2trLockingScript } from '..';
+import { addrToP2trLockingScript, emptyOutputByteStrings, getTxId } from '..';
 import { CAT721Utxo } from '../lib/provider';
 import { Transaction } from '@scrypt-inc/bitcoinjs-lib';
 import { CAT721State } from '../contracts/cat721/types';

@@ -43,7 +43,7 @@ export class CAT20 extends SmartContract<CAT20State> {
         CAT20StateLib.checkState(this.state);
         const cat20StateHash = CAT20StateLib.stateHash(this.state);
 
-        CAT20GuardStateLib.checkState(guardState);
+        CAT20GuardStateLib.formalCheckState(guardState);
         const guardStateHash = CAT20GuardStateLib.stateHash(guardState);
         this.checkInputStateHash(guardInputIndex, guardStateHash);
 

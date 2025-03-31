@@ -1,19 +1,11 @@
 import { Transaction } from '@scrypt-inc/bitcoinjs-lib';
-import {
-    ByteString,
-    ChainProvider,
-    ExtPsbt,
-    getTxId,
-    Ripemd160,
-    Signer,
-    UTXO,
-    UtxoProvider,
-} from '@scrypt-inc/scrypt-ts-btc';
+import { ByteString, ChainProvider, ExtPsbt, Ripemd160, Signer, UTXO, UtxoProvider } from '@scrypt-inc/scrypt-ts-btc';
 import { MerkleProof, ProofNodePos } from '../../../contracts';
 import { CAT721OpenMinterCovenant } from '../../../covenants/cat721OpenMinterCovenant';
 import { OpenMinterCat721Meta } from '../../../lib/metadata';
 import { CAT721OpenMinterUtxo, processExtPsbts } from '../../../lib/provider';
 import { createNft } from './nft';
+import { getTxId } from '../../../lib/utils';
 
 export async function mintNft(
     signer: Signer,
@@ -24,9 +16,9 @@ export async function mintNft(
     proofNodePos: ProofNodePos,
     nextMerkleRoot: string,
     nft: {
-        contentType: string,
-        contentBody: string,
-        nftmetadata: object,
+        contentType: string;
+        contentBody: string;
+        nftmetadata: object;
     },
     collectionId: string,
     metadata: OpenMinterCat721Meta,
@@ -41,8 +33,6 @@ export async function mintNft(
     const address = await signer.getAddress();
     const pubkey = await signer.getPublicKey();
 
-
-
     // fetch minter preTx
     const minterInputIndex = 0;
     const spentMinterTxHex = await chainProvider.getRawTransaction(minterUtxo.txId);
@@ -53,13 +43,12 @@ export async function mintNft(
         minterUtxo,
     );
 
-
     const utxos = await utxoProvider.getUtxos(address);
 
     const { commitPsbt, nftCommitScript, cblock } = await createNft(signer, nft, utxos, feeRate);
 
-    const commitUtxo = commitPsbt.getUtxo(0)
-    const feeUTXO: UTXO = commitPsbt.getChangeUTXO()
+    const commitUtxo = commitPsbt.getUtxo(0);
+    const feeUTXO: UTXO = commitPsbt.getChangeUTXO();
     const { mintTx: mintPsbt, nextMinter } = CAT721OpenMinterCovenant.buildMintTx(
         minterPreTxHex,
         spentMinterTxHex,
@@ -85,5 +74,4 @@ export async function mintNft(
         mintTx: mintPsbt,
         minter: nextMinter,
     };
-
 }

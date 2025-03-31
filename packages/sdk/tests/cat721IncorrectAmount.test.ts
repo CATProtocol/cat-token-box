@@ -7,7 +7,7 @@ import { catToXOnly } from '../src/lib/utils';
 import {
     ExtPsbt,
     fill,
-    getBackTraceInfo_,
+    getBackTraceInfo,
     PubKey,
     STATE_OUTPUT_COUNT_MAX,
     toByteString,
@@ -140,7 +140,7 @@ describe('Test cat721 incorrect amount/localId', async () => {
                         },
                         guardState,
                         BigInt(guardInputIndex),
-                        getBackTraceInfo_(utxo.trace.prevTxHex, utxo.trace.prevPrevTxHex, utxo.trace.prevTxInput),
+                        getBackTraceInfo(utxo.trace.prevTxHex, utxo.trace.prevPrevTxHex, utxo.trace.prevTxInput),
                     );
                 },
             });

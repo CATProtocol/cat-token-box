@@ -2,6 +2,10 @@
 
 The tracker reads CAT token transactions from the blockchain, stores them in Postgres in a structured way, which can be quickly retrieved via RESTful APIs. The Swagger documentation for all the APIs can be found at http://127.0.0.1:3000 after running.
 
+## Attention
+
+Tracker v2 is NOT compatible with any previous version because of the CAT Protocol upgrade. If you have run Tracker before, please note that v2 is a brand new service that must be run using a NEW database from the beginning. **You CANNOT run v2 by upgrading a previous tracker**.
+
 ## Installation
 
 ```bash

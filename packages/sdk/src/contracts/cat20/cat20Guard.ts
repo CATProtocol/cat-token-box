@@ -21,7 +21,7 @@ import { CAT20StateLib } from './cat20State';
 import { CAT20GuardStateLib } from './cat20GuardState';
 
 export class CAT20Guard extends SmartContract<CAT20GuardConstState> {
-    @method()
+    @method({ autoCheckInputStateHash: false })
     public unlock(
         // for each curTx output except the state hash root output,
         // if it is a token output, the value is token owner address of this output,
@@ -50,7 +50,7 @@ export class CAT20Guard extends SmartContract<CAT20GuardConstState> {
         assert(this.state.inputStateHashes[Number(this.ctx.inputIndexVal)] == toByteString(''));
 
         // check state
-        CAT20GuardStateLib.checkState(this.state);
+        const thisStateHash = CAT20GuardStateLib.formalCheckState(this.state);
 
         // how many different types of tokens in curTx inputs
         let inputTokenTypes = 0n;
@@ -92,12 +92,17 @@ export class CAT20Guard extends SmartContract<CAT20GuardConstState> {
                 CAT20StateLib.checkState(cat20States[Number(i)]);
                 const cat20StateHash = CAT20StateLib.stateHash(cat20States[Number(i)]);
                 assert(this.state.inputStateHashes[Number(i)] == cat20StateHash);
-                this.checkInputStateHash(i, cat20StateHash);
                 sumInputTokens[Number(tokenScriptIndex)] = SafeMath.add(
                     sumInputTokens[Number(tokenScriptIndex)],
                     cat20States[Number(i)].amount,
                 );
                 tokenScriptIndexMax = tokenScriptIndex > tokenScriptIndexMax ? tokenScriptIndex : tokenScriptIndexMax;
+            }
+            if (tokenScriptIndex != -1n || i == this.ctx.inputIndexVal) {
+                this.checkInputStateHash(
+                    i,
+                    i !== this.ctx.inputIndexVal ? this.state.inputStateHashes[Number(i)] : thisStateHash,
+                );
             }
         }
         // verify inputTokenTypes by tokenScriptIndexMax

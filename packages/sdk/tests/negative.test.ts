@@ -27,7 +27,7 @@ import { CAT721GuardCovenant } from '../src/covenants/cat721GuardCovenant';
 import { catToXOnly, getDummyUtxo, isP2TR, pubKeyPrefix } from '../src/lib/utils';
 import {
     fill,
-    getBackTraceInfo_,
+    getBackTraceInfo,
     PubKey,
     STATE_OUTPUT_COUNT_MAX,
     toByteString,
@@ -141,7 +141,7 @@ describe('Test state amount/localId negative for cat20/cat721', () => {
                         },
                         guardState,
                         BigInt(guardInputIndex),
-                        getBackTraceInfo_(utxo.trace.prevTxHex, utxo.trace.prevPrevTxHex, utxo.trace.prevTxInput),
+                        getBackTraceInfo(utxo.trace.prevTxHex, utxo.trace.prevPrevTxHex, utxo.trace.prevTxInput),
                     );
                 },
             });
@@ -225,7 +225,7 @@ describe('Test state amount/localId negative for cat20/cat721', () => {
                         },
                         guardState,
                         BigInt(guardInputIndex),
-                        getBackTraceInfo_(utxo.trace.prevTxHex, utxo.trace.prevPrevTxHex, utxo.trace.prevTxInput),
+                        getBackTraceInfo(utxo.trace.prevTxHex, utxo.trace.prevPrevTxHex, utxo.trace.prevTxInput),
                     );
                 },
             });

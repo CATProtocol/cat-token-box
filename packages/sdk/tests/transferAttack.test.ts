@@ -12,7 +12,7 @@ import { CAT20GuardCovenant } from '../src/covenants/cat20GuardCovenant';
 import { catToXOnly, getDummyUtxo, isP2TR, pubKeyPrefix } from '../src/lib/utils';
 import {
     fill,
-    getBackTraceInfo_,
+    getBackTraceInfo,
     PubKey,
     STATE_OUTPUT_COUNT_MAX,
     toByteString,
@@ -88,7 +88,7 @@ describe('Test Transfer Attack', () => {
                         },
                         guardState,
                         BigInt(guardInputIndex),
-                        getBackTraceInfo_(utxo.trace.prevTxHex, utxo.trace.prevPrevTxHex, utxo.trace.prevTxInput),
+                        getBackTraceInfo(utxo.trace.prevTxHex, utxo.trace.prevPrevTxHex, utxo.trace.prevTxInput),
                     );
                 },
             });
