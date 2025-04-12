@@ -211,7 +211,6 @@ describe('Test incorrect state for cat20/cat721', () => {
                 invokeMethod: (contract: CAT20, curPsbt: ExtPsbt) => {
                     contract.unlock(
                         {
-                            isUserSpend: true,
                             userPubKeyPrefix: mainPubKey.prefix,
                             userXOnlyPubKey: mainPubKey.xOnlyPubKey,
                             userSig: curPsbt.getSig(inputIndex, { address: mainAddress }),
@@ -294,7 +293,6 @@ describe('Test incorrect state for cat20/cat721', () => {
                 invokeMethod: (contract: CAT20, curPsbt: ExtPsbt) => {
                     contract.unlock(
                         {
-                            isUserSpend: true,
                             userPubKeyPrefix: mainPubKey.prefix,
                             userXOnlyPubKey: mainPubKey.xOnlyPubKey,
                             userSig: curPsbt.getSig(inputIndex, { address: mainAddress }),
@@ -377,7 +375,6 @@ describe('Test incorrect state for cat20/cat721', () => {
                 invokeMethod: (contract: CAT721, curPsbt: ExtPsbt) => {
                     contract.unlock(
                         {
-                            isUserSpend: true,
                             userPubKeyPrefix: mainPubKey.prefix,
                             userXOnlyPubKey: mainPubKey.xOnlyPubKey,
                             userSig: curPsbt.getSig(inputIndex, { address: mainAddress }),
@@ -466,7 +463,6 @@ describe('Test incorrect state for cat20/cat721', () => {
                 invokeMethod: (contract: CAT721, curPsbt: ExtPsbt) => {
                     contract.unlock(
                         {
-                            isUserSpend: true,
                             userPubKeyPrefix: mainPubKey.prefix,
                             userXOnlyPubKey: mainPubKey.xOnlyPubKey,
                             userSig: curPsbt.getSig(inputIndex, { address: mainAddress }),

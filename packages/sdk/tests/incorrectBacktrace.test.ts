@@ -102,7 +102,6 @@ describe('Test Incorrect BacktraceInfo', () => {
 
                     contract.unlock(
                         {
-                            isUserSpend: true,
                             userPubKeyPrefix: mainPubKey.prefix,
                             userXOnlyPubKey: mainPubKey.xOnlyPubKey,
                             userSig: curPsbt.getSig(inputIndex, { address: mainAddress }),
@@ -208,7 +207,6 @@ describe('Test Incorrect BacktraceInfo', () => {
 
                     contract.unlock(
                         {
-                            isUserSpend: true,
                             userPubKeyPrefix: mainPubKey.prefix,
                             userXOnlyPubKey: mainPubKey.xOnlyPubKey,
                             userSig: curPsbt.getSig(inputIndex, { address: mainAddress }),

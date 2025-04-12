@@ -1,6 +1,6 @@
 {
   "name": "@cat-protocol/cat-sdk-v2",
-  "version": "2.0.0-beta.2",
+  "version": "2.0.0-beta.3",
   "description": "CAT protocol SDK.",
   "author": "catprotocol.org",
   "main": "./dist/cjs/index.js",
@@ -20,7 +20,7 @@
     "build": "npm run compile && npm run build:cjs && npm run build:esm",
     "deploy": "npx ts-node ./deploy.ts",
     "clean": "rimraf scrypt.index.json && rimraf dist && rimraf artifacts/*",
-    "compile": "npx -y @scrypt-inc/cli-btc@beta compile",
+    "compile": "npx -y @scrypt-inc/cli-btc@alpha compile",
     "_pretest": "npm run build",
     "test": "npm run test:mocha",
     "coverage:c8": "c8 npm run test:mocha",
@@ -47,8 +47,8 @@
     "@cmdcode/crypto-tools": "^2.7.4",
     "@cmdcode/tapscript": "=1.4.4",
     "@scrypt-inc/bitcoinjs-lib": "^1.0.11",
-    "@scrypt-inc/cli-btc": "0.2.9-beta.16",
-    "@scrypt-inc/scrypt-ts-btc": "0.2.9-beta.16",
+    "@scrypt-inc/cli-btc": "0.2.9-alpha.17",
+    "@scrypt-inc/scrypt-ts-btc": "0.2.9-alpha.17",
     "@scure/btc-signer": "^1.4.0",
     "bip174": "^3.0.0-rc.1",
     "cbor": "^9.0.2",
@@ -57,6 +57,7 @@
     "dotenv": "^16.0.3",
     "ecpair": "^3.0.0",
     "ecurve": "^1.0.6",
+    "exsolve": "^1.0.4",
     "js-sha256": "^0.9.0"
   },
   "devDependencies": {

@@ -132,7 +132,6 @@ describe('Test cat721 incorrect amount/localId', async () => {
                 invokeMethod: (contract: CAT721, curPsbt: ExtPsbt) => {
                     contract.unlock(
                         {
-                            isUserSpend: true,
                             userPubKeyPrefix: mainPubKey.prefix,
                             userXOnlyPubKey: mainPubKey.xOnlyPubKey,
                             userSig: curPsbt.getSig(inputIndex, { address: mainAddress }),

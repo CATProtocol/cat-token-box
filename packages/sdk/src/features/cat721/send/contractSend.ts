@@ -147,7 +147,6 @@ function buildSendTx(
                 const contractInputIndexVal = contract.ctx.spentScripts.findIndex((v) => hash160(v) === contractHash);
                 contract.unlock(
                     {
-                        isUserSpend: false,
                         userPubKeyPrefix: toByteString(''),
                         userXOnlyPubKey: toByteString('') as PubKey,
                         userSig: toByteString('') as Sig,

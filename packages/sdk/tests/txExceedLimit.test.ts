@@ -118,7 +118,6 @@ describe('Test ExtPsbt inputCount/outputCount exceed limit', () => {
                     invokeMethod: (contract: CAT20, curPsbt: ExtPsbt) => {
                         contract.unlock(
                             {
-                                isUserSpend: true,
                                 userPubKeyPrefix: mainPubKey.prefix,
                                 userXOnlyPubKey: mainPubKey.xOnlyPubKey,
                                 userSig: curPsbt.getSig(inputIndex, { address: mainAddress }),

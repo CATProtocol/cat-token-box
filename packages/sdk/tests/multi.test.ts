@@ -282,7 +282,6 @@ describe('Test multiple cat20 & cat721 token types transfer/burn in a single txn
                         invokeMethod: (contract: CAT20, curPsbt: ExtPsbt) => {
                             contract.unlock(
                                 {
-                                    isUserSpend: true,
                                     userPubKeyPrefix: mainPubKey.prefix,
                                     userXOnlyPubKey: mainPubKey.xOnlyPubKey,
                                     userSig: curPsbt.getSig(inputIndex, { address: mainAddress }),
@@ -356,7 +355,6 @@ describe('Test multiple cat20 & cat721 token types transfer/burn in a single txn
                         invokeMethod: (contract: CAT721, curPsbt: ExtPsbt) => {
                             contract.unlock(
                                 {
-                                    isUserSpend: true,
                                     userPubKeyPrefix: mainPubKey.prefix,
                                     userXOnlyPubKey: mainPubKey.xOnlyPubKey,
                                     userSig: curPsbt.getSig(inputIndex, { address: mainAddress }),

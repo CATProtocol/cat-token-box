@@ -66,7 +66,6 @@ describe('Test the guard input, fake or missing', async () => {
                 invokeMethod: (contract: CAT20, curPsbt: ExtPsbt) => {
                     contract.unlock(
                         {
-                            isUserSpend: true,
                             userPubKeyPrefix: mainPubKey.prefix,
                             userXOnlyPubKey: mainPubKey.xOnlyPubKey,
                             userSig: curPsbt.getSig(0, { address: mainAddress }),
@@ -86,7 +85,6 @@ describe('Test the guard input, fake or missing', async () => {
                 invokeMethod: (contract: CAT20, curPsbt: ExtPsbt) => {
                     contract.unlock(
                         {
-                            isUserSpend: true,
                             userPubKeyPrefix: mainPubKey.prefix,
                             userXOnlyPubKey: mainPubKey.xOnlyPubKey,
                             userSig: curPsbt.getSig(1, { address: mainAddress }),
@@ -140,7 +138,6 @@ describe('Test the guard input, fake or missing', async () => {
                 invokeMethod: (contract: CAT721, curPsbt: ExtPsbt) => {
                     contract.unlock(
                         {
-                            isUserSpend: true,
                             userPubKeyPrefix: mainPubKey.prefix,
                             userXOnlyPubKey: mainPubKey.xOnlyPubKey,
                             userSig: curPsbt.getSig(0, { address: mainAddress }),
@@ -160,7 +157,6 @@ describe('Test the guard input, fake or missing', async () => {
                 invokeMethod: (contract: CAT721, curPsbt: ExtPsbt) => {
                     contract.unlock(
                         {
-                            isUserSpend: true,
                             userPubKeyPrefix: mainPubKey.prefix,
                             userXOnlyPubKey: mainPubKey.xOnlyPubKey,
                             userSig: curPsbt.getSig(1, { address: mainAddress }),

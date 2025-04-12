@@ -138,7 +138,6 @@ describe('Test incorrect amount for cat20', () => {
                 invokeMethod: (contract: CAT20, curPsbt: ExtPsbt) => {
                     contract.unlock(
                         {
-                            isUserSpend: true,
                             userPubKeyPrefix: mainPubKey.prefix,
                             userXOnlyPubKey: mainPubKey.xOnlyPubKey,
                             userSig: curPsbt.getSig(inputIndex, { address: mainAddress }),
