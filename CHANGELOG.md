@@ -37,6 +37,19 @@ The development tools have been significantly improved to simplify the contract 
    - The `guard` now supports up to 4 types of token transfers within a single contract.  
    - This feature provides developers with more flexibility and increases the number of usable input options for contracts.
 
+3. **Owner Address Format Change**
+   - Changed owner address format from hash to locking script, facilitating easier querying and indexing.
+
+4. **Burn Amount in GuardConstState**
+   - Added burn amount tracking in GuardConstState for better token lifecycle management.
+
+5. **Unified Guard Structure**
+   - Merged transferGuard and burnGuard into a single guard, simplifying the architecture.
+
+6. **Enhanced Token Operations**
+   - Added support for burn + mint operations in a single transaction.
+   - Implemented partial burn functionality for more flexible token management.
+
 ---
 
 ### **3. Security Updates**
@@ -69,7 +82,8 @@ The development tools have been significantly improved to simplify the contract 
 | State Hash Management          | Manual serialization/deserialization | Automatic injection of `stateHash` |
 | Token State Access             | Indirect                            | Direct with `InputStateProof`       |
 | Token Transfer Support         | Limited                             | Supports 4 types                    |
-| Contract Size                  | Larger                              | Smaller                             |
+| Owner Address Format           | Hash                                | Locking script                      |
+| Guard Structure                | Separate transferGuard and burnGuard| Unified guard                       |
 | Lines of code in contracts     | ~3200+ Lines                        | ~ 1300+ Lines                       |
 
 ---
