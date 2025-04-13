@@ -71,7 +71,7 @@ describe('Test Incorrect BacktraceInfo', () => {
 
         {
             const psbt = new ExtPsbt().spendUTXO(getDummyUtxo(mainAddress)).addCovenantOutput(guardCovenant, 1e8);
-            const signedPsbtHex = await testSigner.signPsbt(psbt.toHex(), psbt.psbtOptions());
+            const signedPsbtHex = await testSigner.signPsbt(psbt.seal().toHex(), psbt.psbtOptions());
             psbt.combine(ExtPsbt.fromHex(signedPsbtHex)).finalizeAllInputs();
         }
 
@@ -150,7 +150,7 @@ describe('Test Incorrect BacktraceInfo', () => {
         });
 
         try {
-            const signedPsbtHex = await testSigner.signPsbt(psbt.toHex(), psbt.psbtOptions());
+            const signedPsbtHex = await testSigner.signPsbt(psbt.seal().toHex(), psbt.psbtOptions());
             psbt.combine(ExtPsbt.fromHex(signedPsbtHex)).finalizeAllInputs();
             expect.fail('Should have thrown an error due to incorrect backtrace info');
         } catch (error) {
@@ -261,7 +261,7 @@ describe('Test Incorrect BacktraceInfo', () => {
         });
 
         try {
-            const signedPsbtHex = await testSigner.signPsbt(psbt.toHex(), psbt.psbtOptions());
+            const signedPsbtHex = await testSigner.signPsbt(psbt.seal().toHex(), psbt.psbtOptions());
             psbt.combine(ExtPsbt.fromHex(signedPsbtHex)).finalizeAllInputs();
             expect.fail('Should have thrown an error due to incorrect backtrace info');
         } catch (error) {

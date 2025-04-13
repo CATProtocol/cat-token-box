@@ -112,7 +112,7 @@ describe('Test incorrect amount for cat20', () => {
         const guardCovenant = new CAT20GuardCovenant(guardState);
         {
             const psbt = new ExtPsbt().spendUTXO(getDummyUtxo(mainAddress)).addCovenantOutput(guardCovenant, 1e8);
-            const signedPsbtHex = await testSigner.signPsbt(psbt.toHex(), psbt.psbtOptions());
+            const signedPsbtHex = await testSigner.signPsbt(psbt.seal().toHex(), psbt.psbtOptions());
             psbt.combine(ExtPsbt.fromHex(signedPsbtHex)).finalizeAllInputs();
         }
 
@@ -212,7 +212,7 @@ describe('Test incorrect amount for cat20', () => {
         // burn all tokens issues:
         // psbt has not state hash root output
         // cat20Guard required a state hash root output
-        const signedPsbtHex = await testSigner.signPsbt(psbt.toHex(), psbt.psbtOptions());
+        const signedPsbtHex = await testSigner.signPsbt(psbt.seal().toHex(), psbt.psbtOptions());
         psbt.combine(ExtPsbt.fromHex(signedPsbtHex)).finalizeAllInputs();
         expect(psbt.isFinalized).to.be.true;
     }

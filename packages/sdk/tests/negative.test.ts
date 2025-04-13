@@ -111,7 +111,7 @@ describe('Test state amount/localId negative for cat20/cat721', () => {
 
         {
             const psbt = new ExtPsbt().spendUTXO(getDummyUtxo(mainAddress)).addCovenantOutput(guardCovenant, 1e8);
-            const signedPsbtHex = await testSigner.signPsbt(psbt.toHex(), psbt.psbtOptions());
+            const signedPsbtHex = await testSigner.signPsbt(psbt.seal().toHex(), psbt.psbtOptions());
             psbt.combine(ExtPsbt.fromHex(signedPsbtHex)).finalizeAllInputs();
         }
 
@@ -180,7 +180,7 @@ describe('Test state amount/localId negative for cat20/cat721', () => {
             },
         });
 
-        const signedPsbtHex = await testSigner.signPsbt(psbt.toHex(), psbt.psbtOptions());
+        const signedPsbtHex = await testSigner.signPsbt(psbt.seal().toHex(), psbt.psbtOptions());
         psbt.combine(ExtPsbt.fromHex(signedPsbtHex)).finalizeAllInputs();
         return psbt.isFinalized;
     }
@@ -196,7 +196,7 @@ describe('Test state amount/localId negative for cat20/cat721', () => {
                 .spendUTXO(getDummyUtxo(mainAddress))
                 .addCovenantOutput(guardCovenant, 1e8)
                 .seal();
-            const signedPsbtHex = await testSigner.signPsbt(psbt.toHex(), psbt.psbtOptions());
+            const signedPsbtHex = await testSigner.signPsbt(psbt.seal().toHex(), psbt.psbtOptions());
             psbt.combine(ExtPsbt.fromHex(signedPsbtHex)).finalizeAllInputs();
         }
 
@@ -269,7 +269,7 @@ describe('Test state amount/localId negative for cat20/cat721', () => {
             },
         });
 
-        const signedPsbtHex = await testSigner.signPsbt(psbt.toHex(), psbt.psbtOptions());
+        const signedPsbtHex = await testSigner.signPsbt(psbt.seal().toHex(), psbt.psbtOptions());
         psbt.combine(ExtPsbt.fromHex(signedPsbtHex)).finalizeAllInputs();
         return psbt.isFinalized;
     }

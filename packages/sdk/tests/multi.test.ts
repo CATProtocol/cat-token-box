@@ -160,7 +160,7 @@ describe('Test multiple cat20 & cat721 token types transfer/burn in a single txn
                 // 1e8 is enough for the next txn's fee
                 .addCovenantOutput(covenant, 1e8)
                 .seal();
-            const signedPsbtHex = await testSigner.signPsbt(psbt.toHex(), psbt.psbtOptions());
+            const signedPsbtHex = await testSigner.signPsbt(psbt.seal().toHex(), psbt.psbtOptions());
             psbt.combine(ExtPsbt.fromHex(signedPsbtHex)).finalizeAllInputs();
             return covenant;
         }
@@ -172,7 +172,7 @@ describe('Test multiple cat20 & cat721 token types transfer/burn in a single txn
                 // 1e8 is enough for the next txn's fee
                 .addCovenantOutput(covenant, 1e8)
                 .seal();
-            const signedPsbtHex = await testSigner.signPsbt(psbt.toHex(), psbt.psbtOptions());
+            const signedPsbtHex = await testSigner.signPsbt(psbt.seal().toHex(), psbt.psbtOptions());
             psbt.combine(ExtPsbt.fromHex(signedPsbtHex)).finalizeAllInputs();
             return covenant;
         }
@@ -426,7 +426,7 @@ describe('Test multiple cat20 & cat721 token types transfer/burn in a single txn
                 });
             }
 
-            const signedPsbtHex = await testSigner.signPsbt(psbt.toHex(), psbt.psbtOptions());
+            const signedPsbtHex = await testSigner.signPsbt(psbt.seal().seal().toHex(), psbt.psbtOptions());
             psbt.combine(ExtPsbt.fromHex(signedPsbtHex)).finalizeAllInputs();
             expect(psbt.isFinalized).to.be.true;
         }

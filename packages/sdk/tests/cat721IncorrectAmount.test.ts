@@ -108,7 +108,7 @@ describe('Test cat721 incorrect amount/localId', async () => {
                 // 1e8 is enough for the next txn's fee
                 .addCovenantOutput(guardCovenant, 1e8)
                 .seal();
-            const signedPsbtHex = await testSigner.signPsbt(psbt.toHex(), psbt.psbtOptions());
+            const signedPsbtHex = await testSigner.signPsbt(psbt.seal().toHex(), psbt.psbtOptions());
             psbt.combine(ExtPsbt.fromHex(signedPsbtHex)).finalizeAllInputs();
         }
 
@@ -213,7 +213,7 @@ describe('Test cat721 incorrect amount/localId', async () => {
             },
         });
 
-        const signedPsbtHex = await testSigner.signPsbt(psbt.toHex(), psbt.psbtOptions());
+        const signedPsbtHex = await testSigner.signPsbt(psbt.seal().toHex(), psbt.psbtOptions());
         psbt.combine(ExtPsbt.fromHex(signedPsbtHex)).finalizeAllInputs();
         expect(psbt.isFinalized).to.be.true;
     }
