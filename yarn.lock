@@ -368,15 +368,15 @@
     "@noble/curves" "^1.7.0"
 
 "@cat-protocol/cat-sdk-v2@file:packages/sdk":
-  version "2.0.0-beta.3"
+  version "2.0.0-beta.4"
   dependencies:
     "@bitcoinerlab/secp256k1" "^1.1.1"
     "@cmdcode/buff" "^2.2.4"
     "@cmdcode/crypto-tools" "^2.7.4"
     "@cmdcode/tapscript" "=1.4.4"
     "@scrypt-inc/bitcoinjs-lib" "^1.0.11"
-    "@scrypt-inc/cli-btc" "0.2.9-alpha.20"
-    "@scrypt-inc/scrypt-ts-btc" "0.2.9-alpha.20"
+    "@scrypt-inc/cli-btc" "0.2.9-alpha.21"
+    "@scrypt-inc/scrypt-ts-btc" "0.2.9-alpha.21"
     "@scure/btc-signer" "^1.4.0"
     bip174 "^3.0.0-rc.1"
     cbor "^9.0.2"
@@ -1148,15 +1148,15 @@
     valibot "^0.38.0"
     varuint-bitcoin "^2.0.0"
 
-"@scrypt-inc/cli-btc@0.2.9-alpha.20":
-  version "0.2.9-alpha.20"
-  resolved "https://registry.yarnpkg.com/@scrypt-inc/cli-btc/-/cli-btc-0.2.9-alpha.20.tgz#d805090e042743c0c73b6787da0642bfc9930f45"
-  integrity sha512-X+cgPm+NbGywMYRe5xcIEArg5J2UIYnSu9SaxXwZMH9rD1z4pZdxBVyWn6rrT3EYN4hESW4b74KjmlUuWASyug==
+"@scrypt-inc/cli-btc@0.2.9-alpha.21":
+  version "0.2.9-alpha.21"
+  resolved "https://registry.yarnpkg.com/@scrypt-inc/cli-btc/-/cli-btc-0.2.9-alpha.21.tgz#d2fbce8b62909a6e44ab10c0bdc8bd5266911c2f"
+  integrity sha512-UdJ3doqZEXxE6iuOcKHTLz9fDCw7Y+/hwOowFkDPMYglXNoK0kzemVjoqwJlcMQRyMsrSm1EfP7CuUPdQ0wVFA==
   dependencies:
     "@nestjs/common" "^10.0.0"
     "@nestjs/core" "^10.0.0"
     "@nestjs/platform-express" "^10.0.0"
-    "@scrypt-inc/scrypt-ts-transpiler-btc" "0.2.9-alpha.20"
+    "@scrypt-inc/scrypt-ts-transpiler-btc" "0.2.9-alpha.21"
     chalk "4"
     envinfo "^7.14.0"
     glob "^11.0.0"
@@ -1175,10 +1175,10 @@
     valibot "^0.38.0"
     wif "^5.0.0"
 
-"@scrypt-inc/scrypt-ts-btc@0.2.9-alpha.20":
-  version "0.2.9-alpha.20"
-  resolved "https://registry.yarnpkg.com/@scrypt-inc/scrypt-ts-btc/-/scrypt-ts-btc-0.2.9-alpha.20.tgz#dae48ff595fdbb038fc4529e5e6600370a7fce7d"
-  integrity sha512-BR4jlmpoAVyyjjDJqVP2CTUQ6307dCQa17ivS7DqzBqgX7R8W8z0bZBNPO9Wss8ijFG/ZwFdM7q/ucqMbcWRiQ==
+"@scrypt-inc/scrypt-ts-btc@0.2.9-alpha.21":
+  version "0.2.9-alpha.21"
+  resolved "https://registry.yarnpkg.com/@scrypt-inc/scrypt-ts-btc/-/scrypt-ts-btc-0.2.9-alpha.21.tgz#0eb6b6d8d84167c3a90fdbfd2e7d10950b82bee4"
+  integrity sha512-Sh4jGWu9+HEqoZpO48VCvEDtRoAKe6wiKd61V+OQpE9tTC/7O7FhF6Z723Gb7h7K4Pa8EQlD0f+0zTY7tY+TyA==
   dependencies:
     "@bitcoinerlab/secp256k1" "^1.2.0"
     "@cmdcode/tapscript" "=1.4.6"
@@ -1189,19 +1189,19 @@
     md5 "^2.3.0"
     reflect-metadata "^0.2.2"
 
-"@scrypt-inc/scrypt-ts-transpiler-btc@0.2.9-alpha.20":
-  version "0.2.9-alpha.20"
-  resolved "https://registry.yarnpkg.com/@scrypt-inc/scrypt-ts-transpiler-btc/-/scrypt-ts-transpiler-btc-0.2.9-alpha.20.tgz#a0c352763234fc0292b1e32993a19abaa8366777"
-  integrity sha512-jd6rp/J1R9qIfxSTPc1k87Pdv61Nee7bgvrTLtL5ACCMJ4cMeJeBuSNAUSPXQRIDOE/QwF9U7AydoYqBXeL5bw==
+"@scrypt-inc/scrypt-ts-transpiler-btc@0.2.9-alpha.21":
+  version "0.2.9-alpha.21"
+  resolved "https://registry.yarnpkg.com/@scrypt-inc/scrypt-ts-transpiler-btc/-/scrypt-ts-transpiler-btc-0.2.9-alpha.21.tgz#567703c24c5a2ae5325a83c8cf71892b05de4abe"
+  integrity sha512-L5PMaGSqxXjZaQk43MH/aHXkfNPO/UfBwQJBG72tD8v5E7FJt+BI7/9W/AzgJqvmI61UQAM1gKlAOdyYMHYE+Q==
   dependencies:
     "@phenomnomnominal/tsquery" "^6.1.2"
-    "@scrypt-inc/scrypt-ts-btc" "0.2.9-alpha.20"
+    "@scrypt-inc/scrypt-ts-btc" "0.2.9-alpha.21"
     chalk "^4.1.2"
-    exsolve "^1.0.4"
     get-proxy-settings "^0.1.13"
     https-proxy-agent "^7.0.6"
     json-bigint "^1.0.0"
     minimist "^1.2.8"
+    mlly "^1.7.4"
     node-fetch "^2.7.0"
     reflect-metadata "^0.1.13"
     rimraf "^6.0.1"
@@ -2840,6 +2840,11 @@ concat-stream@^1.5.2:
     inherits "^2.0.3"
     readable-stream "^2.2.2"
     typedarray "^0.0.6"
+
+confbox@^0.1.8:
+  version "0.1.8"
+  resolved "https://registry.yarnpkg.com/confbox/-/confbox-0.1.8.tgz#820d73d3b3c82d9bd910652c5d4d599ef8ff8b06"
+  integrity sha512-RMtmw0iFkeR4YV+fUOSucriAQNb9g8zFR52MWCtl+cCZOFRNL6zeB395vPzFhEjjn4fMxXudmELnl/KF/WrK6w==
 
 config-chain@^1.1.11:
   version "1.1.13"
@@ -5683,6 +5688,16 @@ mkdirp@^3.0.1:
   resolved "https://registry.yarnpkg.com/mkdirp/-/mkdirp-3.0.1.tgz#e44e4c5607fb279c168241713cc6e0fea9adcb50"
   integrity sha512-+NsyUUAZDmo6YVHzL/stxSu3t9YS1iljliy3BSDrXJ/dkn1KYdmtZODGGjLcc9XLgVVpH4KshHB8XmZgMhaBXg==
 
+mlly@^1.7.4:
+  version "1.7.4"
+  resolved "https://registry.yarnpkg.com/mlly/-/mlly-1.7.4.tgz#3d7295ea2358ec7a271eaa5d000a0f84febe100f"
+  integrity sha512-qmdSIPC4bDJXgZTCR7XosJiNKySV7O215tsPtDN9iEO/7q/76b/ijtgRu/+epFXSJhijtTCCGp3DWS549P3xKw==
+  dependencies:
+    acorn "^8.14.0"
+    pathe "^2.0.1"
+    pkg-types "^1.3.0"
+    ufo "^1.5.4"
+
 mocha@^10.1.0:
   version "10.8.2"
   resolved "https://registry.yarnpkg.com/mocha/-/mocha-10.8.2.tgz#8d8342d016ed411b12a429eb731b825f961afb96"
@@ -6175,6 +6190,11 @@ path-type@^4.0.0:
   resolved "https://registry.yarnpkg.com/path-type/-/path-type-4.0.0.tgz#84ed01c0a7ba380afe09d90a8c180dcd9d03043b"
   integrity sha512-gDKb8aZMDeD/tZWs9P6+q0J9Mwkdl6xMV8TjnGP3qJVJ06bdMgkbBlLU8IdfOsIsFz2BW1rNVT3XuNEl8zPAvw==
 
+pathe@^2.0.1:
+  version "2.0.3"
+  resolved "https://registry.yarnpkg.com/pathe/-/pathe-2.0.3.tgz#3ecbec55421685b70a9da872b2cff3e1cbed1716"
+  integrity sha512-WUjGcAqP1gQacoQe+OBJsFA7Ld4DyXuUIjZ5cc75cLHvJ7dtNsTugphxIADwspS+AraAUePCKrSVtPLFj/F88w==
+
 pathval@^1.1.1:
   version "1.1.1"
   resolved "https://registry.yarnpkg.com/pathval/-/pathval-1.1.1.tgz#8534e77a77ce7ac5a2512ea21e0fdb8fcf6c3d8d"
@@ -6284,6 +6304,15 @@ pkg-dir@^4.1.0, pkg-dir@^4.2.0:
   integrity sha512-HRDzbaKjC+AOWVXxAU/x54COGeIv9eb+6CkDSQoNTt4XyWoIJvuPsXizxu/Fr23EiekbtZwmh1IcIG/l/a10GQ==
   dependencies:
     find-up "^4.0.0"
+
+pkg-types@^1.3.0:
+  version "1.3.1"
+  resolved "https://registry.yarnpkg.com/pkg-types/-/pkg-types-1.3.1.tgz#bd7cc70881192777eef5326c19deb46e890917df"
+  integrity sha512-/Jm5M4RvtBFVkKWRu2BLUTNP8/M2a+UwuAX+ae4770q1qVGtfjG+WTCupoZixokjmHiry8uI+dlY8KXYV5HVVQ==
+  dependencies:
+    confbox "^0.1.8"
+    mlly "^1.7.4"
+    pathe "^2.0.1"
 
 pluralize@8.0.0:
   version "8.0.0"
@@ -7551,6 +7580,11 @@ typescript@=5.3.3, typescript@~5.3.0:
   version "5.3.3"
   resolved "https://registry.yarnpkg.com/typescript/-/typescript-5.3.3.tgz#b3ce6ba258e72e6305ba66f5c9b452aaee3ffe37"
   integrity sha512-pXWcraxM0uxAS+tN0AG/BF2TyqmHO014Z070UsJ+pFvYuRSq8KH8DmWpnbXe0pEPDHXZV3FcAbJkijJ5oNEnWw==
+
+ufo@^1.5.4:
+  version "1.6.1"
+  resolved "https://registry.yarnpkg.com/ufo/-/ufo-1.6.1.tgz#ac2db1d54614d1b22c1d603e3aef44a85d8f146b"
+  integrity sha512-9a4/uxlTWJ4+a5i0ooc1rU7C7YOw3wT+UGqdeNNHWnOF9qcMBgLRS+4IYUqbczewFx4mLEig6gawh7X6mFlEkA==
 
 uglify-js@^3.1.4:
   version "3.19.3"
