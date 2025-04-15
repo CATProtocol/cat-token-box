@@ -46,7 +46,7 @@ describe('Test cat721 incorrect amount/localId', async () => {
     it('should be success on transfer, burn, and both when input amount is equal to output amount', async () => {
         const cat721 = await createCat721('test', 2, mainAddress);
         await testCase(cat721, [0n, 1n], []);
-        // await testCase(cat721, [], [0n, 1n])
+        await testCase(cat721, [], [0n, 1n])
         await testCase(cat721, [0n], [1n]);
     });
 
@@ -112,7 +112,7 @@ describe('Test cat721 incorrect amount/localId', async () => {
             psbt.combine(ExtPsbt.fromHex(signedPsbtHex)).finalizeAllInputs();
         }
 
-        const psbt = new ExtPsbt();
+        const psbt = new ExtPsbt({forceAddStateRootHashOutput: true});
 
         cat721.tracedUtxos.forEach((utxo) => {
             psbt.addCovenantInput(utxo.nft);
@@ -158,20 +158,13 @@ describe('Test cat721 incorrect amount/localId', async () => {
             invokeMethod: (contract: CAT721Guard, curPsbt: ExtPsbt) => {
                 const ownerAddrOrScripts = fill(toByteString(''), STATE_OUTPUT_COUNT_MAX);
                 {
-                    if (outputHasCat721) {
-                        // exclude the state hash root output
-                        const outputScripts = curPsbt.txOutputs
-                            .slice(1)
-                            .map((output) => toByteString(uint8ArrayToHex(output.script)));
-                        applyArray(outputScripts, ownerAddrOrScripts, cat721OutputStartIndex - 1);
-                        const cat721OwnerAddrs = outputStates.map((state) => state.ownerAddr);
-                        applyArray(cat721OwnerAddrs, ownerAddrOrScripts, cat721OutputStartIndex - 1);
-                    } else {
-                        const outputScripts = curPsbt.txOutputs.map((output) =>
-                            toByteString(uint8ArrayToHex(output.script)),
-                        );
-                        applyArray(outputScripts, ownerAddrOrScripts, 0);
-                    }
+                    // exclude the state hash root output
+                    const outputScripts = curPsbt.txOutputs
+                        .slice(1)
+                        .map((output) => toByteString(uint8ArrayToHex(output.script)));
+                    applyArray(outputScripts, ownerAddrOrScripts, cat721OutputStartIndex - 1);
+                    const cat721OwnerAddrs = outputStates.map((state) => state.ownerAddr);
+                    applyArray(cat721OwnerAddrs, ownerAddrOrScripts, cat721OutputStartIndex - 1);
                 }
                 const _outputLocalIds = fill(-1n, STATE_OUTPUT_COUNT_MAX);
                 {
@@ -191,7 +184,7 @@ describe('Test cat721 incorrect amount/localId', async () => {
                 }
                 const outputSatoshis = fill(toByteString(''), STATE_OUTPUT_COUNT_MAX);
                 {
-                    applyArray(getOutputSatoshisList(psbt).slice(outputHasCat721 ? 1 : 0), outputSatoshis, 0);
+                    applyArray(getOutputSatoshisList(psbt).slice(1), outputSatoshis, 0);
                 }
                 const cat721States = fill({ ownerAddr: toByteString(''), localId: 0n }, TX_INPUT_COUNT_MAX);
                 {
@@ -201,7 +194,7 @@ describe('Test cat721 incorrect amount/localId', async () => {
                         cat721InputStartIndex,
                     );
                 }
-                const outputCount = outputHasCat721 ? curPsbt.txOutputs.length - 1 : curPsbt.txOutputs.length; // exclude the state hash root output
+                const outputCount = curPsbt.txOutputs.length - 1 // exclude the state hash root output
                 contract.unlock(
                     ownerAddrOrScripts,
                     _outputLocalIds,

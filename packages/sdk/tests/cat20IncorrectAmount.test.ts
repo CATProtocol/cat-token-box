@@ -43,8 +43,7 @@ describe('Test incorrect amount for cat20', () => {
     it('should transfer, burn, and both when input amount is equal to output amount successfully', async () => {
         const cat20 = await createCat20([1000n], mainAddress, 'test');
         await testCase(cat20, [1000n], [0n]);
-        // todo: fix this no state output tx
-        // await testCase(cat20, [], [1000n])
+        await testCase(cat20, [], [1000n])
         await testCase(cat20, [500n], [500n]);
     });
 
@@ -117,7 +116,7 @@ describe('Test incorrect amount for cat20', () => {
         }
 
         const guardInputIndex = cat20.tracedUtxos.length;
-        const psbt = new ExtPsbt();
+        const psbt = new ExtPsbt({forceAddStateRootHashOutput: true});
         cat20.tracedUtxos.forEach((utxo, i) => {
             psbt.addCovenantInput(utxo.token);
             guardState.tokenScriptIndexes[i] = 0n;
@@ -156,20 +155,13 @@ describe('Test incorrect amount for cat20', () => {
                 const cat20InputStartIndex = 0;
                 const ownerAddrOrScripts = fill(toByteString(''), STATE_OUTPUT_COUNT_MAX);
                 {
-                    if (outputHasCat20) {
-                        // exclude the state hash root output
-                        const outputScripts = curPsbt.txOutputs
-                            .slice(1)
-                            .map((output) => toByteString(uint8ArrayToHex(output.script)));
-                        applyArray(outputScripts, ownerAddrOrScripts, cat20OutputStartIndex - 1);
-                        const cat20OwnerAddrs = outputStates.map((state) => state.ownerAddr);
-                        applyArray(cat20OwnerAddrs, ownerAddrOrScripts, cat20OutputStartIndex - 1);
-                    } else {
-                        const outputScripts = curPsbt.txOutputs.map((output) =>
-                            toByteString(uint8ArrayToHex(output.script)),
-                        );
-                        applyArray(outputScripts, ownerAddrOrScripts, 0);
-                    }
+                    // exclude the state hash root output
+                    const outputScripts = curPsbt.txOutputs
+                        .slice(1)
+                        .map((output) => toByteString(uint8ArrayToHex(output.script)));
+                    applyArray(outputScripts, ownerAddrOrScripts, cat20OutputStartIndex - 1);
+                    const cat20OwnerAddrs = outputStates.map((state) => state.ownerAddr);
+                    applyArray(cat20OwnerAddrs, ownerAddrOrScripts, cat20OutputStartIndex - 1);
                 }
 
                 const outputTokens = fill(0n, STATE_OUTPUT_COUNT_MAX);
@@ -190,14 +182,15 @@ describe('Test incorrect amount for cat20', () => {
 
                 const outputSatoshis = fill(toByteString(''), STATE_OUTPUT_COUNT_MAX);
                 {
-                    applyArray(getOutputSatoshisList(psbt).slice(outputHasCat20 ? 1 : 0), outputSatoshis, 0);
+                    applyArray(getOutputSatoshisList(psbt).slice(1), outputSatoshis, 0);
                 }
                 const cat20States = fill({ ownerAddr: toByteString(''), amount: 0n }, TX_INPUT_COUNT_MAX);
                 {
                     const inputCat20States = cat20.tracedUtxos.map((utxo) => utxo.token.state);
                     applyArray(inputCat20States, cat20States, cat20InputStartIndex);
                 }
-                const outputCount = outputHasCat20 ? curPsbt.txOutputs.length - 1 : curPsbt.txOutputs.length; // exclude the state hash root output
+                // const outputCount = outputHasCat20 ? curPsbt.txOutputs.length - 1 : curPsbt.txOutputs.length; 
+                const outputCount = curPsbt.txOutputs.length - 1; // exclude the state hash root output
                 contract.unlock(
                     ownerAddrOrScripts,
                     outputTokens,
@@ -208,10 +201,6 @@ describe('Test incorrect amount for cat20', () => {
                 );
             },
         });
-        // todo:
-        // burn all tokens issues:
-        // psbt has not state hash root output
-        // cat20Guard required a state hash root output
         const signedPsbtHex = await testSigner.signPsbt(psbt.seal().toHex(), psbt.psbtOptions());
         psbt.combine(ExtPsbt.fromHex(signedPsbtHex)).finalizeAllInputs();
         expect(psbt.isFinalized).to.be.true;
