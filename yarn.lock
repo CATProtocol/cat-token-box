@@ -375,8 +375,8 @@
     "@cmdcode/crypto-tools" "^2.7.4"
     "@cmdcode/tapscript" "=1.4.4"
     "@scrypt-inc/bitcoinjs-lib" "^1.0.11"
-    "@scrypt-inc/cli-btc" "0.2.9-alpha.21"
-    "@scrypt-inc/scrypt-ts-btc" "0.2.9-alpha.21"
+    "@scrypt-inc/cli-btc" "1.0.0"
+    "@scrypt-inc/scrypt-ts-btc" "1.0.0"
     "@scure/btc-signer" "^1.4.0"
     bip174 "^3.0.0-rc.1"
     cbor "^9.0.2"
@@ -1148,15 +1148,15 @@
     valibot "^0.38.0"
     varuint-bitcoin "^2.0.0"
 
-"@scrypt-inc/cli-btc@0.2.9-alpha.21":
-  version "0.2.9-alpha.21"
-  resolved "https://registry.yarnpkg.com/@scrypt-inc/cli-btc/-/cli-btc-0.2.9-alpha.21.tgz#d2fbce8b62909a6e44ab10c0bdc8bd5266911c2f"
-  integrity sha512-UdJ3doqZEXxE6iuOcKHTLz9fDCw7Y+/hwOowFkDPMYglXNoK0kzemVjoqwJlcMQRyMsrSm1EfP7CuUPdQ0wVFA==
+"@scrypt-inc/cli-btc@1.0.0":
+  version "1.0.0"
+  resolved "https://registry.yarnpkg.com/@scrypt-inc/cli-btc/-/cli-btc-1.0.0.tgz#3f6d9afa597964f8d47616c27684a6e4d2e03ef1"
+  integrity sha512-CGG8G5yAlMUvm+Up/eYPphNdSmrwxaurn9Olxe+MC2Hwf/jHrd0kJTN18rOAIXmFaXss9skuO+sxMC6KSaG6kQ==
   dependencies:
     "@nestjs/common" "^10.0.0"
     "@nestjs/core" "^10.0.0"
     "@nestjs/platform-express" "^10.0.0"
-    "@scrypt-inc/scrypt-ts-transpiler-btc" "0.2.9-alpha.21"
+    "@scrypt-inc/scrypt-ts-transpiler-btc" "1.0.0"
     chalk "4"
     envinfo "^7.14.0"
     glob "^11.0.0"
@@ -1175,10 +1175,10 @@
     valibot "^0.38.0"
     wif "^5.0.0"
 
-"@scrypt-inc/scrypt-ts-btc@0.2.9-alpha.21":
-  version "0.2.9-alpha.21"
-  resolved "https://registry.yarnpkg.com/@scrypt-inc/scrypt-ts-btc/-/scrypt-ts-btc-0.2.9-alpha.21.tgz#0eb6b6d8d84167c3a90fdbfd2e7d10950b82bee4"
-  integrity sha512-Sh4jGWu9+HEqoZpO48VCvEDtRoAKe6wiKd61V+OQpE9tTC/7O7FhF6Z723Gb7h7K4Pa8EQlD0f+0zTY7tY+TyA==
+"@scrypt-inc/scrypt-ts-btc@1.0.0":
+  version "1.0.0"
+  resolved "https://registry.yarnpkg.com/@scrypt-inc/scrypt-ts-btc/-/scrypt-ts-btc-1.0.0.tgz#e1bf2c9999bbfe9eadac3ec9e7e5ca23f41c17ea"
+  integrity sha512-7r1jeHor48FZpBTdVWWwARqwKpt9VDhu4veaBVAYdkZXkS4RAHI46KZkncF4aSA1tZsgE5aN4LCDMuvBBJd41w==
   dependencies:
     "@bitcoinerlab/secp256k1" "^1.2.0"
     "@cmdcode/tapscript" "=1.4.6"
@@ -1189,13 +1189,13 @@
     md5 "^2.3.0"
     reflect-metadata "^0.2.2"
 
-"@scrypt-inc/scrypt-ts-transpiler-btc@0.2.9-alpha.21":
-  version "0.2.9-alpha.21"
-  resolved "https://registry.yarnpkg.com/@scrypt-inc/scrypt-ts-transpiler-btc/-/scrypt-ts-transpiler-btc-0.2.9-alpha.21.tgz#567703c24c5a2ae5325a83c8cf71892b05de4abe"
-  integrity sha512-L5PMaGSqxXjZaQk43MH/aHXkfNPO/UfBwQJBG72tD8v5E7FJt+BI7/9W/AzgJqvmI61UQAM1gKlAOdyYMHYE+Q==
+"@scrypt-inc/scrypt-ts-transpiler-btc@1.0.0":
+  version "1.0.0"
+  resolved "https://registry.yarnpkg.com/@scrypt-inc/scrypt-ts-transpiler-btc/-/scrypt-ts-transpiler-btc-1.0.0.tgz#51f4a1621a567326ff728b32325fe16f72d0a876"
+  integrity sha512-vFcgdnBBLKLUjDjfusXgQE5jyJtqvNEWe8llMUgHY1pAInJmUIEJ/WeqEzNBiBtOSAXs5gFkwn0uzv8BMcBR0Q==
   dependencies:
     "@phenomnomnominal/tsquery" "^6.1.2"
-    "@scrypt-inc/scrypt-ts-btc" "0.2.9-alpha.21"
+    "@scrypt-inc/scrypt-ts-btc" "1.0.0"
     chalk "^4.1.2"
     get-proxy-settings "^0.1.13"
     https-proxy-agent "^7.0.6"
