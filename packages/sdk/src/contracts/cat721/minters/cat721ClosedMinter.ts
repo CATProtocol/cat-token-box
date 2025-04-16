@@ -57,10 +57,6 @@ export class CAT721ClosedMinter extends SmartContract<CAT721ClosedMinterState> {
         // minter input should be the first input in curTx
         assert(this.ctx.inputIndexVal == 0n);
 
-        // check issuer
-        OwnerUtils.checkUserOwner(issuerPubKeyPrefix, issuerPubKey, this.issuerAddress);
-        assert(this.checkSig(issuerSig, issuerPubKey));
-
         const nextLocalId = this.state.nextLocalId + 1n;
         if (nextLocalId < this.state.maxLocalId) {
             this.appendStateOutput(
