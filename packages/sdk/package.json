@@ -1,6 +1,6 @@
 {
   "name": "@cat-protocol/cat-sdk-v2",
-  "version": "2.0.0-beta.4",
+  "version": "2.0.0",
   "description": "CAT protocol SDK.",
   "author": "catprotocol.org",
   "main": "./dist/cjs/index.js",
