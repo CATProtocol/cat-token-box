@@ -356,7 +356,7 @@
     "@noble/secp256k1" "^1.7.1"
 
 "@cat-protocol/cat-sdk@file:packages/sdk":
-  version "1.0.7"
+  version "1.0.17"
   dependencies:
     "@bitcoinerlab/secp256k1" "^1.1.1"
     "@cmdcode/buff" "^2.2.4"
@@ -366,7 +366,7 @@
     bigi "^1.4.2"
     bip174 "^3.0.0-rc.1"
     bitcoinjs-lib "7.0.0-rc.0"
-    bitcore-lib-inquisition "^10.0.30"
+    bitcore-lib-inquisition "^10.3.1"
     cbor "^9.0.2"
     cross-fetch "^4.0.0"
     decimal.js "^10.4.3"
@@ -2109,16 +2109,16 @@ bitcoinjs-lib@7.0.0-rc.0:
     valibot "^0.38.0"
     varuint-bitcoin "^2.0.0"
 
-bitcore-lib-inquisition@^10.0.30:
-  version "10.3.0"
-  resolved "https://registry.yarnpkg.com/bitcore-lib-inquisition/-/bitcore-lib-inquisition-10.3.0.tgz#82d8754c67b5fc8ec5d16996727074b8d323dd58"
-  integrity sha512-d4/PQK7KnE91gHAgu/cMbZVXpAfElk3/1ACLs/b87pyilE5SYs29JPWwTyNGygBAHxeB2P2c+3CJILCBevN/1g==
+bitcore-lib-inquisition@^10.3.1:
+  version "10.3.1"
+  resolved "https://registry.yarnpkg.com/bitcore-lib-inquisition/-/bitcore-lib-inquisition-10.3.1.tgz#5edf565f95a2dbdfc6bd1aaa45a1a5c5842556e0"
+  integrity sha512-8rf4gDXEuVSPPj6ZOFde4I8IskDrx14Jwt+5tozfQ9sypzH9mrrLUNkq2gGSVF2A0/p7DC2qbnyiXym2rDwqcg==
   dependencies:
     bech32 "=2.0.0"
     bn.js "=4.11.8"
     bs58 "^4.0.1"
     buffer-compare "=1.1.1"
-    elliptic "^6.5.3"
+    elliptic "6.6.1"
     inherits "=2.0.1"
     lodash "^4.17.20"
 
@@ -3187,20 +3187,7 @@ electron-to-chromium@^1.5.41:
   resolved "https://registry.yarnpkg.com/electron-to-chromium/-/electron-to-chromium-1.5.55.tgz#73684752aa2e1aa49cafb355a41386c6637e76a9"
   integrity sha512-6maZ2ASDOTBtjt9FhqYPRnbvKU5tjG0IN9SztUOWYw2AzNDNpKJYLJmlK0/En4Hs/aiWnB+JZ+gW19PIGszgKg==
 
-elliptic@^6.5.3:
-  version "6.6.0"
-  resolved "https://registry.yarnpkg.com/elliptic/-/elliptic-6.6.0.tgz#5919ec723286c1edf28685aa89261d4761afa210"
-  integrity sha512-dpwoQcLc/2WLQvJvLRHKZ+f9FgOdjnq11rurqwekGQygGPsYSK29OMMD2WalatiqQ+XGFDglTNixpPfI+lpaAA==
-  dependencies:
-    bn.js "^4.11.9"
-    brorand "^1.1.0"
-    hash.js "^1.0.0"
-    hmac-drbg "^1.0.1"
-    inherits "^2.0.4"
-    minimalistic-assert "^1.0.1"
-    minimalistic-crypto-utils "^1.0.1"
-
-elliptic@^6.6.1:
+elliptic@6.6.1, elliptic@^6.6.1:
   version "6.6.1"
   resolved "https://registry.yarnpkg.com/elliptic/-/elliptic-6.6.1.tgz#3b8ffb02670bf69e382c7f65bf524c97c5405c06"
   integrity sha512-RaddvvMatK2LJHqFJ+YA4WysVN5Ita9E35botqIYspQ4TkRAlCicdzKOjlyv/1Za5RyTNn7di//eEV0uTAfe3g==

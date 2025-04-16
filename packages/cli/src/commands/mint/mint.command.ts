@@ -199,6 +199,10 @@ export class MintCommand extends BoardcastCommand {
               feeRate,
             );
 
+            this.spendSerivce.updateTxsSpends([
+              res.mintTx.extractTransaction(),
+            ]);
+
             const { mintTxId } = res;
             console.log(
               `Minting ${unScaleByDecimals(amount, token.metadata.decimals)} ${token.metadata.symbol} tokens in txid: ${mintTxId} ...`,
