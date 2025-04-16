@@ -21,7 +21,7 @@ On a fundamental level, this SDK offers all the essential smart contracts writte
 ## Installation
 
 ```bash
-npm i @cat-protocol/cat-sdk
+npm i @cat-protocol/cat-sdk-v2
 ```
 
 ## Build Locally
@@ -38,11 +38,11 @@ yarn test
 
 ## Sample Transactions
 
-Sample token contract address is [bc1plhz9wf0desgz8t32xm67vay9hgdmrnwzjzujgg0k9883cfxxgkzs20qfd5](https://mempool.fractalbitcoin.io/address/bc1plhz9wf0desgz8t32xm67vay9hgdmrnwzjzujgg0k9883cfxxgkzs20qfd5)
+Sample token contract address is [bc1p2dxw0fux0wzga0udvlrpn40v3ap8ggu6c9kqaf6h2ahjhuhkzess266xgf](https://mempool.fractalbitcoin.io/address/bc1plhz9wf0desgz8t32xm67vay9hgdmrnwzjzujgg0k9883cfxxgkzs20qfd5)
 
-- A transaction with 2 token UTXO inputs and 1 token UTXO output, with a virtual size (vsize) of 3.9k. The transaction ID (txid) is [2537706ed1000d5dd3a28d79a95ade8f674fd3e25c020cbcf97fd1b1e86ec8ef](https://mempool.fractalbitcoin.io/tx/2537706ed1000d5dd3a28d79a95ade8f674fd3e25c020cbcf97fd1b1e86ec8ef).
+- A transaction with 2 token UTXO inputs and 2 token UTXO output, with a virtual size (vsize) of 12.33k. The transaction ID (txid) is [73c9f38608625daac885cb76cd9522bb7d3860c8daf191c9bf7667b4f1129a1f](https://mempool.fractalbitcoin.io/tx/73c9f38608625daac885cb76cd9522bb7d3860c8daf191c9bf7667b4f1129a1f).
 
-- A transaction with 1 token UTXO input and 2 token UTXO outputs, with a virtual size (vsize) of 2.6k. The transaction ID (txid) is [94e3254c1237ba7cd42eaeeae713c646ee5dd1cd6c4dd6ef07241d5336cd2aa7](https://mempool.fractalbitcoin.io/tx/94e3254c1237ba7cd42eaeeae713c646ee5dd1cd6c4dd6ef07241d5336cd2aa7).
+- A transaction with 1 token UTXO input and 2 token UTXO outputs, with a virtual size (vsize) of 8.91k. The transaction ID (txid) is [10c9466116b3d44dcb573f0be77b258c2c705f038fcc041b5fb1c4fab6904952](https://mempool.fractalbitcoin.io/tx/10c9466116b3d44dcb573f0be77b258c2c705f038fcc041b5fb1c4fab6904952).
 
 ## CAT Token Transaction Limits
 
