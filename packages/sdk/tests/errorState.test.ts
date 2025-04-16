@@ -191,7 +191,7 @@ describe('Test incorrect state for cat20/cat721', () => {
         const guardCovenant = new CAT20GuardCovenant(guardState);
         {
             const psbt = new ExtPsbt().spendUTXO(getDummyUtxo(mainAddress)).addCovenantOutput(guardCovenant, 1e8);
-            const signedPsbtHex = await testSigner.signPsbt(psbt.toHex(), psbt.psbtOptions());
+            const signedPsbtHex = await testSigner.signPsbt(psbt.seal().toHex(), psbt.psbtOptions());
             psbt.combine(ExtPsbt.fromHex(signedPsbtHex)).finalizeAllInputs();
         }
 
@@ -211,7 +211,6 @@ describe('Test incorrect state for cat20/cat721', () => {
                 invokeMethod: (contract: CAT20, curPsbt: ExtPsbt) => {
                     contract.unlock(
                         {
-                            isUserSpend: true,
                             userPubKeyPrefix: mainPubKey.prefix,
                             userXOnlyPubKey: mainPubKey.xOnlyPubKey,
                             userSig: curPsbt.getSig(inputIndex, { address: mainAddress }),
@@ -259,7 +258,7 @@ describe('Test incorrect state for cat20/cat721', () => {
             },
         });
 
-        const signedPsbtHex = await testSigner.signPsbt(psbt.toHex(), psbt.psbtOptions());
+        const signedPsbtHex = await testSigner.signPsbt(psbt.seal().toHex(), psbt.psbtOptions());
         psbt.combine(ExtPsbt.fromHex(signedPsbtHex)).finalizeAllInputs();
         return psbt.isFinalized;
     }
@@ -268,7 +267,7 @@ describe('Test incorrect state for cat20/cat721', () => {
         const guardCovenant = new CAT20GuardCovenant(incorrectGuardState);
         {
             const psbt = new ExtPsbt().spendUTXO(getDummyUtxo(mainAddress)).addCovenantOutput(guardCovenant, 1e8);
-            const signedPsbtHex = await testSigner.signPsbt(psbt.toHex(), psbt.psbtOptions());
+            const signedPsbtHex = await testSigner.signPsbt(psbt.seal().toHex(), psbt.psbtOptions());
             psbt.combine(ExtPsbt.fromHex(signedPsbtHex)).finalizeAllInputs();
         }
 
@@ -294,7 +293,6 @@ describe('Test incorrect state for cat20/cat721', () => {
                 invokeMethod: (contract: CAT20, curPsbt: ExtPsbt) => {
                     contract.unlock(
                         {
-                            isUserSpend: true,
                             userPubKeyPrefix: mainPubKey.prefix,
                             userXOnlyPubKey: mainPubKey.xOnlyPubKey,
                             userSig: curPsbt.getSig(inputIndex, { address: mainAddress }),
@@ -342,7 +340,7 @@ describe('Test incorrect state for cat20/cat721', () => {
             },
         });
 
-        const signedPsbtHex = await testSigner.signPsbt(psbt.toHex(), psbt.psbtOptions());
+        const signedPsbtHex = await testSigner.signPsbt(psbt.seal().toHex(), psbt.psbtOptions());
         psbt.combine(ExtPsbt.fromHex(signedPsbtHex)).finalizeAllInputs();
         return psbt.isFinalized;
     }
@@ -358,7 +356,7 @@ describe('Test incorrect state for cat20/cat721', () => {
                 .spendUTXO(getDummyUtxo(mainAddress))
                 .addCovenantOutput(guardCovenant, 1e8)
                 .seal();
-            const signedPsbtHex = await testSigner.signPsbt(psbt.toHex(), psbt.psbtOptions());
+            const signedPsbtHex = await testSigner.signPsbt(psbt.seal().toHex(), psbt.psbtOptions());
             psbt.combine(ExtPsbt.fromHex(signedPsbtHex)).finalizeAllInputs();
         }
 
@@ -377,7 +375,6 @@ describe('Test incorrect state for cat20/cat721', () => {
                 invokeMethod: (contract: CAT721, curPsbt: ExtPsbt) => {
                     contract.unlock(
                         {
-                            isUserSpend: true,
                             userPubKeyPrefix: mainPubKey.prefix,
                             userXOnlyPubKey: mainPubKey.xOnlyPubKey,
                             userSig: curPsbt.getSig(inputIndex, { address: mainAddress }),
@@ -431,7 +428,7 @@ describe('Test incorrect state for cat20/cat721', () => {
             },
         });
 
-        const signedPsbtHex = await testSigner.signPsbt(psbt.toHex(), psbt.psbtOptions());
+        const signedPsbtHex = await testSigner.signPsbt(psbt.seal().toHex(), psbt.psbtOptions());
         psbt.combine(ExtPsbt.fromHex(signedPsbtHex)).finalizeAllInputs();
         return psbt.isFinalized;
     }
@@ -443,7 +440,7 @@ describe('Test incorrect state for cat20/cat721', () => {
                 .spendUTXO(getDummyUtxo(mainAddress))
                 .addCovenantOutput(guardCovenant, 1e8)
                 .seal();
-            const signedPsbtHex = await testSigner.signPsbt(psbt.toHex(), psbt.psbtOptions());
+            const signedPsbtHex = await testSigner.signPsbt(psbt.seal().toHex(), psbt.psbtOptions());
             psbt.combine(ExtPsbt.fromHex(signedPsbtHex)).finalizeAllInputs();
         }
 
@@ -466,7 +463,6 @@ describe('Test incorrect state for cat20/cat721', () => {
                 invokeMethod: (contract: CAT721, curPsbt: ExtPsbt) => {
                     contract.unlock(
                         {
-                            isUserSpend: true,
                             userPubKeyPrefix: mainPubKey.prefix,
                             userXOnlyPubKey: mainPubKey.xOnlyPubKey,
                             userSig: curPsbt.getSig(inputIndex, { address: mainAddress }),
@@ -520,7 +516,7 @@ describe('Test incorrect state for cat20/cat721', () => {
             },
         });
 
-        const signedPsbtHex = await testSigner.signPsbt(psbt.toHex(), psbt.psbtOptions());
+        const signedPsbtHex = await testSigner.signPsbt(psbt.seal().toHex(), psbt.psbtOptions());
         psbt.combine(ExtPsbt.fromHex(signedPsbtHex)).finalizeAllInputs();
         return psbt.isFinalized;
     }

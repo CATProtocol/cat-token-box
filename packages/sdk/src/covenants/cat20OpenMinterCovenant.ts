@@ -60,6 +60,8 @@ export class CAT20OpenMinterCovenant extends StatefulCovenant<CAT20OpenMinterSta
             scaledTokenInfo.limit,
             metadata.preminerAddr || '',
         );
+        // check props
+        contract.checkProps();
         super(state, [{ contract }], { network });
         this.tokenScript = new CAT20Covenant(this.address).lockingScriptHex;
     }

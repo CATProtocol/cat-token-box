@@ -206,7 +206,6 @@ function buildSendTx(
                 const sig = curPsbt.getSig(i, { address: address, disableTweakSigner: _isP2TR ? false : true });
                 contract.unlock(
                     {
-                        isUserSpend: true,
                         userPubKeyPrefix: _isP2TR ? '' : pubKeyPrefix(pubKey),
                         userXOnlyPubKey: PubKey(catToXOnly(pubKey, _isP2TR)),
                         userSig: sig,

@@ -1,5 +1,6 @@
 import {
     ByteString,
+    ExtPsbt,
     fill,
     hash160,
     Outpoint,
@@ -156,6 +157,12 @@ export function getDummyUtxo(_address?: string, satoshis?: number): UTXO {
         script: uint8ArrayToHex(address.toOutputScript(_address)),
         satoshis: satoshis || 9007199254740991,
     };
+}
+
+export function getStateProvableUtxo(_address: string) {
+    const ext = new ExtPsbt();
+    ext.spendUTXO(getDummyUtxo(_address)).change(_address, 1);
+    return ext.getChangeUTXO();
 }
 
 export function getDummyUtxos(address: string, count: number, satoshis?: number): UTXO[] {

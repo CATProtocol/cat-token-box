@@ -368,15 +368,15 @@
     "@noble/curves" "^1.7.0"
 
 "@cat-protocol/cat-sdk-v2@file:packages/sdk":
-  version "1.0.17"
+  version "2.0.0-beta.4"
   dependencies:
     "@bitcoinerlab/secp256k1" "^1.1.1"
     "@cmdcode/buff" "^2.2.4"
     "@cmdcode/crypto-tools" "^2.7.4"
     "@cmdcode/tapscript" "=1.4.4"
     "@scrypt-inc/bitcoinjs-lib" "^1.0.11"
-    "@scrypt-inc/cli-btc" "0.2.9-beta.16"
-    "@scrypt-inc/scrypt-ts-btc" "0.2.9-beta.16"
+    "@scrypt-inc/cli-btc" "1.0.0"
+    "@scrypt-inc/scrypt-ts-btc" "1.0.0"
     "@scure/btc-signer" "^1.4.0"
     bip174 "^3.0.0-rc.1"
     cbor "^9.0.2"
@@ -385,6 +385,7 @@
     dotenv "^16.0.3"
     ecpair "^3.0.0"
     ecurve "^1.0.6"
+    exsolve "^1.0.4"
     js-sha256 "^0.9.0"
 
 "@cmdcode/buff@^2.2.4", "@cmdcode/buff@^2.2.5":
@@ -1147,15 +1148,15 @@
     valibot "^0.38.0"
     varuint-bitcoin "^2.0.0"
 
-"@scrypt-inc/cli-btc@0.2.9-beta.16":
-  version "0.2.9-beta.16"
-  resolved "https://registry.yarnpkg.com/@scrypt-inc/cli-btc/-/cli-btc-0.2.9-beta.16.tgz#ee0b30fa6ae19b971ad3b9815062730f3fa8daea"
-  integrity sha512-QbFmveDwwINlp0oYb3W/LVD8S8iThnzHy6rzInllRNDAlXJnd4w+eVfMqZfYB0Rv1FNrVTEt04AwZ9yXsS6HkA==
+"@scrypt-inc/cli-btc@1.0.0":
+  version "1.0.0"
+  resolved "https://registry.yarnpkg.com/@scrypt-inc/cli-btc/-/cli-btc-1.0.0.tgz#3f6d9afa597964f8d47616c27684a6e4d2e03ef1"
+  integrity sha512-CGG8G5yAlMUvm+Up/eYPphNdSmrwxaurn9Olxe+MC2Hwf/jHrd0kJTN18rOAIXmFaXss9skuO+sxMC6KSaG6kQ==
   dependencies:
     "@nestjs/common" "^10.0.0"
     "@nestjs/core" "^10.0.0"
     "@nestjs/platform-express" "^10.0.0"
-    "@scrypt-inc/scrypt-ts-transpiler-btc" "0.2.9-beta.16"
+    "@scrypt-inc/scrypt-ts-transpiler-btc" "1.0.0"
     chalk "4"
     envinfo "^7.14.0"
     glob "^11.0.0"
@@ -1174,10 +1175,10 @@
     valibot "^0.38.0"
     wif "^5.0.0"
 
-"@scrypt-inc/scrypt-ts-btc@0.2.9-beta.16":
-  version "0.2.9-beta.16"
-  resolved "https://registry.yarnpkg.com/@scrypt-inc/scrypt-ts-btc/-/scrypt-ts-btc-0.2.9-beta.16.tgz#9cde3781ffeda58350e875edf54009fd6598eeed"
-  integrity sha512-PvfZMNQ7dhBUXazsAooIABT7gD9MQDxt+QG9rBUDZR1YCbzF81xiayYpmahDfEupcpiQoje1EpffxZCwS1WAlg==
+"@scrypt-inc/scrypt-ts-btc@1.0.0":
+  version "1.0.0"
+  resolved "https://registry.yarnpkg.com/@scrypt-inc/scrypt-ts-btc/-/scrypt-ts-btc-1.0.0.tgz#e1bf2c9999bbfe9eadac3ec9e7e5ca23f41c17ea"
+  integrity sha512-7r1jeHor48FZpBTdVWWwARqwKpt9VDhu4veaBVAYdkZXkS4RAHI46KZkncF4aSA1tZsgE5aN4LCDMuvBBJd41w==
   dependencies:
     "@bitcoinerlab/secp256k1" "^1.2.0"
     "@cmdcode/tapscript" "=1.4.6"
@@ -1188,18 +1189,19 @@
     md5 "^2.3.0"
     reflect-metadata "^0.2.2"
 
-"@scrypt-inc/scrypt-ts-transpiler-btc@0.2.9-beta.16":
-  version "0.2.9-beta.16"
-  resolved "https://registry.yarnpkg.com/@scrypt-inc/scrypt-ts-transpiler-btc/-/scrypt-ts-transpiler-btc-0.2.9-beta.16.tgz#94aa2a4091ad45d9eb144118e20a3b8bc0f00d58"
-  integrity sha512-/8kv7dNK3PgnfH9bLygriNgivVWdX0Nj/pQSbbqtxtmO4XxIX/TYzyEov05r5jMKLLJaVAoC1hRy8wqLQpIEpA==
+"@scrypt-inc/scrypt-ts-transpiler-btc@1.0.0":
+  version "1.0.0"
+  resolved "https://registry.yarnpkg.com/@scrypt-inc/scrypt-ts-transpiler-btc/-/scrypt-ts-transpiler-btc-1.0.0.tgz#51f4a1621a567326ff728b32325fe16f72d0a876"
+  integrity sha512-vFcgdnBBLKLUjDjfusXgQE5jyJtqvNEWe8llMUgHY1pAInJmUIEJ/WeqEzNBiBtOSAXs5gFkwn0uzv8BMcBR0Q==
   dependencies:
     "@phenomnomnominal/tsquery" "^6.1.2"
-    "@scrypt-inc/scrypt-ts-btc" "0.2.9-beta.16"
+    "@scrypt-inc/scrypt-ts-btc" "1.0.0"
     chalk "^4.1.2"
     get-proxy-settings "^0.1.13"
     https-proxy-agent "^7.0.6"
     json-bigint "^1.0.0"
     minimist "^1.2.8"
+    mlly "^1.7.4"
     node-fetch "^2.7.0"
     reflect-metadata "^0.1.13"
     rimraf "^6.0.1"
@@ -2839,6 +2841,11 @@ concat-stream@^1.5.2:
     readable-stream "^2.2.2"
     typedarray "^0.0.6"
 
+confbox@^0.1.8:
+  version "0.1.8"
+  resolved "https://registry.yarnpkg.com/confbox/-/confbox-0.1.8.tgz#820d73d3b3c82d9bd910652c5d4d599ef8ff8b06"
+  integrity sha512-RMtmw0iFkeR4YV+fUOSucriAQNb9g8zFR52MWCtl+cCZOFRNL6zeB395vPzFhEjjn4fMxXudmELnl/KF/WrK6w==
+
 config-chain@^1.1.11:
   version "1.1.13"
   resolved "https://registry.yarnpkg.com/config-chain/-/config-chain-1.1.13.tgz#fad0795aa6a6cdaff9ed1b68e9dff94372c232f4"
@@ -3657,6 +3664,11 @@ express@4.21.1:
     type-is "~1.6.18"
     utils-merge "1.0.1"
     vary "~1.1.2"
+
+exsolve@^1.0.4:
+  version "1.0.4"
+  resolved "https://registry.yarnpkg.com/exsolve/-/exsolve-1.0.4.tgz#7de5c75af82ecd15998328fbf5f2295883be3a39"
+  integrity sha512-xsZH6PXaER4XoV+NiT7JHp1bJodJVT+cxeSH1G0f0tlT0lJqYuHUP3bUx2HtfTDvOagMINYp8rsqusxud3RXhw==
 
 external-editor@^3.0.3, external-editor@^3.1.0:
   version "3.1.0"
@@ -5676,6 +5688,16 @@ mkdirp@^3.0.1:
   resolved "https://registry.yarnpkg.com/mkdirp/-/mkdirp-3.0.1.tgz#e44e4c5607fb279c168241713cc6e0fea9adcb50"
   integrity sha512-+NsyUUAZDmo6YVHzL/stxSu3t9YS1iljliy3BSDrXJ/dkn1KYdmtZODGGjLcc9XLgVVpH4KshHB8XmZgMhaBXg==
 
+mlly@^1.7.4:
+  version "1.7.4"
+  resolved "https://registry.yarnpkg.com/mlly/-/mlly-1.7.4.tgz#3d7295ea2358ec7a271eaa5d000a0f84febe100f"
+  integrity sha512-qmdSIPC4bDJXgZTCR7XosJiNKySV7O215tsPtDN9iEO/7q/76b/ijtgRu/+epFXSJhijtTCCGp3DWS549P3xKw==
+  dependencies:
+    acorn "^8.14.0"
+    pathe "^2.0.1"
+    pkg-types "^1.3.0"
+    ufo "^1.5.4"
+
 mocha@^10.1.0:
   version "10.8.2"
   resolved "https://registry.yarnpkg.com/mocha/-/mocha-10.8.2.tgz#8d8342d016ed411b12a429eb731b825f961afb96"
@@ -6168,6 +6190,11 @@ path-type@^4.0.0:
   resolved "https://registry.yarnpkg.com/path-type/-/path-type-4.0.0.tgz#84ed01c0a7ba380afe09d90a8c180dcd9d03043b"
   integrity sha512-gDKb8aZMDeD/tZWs9P6+q0J9Mwkdl6xMV8TjnGP3qJVJ06bdMgkbBlLU8IdfOsIsFz2BW1rNVT3XuNEl8zPAvw==
 
+pathe@^2.0.1:
+  version "2.0.3"
+  resolved "https://registry.yarnpkg.com/pathe/-/pathe-2.0.3.tgz#3ecbec55421685b70a9da872b2cff3e1cbed1716"
+  integrity sha512-WUjGcAqP1gQacoQe+OBJsFA7Ld4DyXuUIjZ5cc75cLHvJ7dtNsTugphxIADwspS+AraAUePCKrSVtPLFj/F88w==
+
 pathval@^1.1.1:
   version "1.1.1"
   resolved "https://registry.yarnpkg.com/pathval/-/pathval-1.1.1.tgz#8534e77a77ce7ac5a2512ea21e0fdb8fcf6c3d8d"
@@ -6277,6 +6304,15 @@ pkg-dir@^4.1.0, pkg-dir@^4.2.0:
   integrity sha512-HRDzbaKjC+AOWVXxAU/x54COGeIv9eb+6CkDSQoNTt4XyWoIJvuPsXizxu/Fr23EiekbtZwmh1IcIG/l/a10GQ==
   dependencies:
     find-up "^4.0.0"
+
+pkg-types@^1.3.0:
+  version "1.3.1"
+  resolved "https://registry.yarnpkg.com/pkg-types/-/pkg-types-1.3.1.tgz#bd7cc70881192777eef5326c19deb46e890917df"
+  integrity sha512-/Jm5M4RvtBFVkKWRu2BLUTNP8/M2a+UwuAX+ae4770q1qVGtfjG+WTCupoZixokjmHiry8uI+dlY8KXYV5HVVQ==
+  dependencies:
+    confbox "^0.1.8"
+    mlly "^1.7.4"
+    pathe "^2.0.1"
 
 pluralize@8.0.0:
   version "8.0.0"
@@ -7544,6 +7580,11 @@ typescript@=5.3.3, typescript@~5.3.0:
   version "5.3.3"
   resolved "https://registry.yarnpkg.com/typescript/-/typescript-5.3.3.tgz#b3ce6ba258e72e6305ba66f5c9b452aaee3ffe37"
   integrity sha512-pXWcraxM0uxAS+tN0AG/BF2TyqmHO014Z070UsJ+pFvYuRSq8KH8DmWpnbXe0pEPDHXZV3FcAbJkijJ5oNEnWw==
+
+ufo@^1.5.4:
+  version "1.6.1"
+  resolved "https://registry.yarnpkg.com/ufo/-/ufo-1.6.1.tgz#ac2db1d54614d1b22c1d603e3aef44a85d8f146b"
+  integrity sha512-9a4/uxlTWJ4+a5i0ooc1rU7C7YOw3wT+UGqdeNNHWnOF9qcMBgLRS+4IYUqbczewFx4mLEig6gawh7X6mFlEkA==
 
 uglify-js@^3.1.4:
   version "3.19.3"

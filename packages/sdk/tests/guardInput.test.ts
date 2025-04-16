@@ -15,7 +15,7 @@ import {
     CAT721Covenant,
     CAT721Guard,
     catToXOnly,
-    getDummyUtxo,
+    getStateProvableUtxo,
     isP2TR,
     pubKeyPrefix,
 } from '../src';
@@ -59,14 +59,13 @@ describe('Test the guard input, fake or missing', async () => {
         const psbt = new ExtPsbt()
             .addCovenantInput(cat20.tracedUtxos[0].token)
             .addCovenantInput(cat20.tracedUtxos[1].token)
-            .spendUTXO(getDummyUtxo(mainAddress))
+            .spendUTXO(getStateProvableUtxo(mainAddress))
             .addCovenantOutput(outputCat20Covenant, Postage.TOKEN_POSTAGE)
             .change(mainAddress, 0)
             .updateCovenantInput(0, cat20.tracedUtxos[0].token, {
                 invokeMethod: (contract: CAT20, curPsbt: ExtPsbt) => {
                     contract.unlock(
                         {
-                            isUserSpend: true,
                             userPubKeyPrefix: mainPubKey.prefix,
                             userXOnlyPubKey: mainPubKey.xOnlyPubKey,
                             userSig: curPsbt.getSig(0, { address: mainAddress }),
@@ -86,7 +85,6 @@ describe('Test the guard input, fake or missing', async () => {
                 invokeMethod: (contract: CAT20, curPsbt: ExtPsbt) => {
                     contract.unlock(
                         {
-                            isUserSpend: true,
                             userPubKeyPrefix: mainPubKey.prefix,
                             userXOnlyPubKey: mainPubKey.xOnlyPubKey,
                             userSig: curPsbt.getSig(1, { address: mainAddress }),
@@ -103,7 +101,7 @@ describe('Test the guard input, fake or missing', async () => {
                 },
             });
 
-        const signedPsbtHex = await testSigner.signPsbt(psbt.toHex(), psbt.psbtOptions());
+        const signedPsbtHex = await testSigner.signPsbt(psbt.seal().toHex(), psbt.psbtOptions());
         psbt.combine(ExtPsbt.fromHex(signedPsbtHex));
 
         expect(() => psbt.finalizeAllInputs()).to.throw(
@@ -132,7 +130,7 @@ describe('Test the guard input, fake or missing', async () => {
         const psbt = new ExtPsbt()
             .addCovenantInput(cat721.tracedUtxos[0].nft)
             .addCovenantInput(cat721.tracedUtxos[1].nft)
-            .spendUTXO(getDummyUtxo(mainAddress))
+            .spendUTXO(getStateProvableUtxo(mainAddress))
             .addCovenantOutput(outputCat721Covenants[0], Postage.TOKEN_POSTAGE)
             .addCovenantOutput(outputCat721Covenants[1], Postage.TOKEN_POSTAGE)
             .change(mainAddress, 0)
@@ -140,7 +138,6 @@ describe('Test the guard input, fake or missing', async () => {
                 invokeMethod: (contract: CAT721, curPsbt: ExtPsbt) => {
                     contract.unlock(
                         {
-                            isUserSpend: true,
                             userPubKeyPrefix: mainPubKey.prefix,
                             userXOnlyPubKey: mainPubKey.xOnlyPubKey,
                             userSig: curPsbt.getSig(0, { address: mainAddress }),
@@ -160,7 +157,6 @@ describe('Test the guard input, fake or missing', async () => {
                 invokeMethod: (contract: CAT721, curPsbt: ExtPsbt) => {
                     contract.unlock(
                         {
-                            isUserSpend: true,
                             userPubKeyPrefix: mainPubKey.prefix,
                             userXOnlyPubKey: mainPubKey.xOnlyPubKey,
                             userSig: curPsbt.getSig(1, { address: mainAddress }),
@@ -177,7 +173,7 @@ describe('Test the guard input, fake or missing', async () => {
                 },
             });
 
-        const signedPsbtHex = await testSigner.signPsbt(psbt.toHex(), psbt.psbtOptions());
+        const signedPsbtHex = await testSigner.signPsbt(psbt.seal().toHex(), psbt.psbtOptions());
         psbt.combine(ExtPsbt.fromHex(signedPsbtHex));
 
         expect(() => psbt.finalizeAllInputs()).to.throw(

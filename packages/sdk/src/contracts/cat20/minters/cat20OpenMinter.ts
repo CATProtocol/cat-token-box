@@ -125,4 +125,12 @@ export class CAT20OpenMinter extends SmartContract<CAT20OpenMinterState> {
         const outputs = this.buildStateOutputs() + this.buildChangeOutput();
         assert(this.checkOutputs(outputs), 'Outputs mismatch with the transaction context');
     }
+
+    public checkProps() {
+        //
+        assert(
+            this.premineCount * this.limit == this.premine,
+            'premineCount needs to be multiplied by limit to equal premine.',
+        );
+    }
 }
