@@ -73,6 +73,10 @@ The development tools have been significantly improved to simplify the contract 
 
 ---
 
+## Audits
+
+- SlowMist: [report](./audits/cat-token-box%20-%20SlowMist%20Audit%20Report.pdf)
+
 ## **Comparison of v1 and v2**
 
 | Feature                        | v1                                  | v2                                  |

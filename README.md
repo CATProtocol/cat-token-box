@@ -5,6 +5,9 @@
 
 A reference implementation of the `Covenant Attested Token (CAT)` protocol on BTC signet and Fractal, where `OP_CAT` is re-activated.
 
+## Audits
+
+- SlowMist: [report](./audits/cat-token-box%20-%20SlowMist%20Audit%20Report.pdf)
 
 ## Out of the Box
 
