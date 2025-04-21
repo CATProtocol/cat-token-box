@@ -1,7 +1,7 @@
 import { Network, networks } from 'bitcoinjs-lib';
 
 export class Constants {
-  static readonly BLOCK_PROCESSING_INTERVAL = 10000;
+  static readonly BLOCK_PROCESSING_INTERVAL = 1000;
 
   static readonly CACHE_MAX_SIZE = 10000;
 
