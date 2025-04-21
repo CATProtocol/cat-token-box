@@ -86,7 +86,9 @@ export class BlockService implements OnModuleInit {
   private async daemonProcessBlocks() {
     while (true) {
       try {
+        const startTs = Date.now();
         await this.processBlocks();
+        this.logger.debug(`-- one round process blocks cost ${Math.ceil(Date.now() - startTs)} ms`);
       } catch (e) {
         this.logger.error(`daemon process blocks error, ${e.message}`);
       }
@@ -95,6 +97,7 @@ export class BlockService implements OnModuleInit {
 
   private async processBlocks() {
     // query last processed block in database
+    const _tsPrepare = Date.now();
     const lastProcessedBlock = await this.commonService.getLastProcessedBlock();
     // the potential next height to be processed is the height of last processed block plus one
     // or the genesis block height if this is the first time run
@@ -102,7 +105,9 @@ export class BlockService implements OnModuleInit {
     // get block hash by height to check the existence of the next block
     // if cannot get a result, then there is no new block to process
     const nextHash = await this.getBlockHash(nextHeight);
+    this.logger.debug(`process blocks prepare cost ${Math.ceil(Date.now() - _tsPrepare)} ms`);
     if (!nextHash) {
+      this.logger.debug('hit no new block in process blocks');
       await sleep(Constants.BLOCK_PROCESSING_INTERVAL);
       return;
     }
@@ -121,8 +126,12 @@ export class BlockService implements OnModuleInit {
     //             \ -- [ ] -- [ ] -- [ ]
     //                   ^             ^
     //               nextHeader     nextHash
+    const _tsReorg = Date.now();
     const nextHeader = await this.processReorg(nextHash);
+    this.logger.debug(`-- process reorg cost ${Math.ceil(Date.now() - _tsReorg)} ms`);
+    const _tsProcess = Date.now();
     await this.processBlock(nextHeader);
+    this.logger.debug(`-- process block cost ${Math.ceil(Date.now() - _tsProcess)} ms`);
   }
 
   /**
@@ -157,8 +166,12 @@ export class BlockService implements OnModuleInit {
   }
 
   private async processBlock(blockHeader: BlockHeader) {
+    const _tsGetRawBlock = Date.now();
     const rawBlock = await this.getRawBlock(blockHeader.hash);
+    this.logger.debug(`get raw block cost ${Math.ceil(Date.now() - _tsGetRawBlock)} ms`);
+    const _tsParseBlock = Date.now();
     const block = Block.fromHex(rawBlock);
+    this.logger.debug(`parse block cost ${Math.ceil(Date.now() - _tsParseBlock)} ms`);
     if (block.transactions.length === 0) {
       throw new Error('no txs in block');
     }
@@ -174,10 +187,12 @@ export class BlockService implements OnModuleInit {
       }
     }
     // save block
+    const _tsSaveBlock = Date.now();
     await this.blockEntityRepository.save({
       ...blockHeader,
       previousHash: blockHeader.previousblockhash,
     });
+    this.logger.debug(`save block cost ${Math.ceil(Date.now() - _tsSaveBlock)} ms`);
 
     let _percentage = '';
     const latestBlockHeight = (await this.commonService.getBlockchainInfo())?.headers;
