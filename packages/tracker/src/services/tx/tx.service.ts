@@ -54,6 +54,10 @@ export class TxService {
     private txEntityRepository: Repository<TxEntity>,
     @InjectRepository(TxOutEntity)
     private txOutEntityRepository: Repository<TxOutEntity>,
+    @InjectRepository(NftInfoEntity)
+    private nftInfoEntityRepository: Repository<NftInfoEntity>,
+    @InjectRepository(TokenMintEntity)
+    private tokenMintEntityRepository: Repository<TokenMintEntity>,
   ) {
     this.dataSource = this.txEntityRepository.manager.connection;
   }
@@ -84,12 +88,8 @@ export class TxService {
     const payIns = tx.ins.map((input) => this.parseTaprootInput(input));
 
     const startTs = Date.now();
-    const queryRunner = this.dataSource.createQueryRunner();
-    await queryRunner.connect();
-    await queryRunner.startTransaction();
     try {
-      const promises: Promise<any>[] = [];
-      this.updateSpent(queryRunner.manager, promises, tx);
+      this.updateSpent(tx);
       let stateHashes: Buffer[];
 
       // search Guard inputs
@@ -98,14 +98,13 @@ export class TxService {
         // found Guard in inputs, this is a token transfer tx
         for (const guardInput of guardInputs) {
           stateHashes = await this.processTransferTx(
-            queryRunner.manager,
-            promises,
             tx,
             guardInput,
             payOuts,
             blockHeader,
           );
         }
+        await this.saveTx(tx, txIndex, blockHeader, stateHashes);
         this.logger.log(`[OK] transfer tx ${tx.getId()}`);
       }
 
@@ -114,8 +113,6 @@ export class TxService {
       if (tokenInfo) {
         // found minter in inputs, this is a token mint tx
         stateHashes = await this.processMintTx(
-          queryRunner.manager,
-          promises,
           tx,
           payIns,
           payOuts,
@@ -123,29 +120,22 @@ export class TxService {
           tokenInfo,
           blockHeader,
         );
+        await this.saveTx(tx, txIndex, blockHeader, stateHashes);
         this.logger.log(`[OK] mint tx ${tx.getId()}`);
       } else if (guardInputs.length === 0) {
         // no minter and Guard in inputs, this is a token reveal tx
         stateHashes = await this.processRevealTx(
-          queryRunner.manager,
-          promises,
           tx,
           payIns,
           payOuts,
           blockHeader,
         );
+        await this.saveTx(tx, txIndex, blockHeader, stateHashes);
         this.logger.log(`[OK] reveal tx ${tx.getId()}`);
       }
-
-      await Promise.all([
-        ...promises,
-        this.saveTx(queryRunner.manager, tx, txIndex, blockHeader, stateHashes),
-      ]);
-      await queryRunner.commitTransaction();
       return Math.ceil(Date.now() - startTs);
     } catch (e) {
       if (e instanceof TransferTxError) {
-        // do not rollback for TransferTxError
         this.logger.error(
           `[502750] invalid transfer tx ${tx.getId()}, ${e.message}`,
         );
@@ -155,10 +145,7 @@ export class TxService {
         } else {
           this.logger.error(`process tx ${tx.getId()} error, ${e.message}`);
         }
-        await queryRunner.rollbackTransaction();
       }
-    } finally {
-      await queryRunner.release();
     }
   }
 
@@ -175,17 +162,12 @@ export class TxService {
     return false;
   }
 
-  private async updateSpent(
-    manager: EntityManager,
-    promises: Promise<any>[],
-    tx: Transaction,
-  ) {
-    tx.ins.forEach((input, i) => {
-      const prevTxid = Buffer.from(input.hash).reverse().toString('hex');
-      const prevOutputIndex = input.index;
-      promises.push(
-        manager.update(
-          TxOutEntity,
+  private async updateSpent(tx: Transaction) {
+    await Promise.all(
+      tx.ins.map((input, i) => {
+        const prevTxid = Buffer.from(input.hash).reverse().toString('hex');
+        const prevOutputIndex = input.index;
+        return this.txOutEntityRepository.update(
           {
             txid: prevTxid,
             outputIndex: prevOutputIndex,
@@ -194,20 +176,19 @@ export class TxService {
             spendTxid: tx.getId(),
             spendInputIndex: i,
           },
-        ),
-      );
-    });
+        );
+      }),
+    );
   }
 
   private async saveTx(
-    manager: EntityManager,
     tx: Transaction,
     txIndex: number,
     blockHeader: BlockHeader,
     stateHashes: Buffer[],
   ) {
     const rootHash = this.parseStateRootHash(tx);
-    return manager.save(TxEntity, {
+    await this.txEntityRepository.save({
       txid: tx.getId(),
       blockHeight: blockHeader.height,
       txIndex,
@@ -284,8 +265,6 @@ export class TxService {
   }
 
   private async processRevealTx(
-    manager: EntityManager,
-    promises: Promise<any>[],
     tx: Transaction,
     payIns: TaprootPayment[],
     payOuts: TaprootPayment[],
@@ -312,9 +291,11 @@ export class TxService {
     this.validateStateHashes(stateHashes);
     // minter output
     const minterPubKey = this.searchRevealTxMinterOutputs(payOuts);
+
+    let promises: Promise<any>[] = [];
     // save token info
     promises.push(
-      manager.save(TokenInfoEntity, {
+      this.tokenInfoEntityRepository.save({
         tokenId,
         revealTxid: tx.getId(),
         revealHeight: blockHeader.height,
@@ -331,8 +312,7 @@ export class TxService {
     );
     // save tx outputs
     promises.push(
-      manager.save(
-        TxOutEntity,
+      this.txOutEntityRepository.save(
         tx.outs
           .map((_, i) =>
             payOuts[i]?.pubkey
@@ -342,6 +322,8 @@ export class TxService {
           .filter((out) => out !== null),
       ),
     );
+
+    await Promise.all(promises);
     return stateHashes;
   }
 
@@ -420,8 +402,6 @@ export class TxService {
   }
 
   private async processMintTx(
-    manager: EntityManager,
-    promises: Promise<any>[],
     tx: Transaction,
     payIns: TaprootPayment[],
     payOuts: TaprootPayment[],
@@ -466,6 +446,7 @@ export class TxService {
     const { tokenPubKey, outputIndex: tokenOutputIndex } =
       this.searchMintTxTokenOutput(payOuts, tokenInfo);
 
+    let promises: Promise<any>[] = [];
     // save nft info
     if (tokenInfo.decimals < 0) {
       const commitInput = this.searchMintTxCommitInput(payIns);
@@ -478,7 +459,7 @@ export class TxService {
           data: { metadata, content },
         } = envelope;
         promises.push(
-          manager.save(NftInfoEntity, {
+          this.nftInfoEntityRepository.save({
             collectionId: tokenInfo.tokenId,
             localId: tokenAmount,
             mintTxid: tx.getId(),
@@ -495,8 +476,7 @@ export class TxService {
     // update token info when first mint
     if (tokenInfo.tokenPubKey === null) {
       promises.push(
-        manager.update(
-          TokenInfoEntity,
+        this.tokenInfoEntityRepository.update(
           {
             tokenId: tokenInfo.tokenId,
           },
@@ -509,7 +489,7 @@ export class TxService {
     }
     // save token mint
     promises.push(
-      manager.save(TokenMintEntity, {
+      this.tokenMintEntityRepository.save({
         txid: tx.getId(),
         tokenPubKey,
         ownerPubKeyHash,
@@ -519,8 +499,7 @@ export class TxService {
     );
     // save tx outputs
     promises.push(
-      manager.save(
-        TxOutEntity,
+      this.txOutEntityRepository.save(
         tx.outs
           .map((_, i) => {
             if (i <= tokenOutputIndex && payOuts[i]?.pubkey) {
@@ -544,6 +523,7 @@ export class TxService {
       ),
     );
 
+    await Promise.all(promises);
     return stateHashes;
   }
 
@@ -644,8 +624,6 @@ export class TxService {
   }
 
   private async processTransferTx(
-    manager: EntityManager,
-    promises: Promise<any>[],
     tx: Transaction,
     guardInput: TaprootPayment,
     payOuts: TaprootPayment[],
@@ -671,17 +649,14 @@ export class TxService {
       }
 
       // save tx outputs
-      promises.push(
-        manager.save(
-          TxOutEntity,
-          [...tokenOutputs.keys()].map((i) => {
-            return {
-              ...this.buildBaseTxOutEntity(tx, i, blockHeader, payOuts),
-              ownerPubKeyHash: tokenOutputs.get(i).ownerPubKeyHash,
-              tokenAmount: tokenOutputs.get(i).tokenAmount,
-            };
-          }),
-        ),
+      await this.txOutEntityRepository.save(
+        [...tokenOutputs.keys()].map((i) => {
+          return {
+            ...this.buildBaseTxOutEntity(tx, i, blockHeader, payOuts),
+            ownerPubKeyHash: tokenOutputs.get(i).ownerPubKeyHash,
+            tokenAmount: tokenOutputs.get(i).tokenAmount,
+          };
+        }),
       );
     }
     return stateHashes;
