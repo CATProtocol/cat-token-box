@@ -4,11 +4,12 @@ dotenv.config();
 import { expect, use } from 'chai';
 import chaiAsPromised from 'chai-as-promised';
 import { ExtPsbt, TX_INPUT_COUNT_MAX, STATE_OUTPUT_COUNT_MAX, TX_OUTPUT_COUNT_MAX } from '@scrypt-inc/scrypt-ts-btc';
-import { CAT20Covenant, CAT20Guard, CAT20State, CAT20StateLib, CAT20GuardCovenant, Postage, CAT20 } from '../src';
+import { CAT20Covenant, CAT20Guard, CAT20State, CAT20StateLib, CAT20GuardCovenant, Postage, CAT20,
+    catToXOnly, getDummyUtxo, isP2TR, pubKeyPrefix
+ } from '@cat-protocol/cat-sdk-v2';
 import { loadAllArtifacts } from './features/cat20/utils';
 import { testSigner } from './utils/testSigner';
 import { createCat20, TestCat20 } from './utils/testCAT20Generater';
-import { catToXOnly, getDummyUtxo, isP2TR, pubKeyPrefix } from '../src/lib/utils';
 import { fill, getBackTraceInfo, PubKey, toByteString } from '@scrypt-inc/scrypt-ts-btc';
 import { applyArray, getOutputSatoshisList } from './utils/txHelper';
 

@@ -17,9 +17,9 @@ import {
     int32ToByteString,
     Ripemd160,
 } from '@scrypt-inc/scrypt-ts-btc';
-import { CAT721GuardConstState, CAT721State } from './types';
-import { CAT721StateLib } from './cat721State';
-import { CAT721GuardStateLib } from './cat721GuardState';
+import { CAT721GuardConstState, CAT721State } from './types.js';
+import { CAT721StateLib } from './cat721State.js';
+import { CAT721GuardStateLib } from './cat721GuardState.js';
 
 export class CAT721Guard extends SmartContract<CAT721GuardConstState> {
     @method({ autoCheckInputStateHash: false })

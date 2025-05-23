@@ -25,13 +25,25 @@ import {
   isP2WPKH,
 } from '@cat-protocol/cat-sdk-v2';
 
+/**
+ * send command options
+ */
 interface SendCommandOptions extends BoardcastCommandOptions {
+  /** token Id */
   id: string;
+  /** receiver address */
   address: string;
+  /** send token amount */
   amount: bigint;
+  /** specify a customized configuration file */
   config?: string;
 }
 
+/**
+ * Send cat20 token command
+ * @example
+ * cat-cli send -i 45ee725c2c5993b3e4d308842d87e973bf1951f5f7a804b21e4dd964ecd12d6b_0 bc1ppresfm876y9ddn3fgw2zr0wj0pl3zanslje9nfpznq3kc90q46rqvm9k07 100
+ */
 @Command({
   name: 'send',
   description: 'Send tokens',

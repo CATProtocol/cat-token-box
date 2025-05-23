@@ -12,10 +12,20 @@ import { findCollectionInfoById } from 'src/collection';
 import { table } from './table';
 import Decimal from 'decimal.js';
 
+/**
+ * balanceNft command options
+ */
 interface BalanceNftCommandOptions extends BaseCommandOptions {
-  id: string;
+  /** nft collection id */
+  id?: string;
 }
 
+/**
+ * Get nft collection balance command
+ * @example
+ * cat-cli wallet balanceNft
+ * cat-cli wallet balanceNft -i 45ee725c2c5993b3e4d308842d87e973bf1951f5f7a804b21e4dd964ecd12d6b_0
+ */
 @SubCommand({
   name: 'balancesNft',
   description: 'Get balances of nft',

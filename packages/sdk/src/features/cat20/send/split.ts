@@ -1,6 +1,7 @@
-import { Psbt } from '@scrypt-inc/bitcoinjs-lib';
-import { dummySig, sleep } from '../../../lib/utils';
 import { ChainProvider, markSpent, Signer, UtxoProvider } from '@scrypt-inc/scrypt-ts-btc';
+import { Psbt } from '@scrypt-inc/bitcoinjs-lib';
+import { dummySig, sleep } from '../../../lib/index.js';
+
 
 /**
  * Split all UTXOs of the current signer into count equal UTXOs.

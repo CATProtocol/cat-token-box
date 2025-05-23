@@ -1,10 +1,10 @@
-import { ChainProvider, ExtPsbt, markSpent, Signer, UTXO, UtxoProvider } from '@scrypt-inc/scrypt-ts-btc';
-import { Cat20TokenInfo, ClosedMinterCat20Meta, dummySig, getDummyUtxo, Postage } from '../../../../src/index';
 import { Psbt } from '@scrypt-inc/bitcoinjs-lib';
-import { CAT20ClosedMinterCovenant } from '../cat20ClosedMinterCovenant';
+import { ChainProvider, ExtPsbt, markSpent, Signer, UTXO, UtxoProvider } from '@scrypt-inc/scrypt-ts-btc';
+import { CAT20ClosedMinterCovenant } from '../../../covenants/index.js';
+import { Postage, Cat20TokenInfo, ClosedMinterCat20Meta, dummySig, getDummyUtxo } from '../../../lib/index.js';
 
 /**
- * Deploy a CAT20 token with metadata.
+ * Deploy a CAT20 token with ClosedMinter
  * @param signer a signer, such as {@link DefaultSigner}  or {@link UnisatSigner}
  * @param utxoProvider a  {@link UtxoProvider}
  * @param chainProvider a  {@link ChainProvider}
@@ -13,7 +13,7 @@ import { CAT20ClosedMinterCovenant } from '../cat20ClosedMinterCovenant';
  * @param changeAddress the address to receive change satoshis, use the signer address as the default
  * @returns the genesis transaction, the token reveal transaction and the premine transaction
  */
-export async function deploy(
+export async function deployClosedMinter(
     signer: Signer,
     utxoProvider: UtxoProvider,
     chainProvider: ChainProvider,
@@ -28,13 +28,13 @@ export async function deploy(
 > {
     const pubKey = await signer.getPublicKey();
     const address = await signer.getAddress();
-    const feeAddress = await signer.getAddress();
-    changeAddress = changeAddress || feeAddress;
+    changeAddress = changeAddress || address;
+    let sigRequests = [];
+
     const { revealTxVSize } = estimateDeployTxVSizes(metadata, address, pubKey, changeAddress, feeRate);
 
-    const utxos = await utxoProvider.getUtxos(feeAddress);
-
     const commitTxOutputsAmount = revealTxVSize * feeRate + Postage.MINTER_POSTAGE;
+    const utxos = await utxoProvider.getUtxos(address);
 
     const { tokenId, tokenAddr, minterAddr, commitPsbt, revealPsbt } = buildCommitAndRevealTxs(
         metadata,
@@ -46,7 +46,7 @@ export async function deploy(
         commitTxOutputsAmount,
     );
 
-    const sigRequests = [
+    sigRequests = [
         {
             psbtHex: commitPsbt.toHex(),
             options: {
@@ -61,12 +61,14 @@ export async function deploy(
             options: revealPsbt.psbtOptions(),
         },
     ];
+
     // sign the psbts
     const [signedCommitPsbt, signedRevealPsbt] = await signer.signPsbts(sigRequests);
 
     // combine and finalize the signed psbts
-    const genesisTxPsbt = await commitPsbt.combine(Psbt.fromHex(signedCommitPsbt)).finalizeAllInputs();
-    const revealTxPsbt = await revealPsbt.combine(Psbt.fromHex(signedRevealPsbt)).finalizeAllInputs();
+    const genesisTxPsbt = commitPsbt.combine(Psbt.fromHex(signedCommitPsbt)).finalizeAllInputs();
+    const revealTxPsbt = revealPsbt.combine(Psbt.fromHex(signedRevealPsbt)).finalizeAllInputs();
+
     // broadcast the psbts
     const genesisTx = genesisTxPsbt.extractTransaction();
     const revealTx = revealTxPsbt.extractTransaction();
@@ -74,15 +76,16 @@ export async function deploy(
     markSpent(utxoProvider, genesisTx);
     await chainProvider.broadcast(revealTx.toHex());
     markSpent(utxoProvider, revealTx);
+
     return {
         tokenId,
         tokenAddr,
         minterAddr,
         genesisTxid: genesisTx.getId(),
         revealTxid: revealTx.getId(),
+        metadata,
         genesisTx: genesisTxPsbt,
         revealTx: revealTxPsbt,
-        metadata: metadata,
         timestamp: new Date().getTime(),
     };
 }
@@ -135,28 +138,13 @@ function buildCommitAndRevealTxs(
         feeRate,
     );
 
-    const commitTxid = commitPsbt.unsignedTx.getId();
-
     // build the reveal tx
     const { tokenId, tokenAddr, minterAddr, revealPsbt } = CAT20ClosedMinterCovenant.buildRevealTx(
-        {
-            txId: commitPsbt.unsignedTx.getId(),
-            outputIndex: 0,
-            script: Buffer.from(commitPsbt.txOutputs[0].script).toString('hex'),
-            satoshis: Number(commitPsbt.txOutputs[0].value),
-        },
+        commitPsbt.getUtxo(0),
         metadata,
         address,
         pubKey,
-        [
-            {
-                address: address,
-                txId: commitTxid,
-                outputIndex: 1,
-                script: Buffer.from(commitPsbt.txOutputs[1].script).toString('hex'),
-                satoshis: Number(commitPsbt.txOutputs[1].value),
-            },
-        ],
+        [commitPsbt.getUtxo(1)],
     );
 
     return {
@@ -165,11 +153,6 @@ function buildCommitAndRevealTxs(
         minterAddr,
         commitPsbt,
         revealPsbt,
-        newFeeUtxo: {
-            txId: commitTxid,
-            outputIndex: 2,
-            script: Buffer.from(commitPsbt.txOutputs[2].script).toString('hex'),
-            satoshis: Number(commitPsbt.txOutputs[2].value),
-        },
+        newFeeUtxo: commitPsbt.getUtxo(2),
     };
 }

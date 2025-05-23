@@ -5,7 +5,19 @@ import { expect, use } from 'chai';
 import chaiAsPromised from 'chai-as-promised';
 import { loadAllArtifacts } from './features/cat20/utils';
 import { testSigner } from './utils/testSigner';
-import { catToXOnly, getDummyUtxo, isP2TR, pubKeyPrefix } from '../src/lib/utils';
+import {
+    catToXOnly,
+    CAT20,
+    CAT20GuardConstState,
+    CAT20GuardCovenant,
+    CAT20StateLib,
+    CAT721,
+    CAT721GuardConstState,
+    CAT721GuardCovenant,
+    Postage,
+    CAT721StateLib,
+    getDummyUtxo, isP2TR, pubKeyPrefix, CAT20Guard, CAT721Guard, CAT20Covenant, TracedCAT20Token, CAT721Covenant, TracedCAT721Nft
+} from '@cat-protocol/cat-sdk-v2';
 import {
     ExtPsbt,
     fill,
@@ -19,21 +31,6 @@ import {
 } from '@scrypt-inc/scrypt-ts-btc';
 import { createCat20, TestCAT20Generater } from './utils/testCAT20Generater';
 import { createCat721, TestCAT721Generater } from './utils/testCAT721Generater';
-import { CAT20Guard } from '../src/contracts/cat20/cat20Guard';
-import { CAT721Guard } from '../src/contracts/cat721/cat721Guard';
-import { CAT20Covenant, TracedCAT20Token } from '../src/covenants/cat20Covenant';
-import { CAT721Covenant, TracedCAT721Nft } from '../src/covenants/cat721Covenant';
-import {
-    CAT20,
-    CAT20GuardConstState,
-    CAT20GuardCovenant,
-    CAT20StateLib,
-    CAT721,
-    CAT721GuardConstState,
-    CAT721GuardCovenant,
-    Postage,
-} from '../src';
-import { CAT721StateLib } from '../src';
 import { applyArray, getOutputSatoshisList } from './utils/txHelper';
 use(chaiAsPromised);
 

@@ -10,9 +10,9 @@ import {
     assert,
 } from '@scrypt-inc/scrypt-ts-btc';
 import { BacktraceInfo } from '@scrypt-inc/scrypt-ts-btc';
-import { OwnerUtils } from '../../utils/ownerUtils';
-import { CAT721ClosedMinterState, CAT721State } from '../types';
-import { CAT721StateLib } from '../cat721State';
+import { OwnerUtils } from '../../utils/ownerUtils.js';
+import { CAT721ClosedMinterState, CAT721State } from '../types.js';
+import { CAT721StateLib } from '../cat721State.js';
 
 export class CAT721ClosedMinter extends SmartContract<CAT721ClosedMinterState> {
     @prop()

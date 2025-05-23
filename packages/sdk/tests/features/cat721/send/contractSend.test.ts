@@ -6,12 +6,9 @@ import { expect, use } from 'chai';
 import chaiAsPromised from 'chai-as-promised';
 import { bvmVerify, hash160, Ripemd160 } from '@scrypt-inc/scrypt-ts-btc';
 import { TestCAT721Generater } from '../../../utils/testCAT721Generater';
-import { NftParallelClosedMinterCat721Meta, toTokenAddress } from '../../../../src';
-import { CAT721Utxo } from '../../../../src/lib/provider';
+import { NftParallelClosedMinterCat721Meta, toTokenAddress, CAT721Utxo, CAT721Covenant, contractSendNft } from '@cat-protocol/cat-sdk-v2';
 import { loadAllArtifacts } from '../utils';
 import { testSigner } from '../../../utils/testSigner';
-import { CAT721Covenant } from '../../../../src/covenants/cat721Covenant';
-import { contractSendNft } from '../../../../src/features/cat721/send/contractSend';
 import { testChainProvider, testUtxoProvider } from '../../../utils/testProvider';
 use(chaiAsPromised);
 

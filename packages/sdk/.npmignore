@@ -3,13 +3,9 @@ tsconfig.json
 src/
 tests/
 static/
-compiler/
-coverage/
-.nyc_output/
 .turbo/
 .vscode
 .husky
-.nycrc
 .eslint*
 *.js.map
 .travis.yml

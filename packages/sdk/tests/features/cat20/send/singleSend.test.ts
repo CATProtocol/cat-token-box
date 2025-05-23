@@ -5,11 +5,10 @@ dotenv.config();
 import { expect, use } from 'chai';
 import chaiAsPromised from 'chai-as-promised';
 import { bvmVerify, Int32, Ripemd160 } from '@scrypt-inc/scrypt-ts-btc';
-import { CAT20Covenant, OpenMinterCat20Meta, toTokenAddress } from '../../../../src';
+import { CAT20Covenant, OpenMinterCat20Meta, toTokenAddress, CAT20Utxo } from '@cat-protocol/cat-sdk-v2';
 import { loadAllArtifacts, singleSendToken } from '../utils';
 import { testSigner } from '../../../../tests/utils/testSigner';
 import { TestCAT20Generater } from '../../../../tests/utils/testCAT20Generater';
-import { CAT20Utxo } from '../../../../src/lib/provider';
 
 use(chaiAsPromised);
 

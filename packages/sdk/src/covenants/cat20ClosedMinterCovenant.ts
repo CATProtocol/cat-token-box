@@ -4,10 +4,8 @@ import {
     ByteString,
     SupportedNetwork,
     UTXO,
-    fill,
     Ripemd160,
     getBackTraceInfo,
-    FixedArray,
     ExtPsbt,
     hexToUint8Array,
     Int32,
@@ -16,60 +14,47 @@ import {
     uint8ArrayToHex,
     StateHashes,
 } from '@scrypt-inc/scrypt-ts-btc';
-import { getCatCommitScript, 
-    Postage, 
-    OpenMinterCat20Meta,
-     scaleUpAmounts,
+import {
+    getCatCommitScript, 
+    Postage,
+    ClosedMinterCat20Meta,
     outpoint2ByteString,
     isP2TR,
     scriptToP2tr,
-    toTokenAddress,
     pubKeyPrefix,
     catToXOnly,
     satoshiToHex,
-    byteStringToBigInt,
-    CAT20OpenMinterUtxo,
+    addrToP2trLockingScript,
+    CAT20ClosedMinterUtxo,
 } from '../lib/index.js';
 
-
 import { CAT20Covenant } from './cat20Covenant.js';
-import { CAT20OpenMinterState, CAT20OpenMinter} from '../contracts/index.js';
+import { CAT20ClosedMinterState, CAT20ClosedMinter} from '../contracts/index.js';
 
-
-export class CAT20OpenMinterCovenant extends StatefulCovenant<CAT20OpenMinterState> {
+export class CAT20ClosedMinterCovenant extends StatefulCovenant<CAT20ClosedMinterState> {
     // locked OpenMinter artifact md5
-    static readonly LOCKED_ASM_VERSION = 'a989365de2bb63e67f4208497806151a';
+    static readonly LOCKED_ASM_VERSION = 'e19abad5fe3486eae439e208f06c16e9';
 
     readonly tokenScript: ByteString;
 
     constructor(
         readonly tokenId: string,
-        metadata: OpenMinterCat20Meta,
-        state?: CAT20OpenMinterState,
+        readonly issuerAddress: string,
+        readonly metadata: ClosedMinterCat20Meta,
+        state?: CAT20ClosedMinterState,
         network?: SupportedNetwork,
     ) {
-        const scaledTokenInfo = scaleUpAmounts(metadata);
-        const maxCount = scaledTokenInfo.max / scaledTokenInfo.limit;
-        const premineCount = scaledTokenInfo.premine / scaledTokenInfo.limit;
-        if (premineCount > 0 && !metadata.preminerAddr) {
-            throw new Error('Preminer public key is required for premining');
-        }
-        const contract = new CAT20OpenMinter(
+        const contract = new CAT20ClosedMinter(
+            addrToP2trLockingScript(issuerAddress),
             outpoint2ByteString(tokenId),
-            maxCount,
-            scaledTokenInfo.premine,
-            premineCount,
-            scaledTokenInfo.limit,
-            metadata.preminerAddr || '',
         );
-        // check props
-        contract.checkProps();
+
         super(state, [{ contract }], { network });
         this.tokenScript = new CAT20Covenant(this.address).lockingScriptHex;
     }
 
     static buildCommitTx(
-        info: OpenMinterCat20Meta,
+        info: ClosedMinterCat20Meta,
         address: string,
         pubkey: string,
         feeUtxos: UTXO[],
@@ -101,7 +86,7 @@ export class CAT20OpenMinterCovenant extends StatefulCovenant<CAT20OpenMinterSta
 
     static buildRevealTx(
         commitUtxo: UTXO,
-        metadata: OpenMinterCat20Meta,
+        metadata: ClosedMinterCat20Meta,
         address: string,
         pubkey: string,
         feeUtxos: UTXO[],
@@ -111,23 +96,13 @@ export class CAT20OpenMinterCovenant extends StatefulCovenant<CAT20OpenMinterSta
         tokenAddr: string;
         revealPsbt: ExtPsbt;
     } {
-        const scaledTokenInfo = scaleUpAmounts(metadata);
-        const maxCount = scaledTokenInfo.max / scaledTokenInfo.limit;
-        const premineCount = scaledTokenInfo.premine / scaledTokenInfo.limit;
-        const remainingSupplyCount = maxCount - premineCount;
 
-        if (!metadata.preminerAddr && premineCount > 0) {
-            metadata.preminerAddr = Ripemd160(toTokenAddress(address));
-        }
-
-        const minter = new CAT20OpenMinterCovenant(`${commitUtxo.txId}_0`, metadata);
+        const minter = new CAT20ClosedMinterCovenant(`${commitUtxo.txId}_0`, address, metadata);
 
         const token = new CAT20Covenant(minter.address);
 
         minter.state = {
             tokenScript: token.lockingScriptHex,
-            hasMintedBefore: false,
-            remainingCount: remainingSupplyCount,
         };
 
         const commitScript = getCatCommitScript(catToXOnly(pubkey, isP2TR(address)), metadata);
@@ -171,47 +146,32 @@ export class CAT20OpenMinterCovenant extends StatefulCovenant<CAT20OpenMinterSta
         };
     }
 
-    static getSplitAmountList(preRemainingSupply: Int32, isPremined: boolean, premineAmount: bigint) {
-        let nextSupply = preRemainingSupply - 1n;
-        if (!isPremined && premineAmount > 0n) {
-            nextSupply = preRemainingSupply;
-        }
-        const splitAmount = fill(nextSupply / 2n, 2);
-        splitAmount[0] += nextSupply - splitAmount[0] * 2n;
-        return splitAmount;
-    }
 
     static buildMintTx(
         spentMinterPreTxHex: string,
         spentMinterTxHex: string,
-        spentMinter: CAT20OpenMinterCovenant,
+        spentMinter: CAT20ClosedMinterCovenant,
         tokenReceiver: Ripemd160,
+        issuerAddres: string,
+        issuerPubKey: string,
+        amount: Int32,
         feeUtxos: UTXO[],
         feeRate: number,
+
         changeAddress: string,
-        preminterAddress?: string,
-        preminerPubKey?: string,
     ) {
         if (!spentMinter.state) {
             throw new Error('Minter state is not available');
         }
 
-        const isPremining =
-            !spentMinter.state.hasMintedBefore && (spentMinter.getSubContract() as CAT20OpenMinter).premine > 0;
-
-        if (isPremining && !preminerPubKey) {
-            throw new Error('Preminer info is required for premining');
-        }
 
         const mintTx = new ExtPsbt();
 
-        const { nextMinters, splitAmountList } = spentMinter.createNextMinters();
+        const nextMinter = spentMinter.createNextMinter();
         // add next minters outputs
-        for (const nextMinter of nextMinters) {
-            mintTx.addCovenantOutput(nextMinter, Postage.MINTER_POSTAGE);
-        }
+        mintTx.addCovenantOutput(nextMinter, Postage.MINTER_POSTAGE);
 
-        const token = spentMinter.createToken(tokenReceiver);
+        const token = spentMinter.createToken(tokenReceiver, amount);
 
         const minterInputIndex = 0;
 
@@ -228,13 +188,12 @@ export class CAT20OpenMinterCovenant extends StatefulCovenant<CAT20OpenMinterSta
 
         mintTx
             .updateCovenantInput(minterInputIndex, spentMinter, {
-                invokeMethod: (contract: CAT20OpenMinter, curPsbt: ExtPsbt) => {
+                invokeMethod: (contract: CAT20ClosedMinter, curPsbt: ExtPsbt) => {
                     contract.mint(
                         token.state,
-                        splitAmountList,
-                        isPremining ? (isP2TR(preminterAddress) ? '' : pubKeyPrefix(preminerPubKey)) : '',
-                        (isPremining ? catToXOnly(preminerPubKey, isP2TR(preminterAddress)) : '') as PubKey,
-                        (isPremining ? curPsbt.getSig(minterInputIndex, { publicKey: preminerPubKey }) : '') as Sig,
+                        (isP2TR(issuerAddres) ? '' : pubKeyPrefix(issuerPubKey)) as ByteString,
+                        (catToXOnly(issuerPubKey, isP2TR(issuerAddres))) as PubKey,
+                        curPsbt.getSig(minterInputIndex, { publicKey: issuerPubKey }) as Sig,
                         satoshiToHex(BigInt(Postage.MINTER_POSTAGE)),
                         satoshiToHex(BigInt(Postage.TOKEN_POSTAGE)),
                         backTraceInfo,
@@ -245,7 +204,7 @@ export class CAT20OpenMinterCovenant extends StatefulCovenant<CAT20OpenMinterSta
         return mintTx;
     }
 
-    static utxoFromMintTx(txHex: string, outputIndex: number): CAT20OpenMinterUtxo {
+    static utxoFromMintTx(txHex: string, outputIndex: number): CAT20ClosedMinterUtxo {
         const tx = Transaction.fromHex(txHex);
         const minterOutput = tx.outs[outputIndex];
         if (!minterOutput) {
@@ -262,14 +221,12 @@ export class CAT20OpenMinterCovenant extends StatefulCovenant<CAT20OpenMinterSta
             }
         }
         const tokenScript = uint8ArrayToHex(tx.outs[Number(tokenOutputIndex)].script);
-        const state: CAT20OpenMinterState = {
+        const state: CAT20ClosedMinterState = {
             tokenScript: tokenScript,
-            hasMintedBefore: true,
-            remainingCount: byteStringToBigInt(nextRemainingCounts[outputIndex - 1]),
         };
         // return minter;
         const out = tx.outs[outputIndex];
-        const cat20MinterUtxo: CAT20OpenMinterUtxo = {
+        const cat20MinterUtxo: CAT20ClosedMinterUtxo = {
             txId: tx.getId(),
             outputIndex: outputIndex,
             script: uint8ArrayToHex(out.script),
@@ -281,45 +238,14 @@ export class CAT20OpenMinterCovenant extends StatefulCovenant<CAT20OpenMinterSta
         return cat20MinterUtxo;
     }
 
-    private createNextMinters(): {
-        nextMinters: CAT20OpenMinterCovenant[];
-        splitAmountList: FixedArray<Int32, 2>;
-    } {
-        const contract = this.getSubContract() as CAT20OpenMinter;
-        const splitAmountList = CAT20OpenMinterCovenant.getSplitAmountList(
-            this.state!.remainingCount,
-            this.state!.hasMintedBefore,
-            contract.premine,
-        );
-
-        const nextMinters = splitAmountList
-            .map((amount) => {
-                if (amount > 0n) {
-                    const newState: CAT20OpenMinterState = {
-                        tokenScript: this.tokenScript,
-                        hasMintedBefore: true,
-                        remainingCount: amount,
-                    };
-                    return this.next(newState);
-                }
-                return undefined;
-            })
-            .filter((minter) => minter !== undefined) as CAT20OpenMinterCovenant[];
-
-        return {
-            nextMinters,
-            splitAmountList,
+    private createNextMinter(): CAT20ClosedMinterCovenant {
+        const newState: CAT20ClosedMinterState = {
+            tokenScript: this.tokenScript,
         };
+        return this.next(newState) as CAT20ClosedMinterCovenant;
     }
 
-    private createToken(toAddr: Ripemd160): CAT20Covenant {
-        const contract = this.getSubContract() as CAT20OpenMinter;
-        let amount = contract.limit;
-        let receiverAddr = toAddr;
-        if (!this.state.hasMintedBefore && contract.premine > 0n) {
-            amount = contract.premine;
-            receiverAddr = contract.preminerAddr as Ripemd160;
-        }
-        return new CAT20Covenant(this.address, { amount, ownerAddr: receiverAddr });
+    private createToken(toAddr: Ripemd160, amount: Int32): CAT20Covenant {
+        return new CAT20Covenant(this.address, { amount, ownerAddr: toAddr });
     }
 }

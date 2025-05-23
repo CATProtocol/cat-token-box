@@ -1,13 +1,9 @@
 import { ByteString, ExtPsbt, Ripemd160, StatefulCovenantUtxo } from '@scrypt-inc/scrypt-ts-btc';
-import { Cat721NftInfo, ClosedMinterCat721Meta, toTokenAddress } from '../../src';
-import { CAT721ClosedMinterState } from '../../src/contracts/cat721/types';
+import { Cat721NftInfo, ClosedMinterCat721Meta, toTokenAddress, CAT721ClosedMinterState, singleSendNft, CAT721Utxo, CAT721Covenant, TracedCAT721Nft } from '@cat-protocol/cat-sdk-v2';
 import { testSigner } from './testSigner';
 import { testChainProvider, testUtxoProvider } from './testProvider';
 import { deploy } from './testCAT721/features/deploy';
 import { mint } from './testCAT721/features/mint';
-import { singleSendNft } from '../../src/features/cat721/send/singleSend';
-import { CAT721Utxo } from '../../src/lib/provider';
-import { CAT721Covenant, TracedCAT721Nft } from '../../src/covenants/cat721Covenant';
 
 export interface CAT721ClosedMinterUtxo extends StatefulCovenantUtxo {
     state: CAT721ClosedMinterState;

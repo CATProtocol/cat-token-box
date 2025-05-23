@@ -13,10 +13,19 @@ import { findTokenInfoById } from 'src/token';
 import { table } from './table';
 import Decimal from 'decimal.js';
 
+/**
+ * balance command options
+ */
 interface BalanceCommandOptions extends BaseCommandOptions {
   id?: string;
 }
 
+/**
+ * Get cat20 token balance command
+ * @example
+ * cat-cli wallet balance
+ * cat-cli wallet balance -i 45ee725c2c5993b3e4d308842d87e973bf1951f5f7a804b21e4dd964ecd12d6b_0
+ */
 @SubCommand({
   name: 'balances',
   description: 'Get balances of all tokens',

@@ -14,7 +14,7 @@ writeFileSync(
     .join("\n")
 );
 
-const cjsPath = join(cwd(), "dist", "cjs", "artifact.js");
+const cjsPath = join(cwd(), "dist", "cjs", "artifact.cjs");
 
 const cjsArifact = readFileSync(cjsPath).toString();
 

@@ -14,6 +14,10 @@ export interface BaseCommandOptions {
   rpcpassword?: string;
 }
 
+/**
+ * a abstract base command class
+ */
+
 export abstract class BaseCommand extends CommandRunner {
   constructor(
     protected readonly walletService: WalletService,

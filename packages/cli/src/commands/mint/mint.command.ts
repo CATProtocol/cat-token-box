@@ -33,16 +33,25 @@ import {
 } from '@cat-protocol/cat-sdk-v2';
 import { Addr, ChainProvider, UtxoProvider } from '@scrypt-inc/scrypt-ts-btc';
 
+/**
+ * mint command options
+ */
 interface MintCommandOptions extends BoardcastCommandOptions {
+  /** token Id */
   id: string;
+  /** do a merge before minting token */
   merge: boolean;
-  new?: number;
 }
 
 function getRandomInt(max: number) {
   return Math.floor(Math.random() * max);
 }
 
+/**
+ * Mint cat20 token command
+ * @example
+ * cat-cli mint -i 45ee725c2c5993b3e4d308842d87e973bf1951f5f7a804b21e4dd964ecd12d6b_0
+ */
 @Command({
   name: 'mint',
   description: 'Mint a token',

@@ -1,16 +1,16 @@
-import { CAT20ClosedMinter } from './contracts/cat20/minters/cat20ClosedMinter';
-import { CAT20OpenMinter } from './contracts/cat20/minters/cat20OpenMinter';
-import { CAT20 } from './contracts/cat20/cat20';
-import { CAT20StateLib } from './contracts/cat20/cat20State';
-import { CAT20Guard } from './contracts/cat20/cat20Guard';
-import { CAT20GuardStateLib } from './contracts/cat20/cat20GuardState';
+import { CAT20ClosedMinter } from './contracts/cat20/minters/cat20ClosedMinter.js';
+import { CAT20OpenMinter } from './contracts/cat20/minters/cat20OpenMinter.js';
+import { CAT20 } from './contracts/cat20/cat20.js';
+import { CAT20StateLib } from './contracts/cat20/cat20State.js';
+import { CAT20Guard } from './contracts/cat20/cat20Guard.js';
+import { CAT20GuardStateLib } from './contracts/cat20/cat20GuardState.js';
 
-import { CAT721ClosedMinter } from './contracts/cat721/minters/cat721ClosedMinter';
-import { CAT721OpenMinter } from './contracts/cat721/minters/cat721OpenMinter';
-import { CAT721 } from './contracts/cat721/cat721';
-import { CAT721StateLib } from './contracts/cat721/cat721State';
-import { CAT721Guard } from './contracts/cat721/cat721Guard';
-import { CAT721GuardStateLib } from './contracts/cat721/cat721GuardState';
+import { CAT721ClosedMinter } from './contracts/cat721/minters/cat721ClosedMinter.js';
+import { CAT721OpenMinter } from './contracts/cat721/minters/cat721OpenMinter.js';
+import { CAT721 } from './contracts/cat721/cat721.js';
+import { CAT721StateLib } from './contracts/cat721/cat721State.js';
+import { CAT721Guard } from './contracts/cat721/cat721Guard.js';
+import { CAT721GuardStateLib } from './contracts/cat721/cat721GuardState.js';
 
 import cat20ClosedMinter from '../artifacts/cat20/minters/cat20ClosedMinter.json';
 import cat20OpenMinter from '../artifacts/cat20/minters/cat20OpenMinter.json';

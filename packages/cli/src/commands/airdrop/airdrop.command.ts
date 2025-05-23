@@ -21,12 +21,24 @@ import {
 } from '@cat-protocol/cat-sdk-v2';
 import { dirname, isAbsolute, join } from 'path';
 import { accessSync, appendFileSync, constants, readFileSync } from 'fs';
+
+/**
+ * airdrop command options
+ */
 interface AirdropCommandOptions extends BoardcastCommandOptions {
+  /** token Id */
   id: string;
+  /** A file used to specify all airdrop addresses and quantities, in CSV format. */
   file: string;
+  /** specify a customized configuration file */
   config?: string;
 }
 
+/**
+ * Airdrop command
+ * @example
+ * cat-cli airdrop -i 45ee725c2c5993b3e4d308842d87e973bf1951f5f7a804b21e4dd964ecd12d6b_0 -f ./airdrop.csv
+ */
 @Command({
   name: 'airdrop',
   description: 'Airdrop tokens',

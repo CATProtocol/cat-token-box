@@ -12,7 +12,7 @@ import {
     UTXO,
 } from '@scrypt-inc/scrypt-ts-btc';
 import { Tap } from '@cmdcode/tapscript';
-import { SupportedNetwork } from './constants';
+import { SupportedNetwork } from './constants.js';
 import {
     Network,
     networks,

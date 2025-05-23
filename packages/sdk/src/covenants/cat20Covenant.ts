@@ -10,10 +10,10 @@ import {
     SupportedNetwork,
     TX_INPUT_COUNT_MAX,
 } from '@scrypt-inc/scrypt-ts-btc';
-import { addrToP2trLockingScript, CAT20, CAT20Guard, CAT20State, emptyOutputByteStrings, getTxId } from '..';
-import { CAT20GuardCovenant } from './cat20GuardCovenant';
-import { CAT20Utxo } from '../lib/provider';
 import { Transaction } from '@scrypt-inc/bitcoinjs-lib';
+import { addrToP2trLockingScript, emptyOutputByteStrings, getTxId, CAT20Utxo } from '../lib/index.js';
+import { CAT20, CAT20Guard, CAT20State} from '../contracts/index.js';
+import { CAT20GuardCovenant } from './cat20GuardCovenant.js';
 
 interface TraceableCat20Utxo extends CAT20Utxo {
     minterAddr: string;

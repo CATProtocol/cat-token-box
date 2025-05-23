@@ -1,5 +1,5 @@
 import { UTXO } from '@scrypt-inc/scrypt-ts-btc';
-import { CAT20Utxo } from '../../../lib/provider';
+import { CAT20Utxo } from '../../../lib/index.js';
 
 /**
  * Select CAT20 UTXOs from all available CAT20 UTXOs such that the cumulative number of tokens equals the specified amount, with priority given to those containing a number of tokens greater than or equal to the amount.

@@ -17,12 +17,11 @@ import {
     UTXO,
     UtxoProvider,
 } from '@scrypt-inc/scrypt-ts-btc';
-import { CAT20Utxo } from '../../../lib/provider';
-import { CAT20Covenant, CAT20GuardCovenant, TracedCAT20Token } from '../../../covenants';
-import { emptyOutputByteStrings, filterFeeUtxos, uint8ArrayToHex } from '../../../lib/utils';
-import { Postage } from '../../../lib/constants';
-import { CAT20, CAT20Guard, CAT20State } from '../../../contracts';
 import { Psbt } from '@scrypt-inc/bitcoinjs-lib';
+import { CAT20Utxo, emptyOutputByteStrings, filterFeeUtxos, uint8ArrayToHex, Postage } from '../../../lib/index.js';
+import { CAT20Covenant, CAT20GuardCovenant, TracedCAT20Token } from '../../../covenants/index.js';
+import { CAT20, CAT20Guard, CAT20State } from '../../../contracts/index.js';
+
 
 /**
  * Send CAT20 tokens to the list of recipients.

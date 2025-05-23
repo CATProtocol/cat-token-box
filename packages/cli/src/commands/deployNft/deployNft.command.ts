@@ -27,16 +27,29 @@ import {
   CAT721OpenMinter,
 } from '@cat-protocol/cat-sdk-v2';
 
+/**
+ * deployNft command options
+ */
 interface DeployNftCommandOptions extends BoardcastCommandOptions {
+  /** specify a customized configuration file */
   config?: string;
+  /** name of the nft collection */
   name?: string;
+  /** symbol of the nft collection */
   symbol?: string;
+  /** description of the nft collection */
   description?: string;
+  /** icon of the nft collection */
   icon?: string;
+  /** max supply of the nft collection */
   max?: bigint;
+  /** premine count of the nft collection */
   premine?: bigint;
+  /** specify a customized metadata file */
   metadata?: string;
+  /** specify a customized resource directory */
   resource?: string;
+  /** specify a customized resource mime type */
   type?: string;
 }
 
@@ -53,6 +66,11 @@ function isEmptyOption(options: DeployNftCommandOptions) {
   );
 }
 
+/**
+ * Deploy cat721 token command
+ * @example
+ * cat-cli deployNft -n cat721 -s cat721 -d "this is cat721 nft" -m 2100 -p 0
+ */
 @Command({
   name: 'deployNft',
   description: 'Deploy an open-mint non-fungible token (NFT)',

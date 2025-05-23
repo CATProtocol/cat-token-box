@@ -2,7 +2,7 @@ import * as dotenv from 'dotenv';
 dotenv.config();
 
 import { bvmVerify } from '@scrypt-inc/scrypt-ts-btc';
-import { singleSend } from '../src/features/cat20';
+import { singleSend } from '@cat-protocol/cat-sdk-v2';
 import { createCat20 } from './utils/testCAT20Generater';
 import { testChainProvider, testUtxoProvider } from './utils/testProvider';
 import { testSigner } from './utils/testSigner';

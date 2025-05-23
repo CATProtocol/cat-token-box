@@ -13,21 +13,21 @@ import {
     UtxoProvider,
     PubKey,
     FixedArray,
+    ExtPsbt,
 } from '@scrypt-inc/scrypt-ts-btc';
-import { CAT20Utxo } from '../../../lib/provider';
-import { ExtPsbt } from '@scrypt-inc/scrypt-ts-btc';
-import { CAT20Covenant, CAT20GuardCovenant, TracedCAT20Token } from '../../../covenants';
-import { Postage } from '../../../lib/constants';
+import { Psbt, address as Address } from '@scrypt-inc/bitcoinjs-lib';
 import {
+    CAT20Utxo,
+    Postage,
     catToXOnly,
     emptyOutputByteStrings,
     filterFeeUtxos,
     isP2TR,
     pubKeyPrefix,
     uint8ArrayToHex,
-} from '../../../lib/utils';
-import { Psbt, address as Address } from '@scrypt-inc/bitcoinjs-lib';
-import { CAT20, CAT20Guard, CAT20State } from '../../../contracts';
+} from '../../../lib/index.js';
+import { CAT20Covenant, CAT20GuardCovenant, TracedCAT20Token } from '../../../covenants/index.js';
+import { CAT20, CAT20Guard, CAT20State } from '../../../contracts/index.js';
 
 /**
  * Send CAT20 tokens to the list of recipients.
@@ -250,8 +250,8 @@ function buildSendTx(
                     (output
                         ? uint8ArrayToHex(output.script)
                         : sendPsbt.isSealed
-                        ? ''
-                        : uint8ArrayToHex(Address.toOutputScript(changeAddress)))
+                            ? ''
+                            : uint8ArrayToHex(Address.toOutputScript(changeAddress)))
                 );
             }) as unknown as FixedArray<ByteString, typeof STATE_OUTPUT_COUNT_MAX>;
 

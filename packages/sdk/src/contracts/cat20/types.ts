@@ -1,6 +1,4 @@
-import { FixedArray, GUARD_TOKEN_TYPE_MAX, Int32, TX_INPUT_COUNT_MAX } from '@scrypt-inc/scrypt-ts-btc';
-import { ByteString } from '@scrypt-inc/scrypt-ts-btc';
-
+import { FixedArray, GUARD_TOKEN_TYPE_MAX, Int32, TX_INPUT_COUNT_MAX, ByteString } from '@scrypt-inc/scrypt-ts-btc';
 export type CAT20State = {
     // owner address
     ownerAddr: ByteString;

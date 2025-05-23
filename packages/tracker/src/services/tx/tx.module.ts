@@ -6,9 +6,15 @@ import { TokenInfoEntity } from '../../entities/tokenInfo.entity';
 import { CommonModule } from '../common/common.module';
 import { ScheduleModule } from '@nestjs/schedule';
 import { TxOutEntity } from '../../entities/txOut.entity';
+import { NftInfoEntity } from '../../entities/nftInfo.entity';
+import { TokenMintEntity } from '../../entities/tokenMint.entity';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([TxEntity, TokenInfoEntity, TxOutEntity]), CommonModule, ScheduleModule.forRoot()],
+  imports: [
+    TypeOrmModule.forFeature([TxEntity, TokenInfoEntity, TxOutEntity, NftInfoEntity, TokenMintEntity]),
+    CommonModule,
+    ScheduleModule.forRoot(),
+  ],
   providers: [TxService],
   exports: [TxService],
 })

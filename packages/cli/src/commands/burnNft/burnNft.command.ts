@@ -19,12 +19,23 @@ import {
 import { BurnNftConfirmQuestionAnswers } from 'src/questions/burnNft-confirm.question';
 import { findCollectionInfoById } from 'src/collection';
 
-interface BurnCommandOptions extends BoardcastCommandOptions {
+/**
+ * burnNft command options
+ */
+interface BurnNftCommandOptions extends BoardcastCommandOptions {
+  /** token Id */
   id: string;
+  /** local Id of Nft */
   localId: bigint;
+  /** specify a customized configuration file */
   config?: string;
 }
 
+/**
+ * Burn Nft command
+ * @example
+ * cat-cli burnNft -i b74d9d31d92794abd38296d2f8c61a1f7dca040f8b967de46973b62ed1c8e026_0 -l 0
+ */
 @Command({
   name: 'burnNft',
   description: 'burn nft',
@@ -40,7 +51,7 @@ export class BurnNftCommand extends BoardcastCommand {
   }
   async cat_cli_run(
     inputs: string[],
-    options?: BurnCommandOptions,
+    options?: BurnNftCommandOptions,
   ): Promise<void> {
     if (!options.id) {
       logerror('expect a tokenId option', new Error());

@@ -1,7 +1,7 @@
 import { SmartContract, prop, ByteString, method, PubKey, Sig, TxUtils, assert } from '@scrypt-inc/scrypt-ts-btc';
-import { OwnerUtils } from '../../utils/ownerUtils';
-import { CAT20State, CAT20ClosedMinterState } from '../types';
-import { CAT20StateLib } from '../cat20State';
+import { OwnerUtils } from '../../utils/ownerUtils.js';
+import { CAT20State, CAT20ClosedMinterState } from '../types.js';
+import { CAT20StateLib } from '../cat20State.js';
 import { BacktraceInfo } from '@scrypt-inc/scrypt-ts-btc';
 
 export class CAT20ClosedMinter extends SmartContract<CAT20ClosedMinterState> {

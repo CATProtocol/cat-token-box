@@ -4,8 +4,16 @@ import { BaseCommand, BaseCommandOptions } from '../base.command';
 import { ConfigService, WalletService } from 'src/providers';
 import { Inject } from '@nestjs/common';
 
+/**
+ * address command options
+ */
 interface AddressCommandOptions extends BaseCommandOptions {}
 
+/**
+ * Show address command
+ * @example
+ * cat-cli wallet address
+ */
 @SubCommand({
   name: 'address',
   description: 'Show address',

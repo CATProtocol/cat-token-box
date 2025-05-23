@@ -21,12 +21,23 @@ import {
 import { findCollectionInfoById } from 'src/collection';
 import { Ripemd160 } from '@scrypt-inc/scrypt-ts-btc';
 
+/**
+ * send Nft command options
+ */
 interface SendNftCommandOptions extends BoardcastCommandOptions {
+  /** nft collection Id */
   id: string;
+  /** nft local Id */
   localId: bigint;
+  /** specify a customized configuration file */
   config?: string;
 }
 
+/**
+ * Send Nft command
+ * @example
+ * cat-cli sendNft -i b74d9d31d92794abd38296d2f8c61a1f7dca040f8b967de46973b62ed1c8e026_0 bc1ppresfm876y9ddn3fgw2zr0wj0pl3zanslje9nfpznq3kc90q46rqvm9k07 -l 1
+ */
 @Command({
   name: 'sendNft',
   description: 'Send Nft',

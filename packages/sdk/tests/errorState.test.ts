@@ -5,7 +5,7 @@ import { expect, use } from 'chai';
 import { loadAllArtifacts } from './features/cat20/utils';
 import chaiAsPromised from 'chai-as-promised';
 import { testSigner } from './utils/testSigner';
-import { catToXOnly, getDummyUtxo, isP2TR, pubKeyPrefix } from '../src/lib/utils';
+import { catToXOnly, getDummyUtxo, isP2TR, pubKeyPrefix, CAT20Covenant } from '@cat-protocol/cat-sdk-v2';
 import {
     PubKey,
     ExtPsbt,
@@ -16,7 +16,6 @@ import {
     uint8ArrayToHex,
     TX_INPUT_COUNT_MAX,
 } from '@scrypt-inc/scrypt-ts-btc';
-import { CAT20Covenant } from '../src/covenants/cat20Covenant';
 import { createCat20, TestCat20 } from './utils/testCAT20Generater';
 import {
     CAT20,
@@ -26,15 +25,15 @@ import {
     CAT20StateLib,
     CAT721GuardConstState,
     Postage,
-} from '../src';
-import { CAT20GuardCovenant } from '../src/covenants/cat20GuardCovenant';
+    CAT20GuardCovenant,
+    CAT721Covenant,
+    CAT721Guard,
+    CAT721StateLib,
+    CAT721, 
+    CAT721GuardCovenant 
+} from '@cat-protocol/cat-sdk-v2';
 import { applyArray, getOutputSatoshisList } from './utils/txHelper';
-import { CAT721Covenant } from '../src/covenants/cat721Covenant';
 import { TestCat721, createCat721 } from './utils/testCAT721Generater';
-import { CAT721Guard } from '../src/contracts/cat721/cat721Guard';
-import { CAT721StateLib } from '../src/contracts/cat721/cat721State';
-import { CAT721, CAT721GuardCovenant } from '../src';
-
 use(chaiAsPromised);
 
 describe('Test incorrect state for cat20/cat721', () => {

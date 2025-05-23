@@ -11,9 +11,9 @@ import {
     TxUtils,
 } from '@scrypt-inc/scrypt-ts-btc';
 import { BacktraceInfo } from '@scrypt-inc/scrypt-ts-btc';
-import { OwnerUtils } from '../../utils/ownerUtils';
-import { CAT20State, CAT20OpenMinterState } from '../types';
-import { CAT20StateLib } from '../cat20State';
+import { OwnerUtils } from '../../utils/ownerUtils.js';
+import { CAT20State, CAT20OpenMinterState } from '../types.js';
+import { CAT20StateLib } from '../cat20State.js';
 
 const MAX_NEXT_MINTERS = 2;
 

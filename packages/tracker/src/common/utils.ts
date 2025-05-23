@@ -146,3 +146,19 @@ export function parseEnvelope(envelope: string): EnvelopeData | null {
   }
   return metadata || content ? { metadata: JSON.parse(stringify(metadata)), content } : null;
 }
+
+/**
+ * Convert binary to integer according to the sign-magnitude rule in little-endian.
+ * Note that an empty binary is treated as 0 to align with bitcoin.
+ */
+export function bin2num(bin: Buffer): number {
+  if (bin.length === 0) {
+    return 0;
+  }
+  const msbIndex = bin.length - 1;
+  const sign = (bin[msbIndex] & 0x80) !== 0 ? -1 : 1;
+  const magnitude = Buffer.from(bin);
+  magnitude[msbIndex] = magnitude[msbIndex] & 0x7f; // clear sign bit
+  const value = magnitude.readUIntLE(0, magnitude.length);
+  return sign * value;
+}

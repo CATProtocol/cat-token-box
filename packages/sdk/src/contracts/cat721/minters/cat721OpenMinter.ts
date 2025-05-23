@@ -10,10 +10,10 @@ import {
     SmartContract,
     TxUtils,
 } from '@scrypt-inc/scrypt-ts-btc';
-import { OwnerUtils } from '../../utils/ownerUtils';
-import { CAT721OpenMinterState, CAT721State, MerkleProof, ProofNodePos } from '../types';
-import { CAT721OpenMinterMerkleTree } from './cat721OpenMinterMerkleTree';
-import { CAT721StateLib } from '../cat721State';
+import { OwnerUtils } from '../../utils/ownerUtils.js';
+import { CAT721OpenMinterState, CAT721State, MerkleProof, ProofNodePos } from '../types.js';
+import { CAT721OpenMinterMerkleTree } from './cat721OpenMinterMerkleTree.js';
+import { CAT721StateLib } from '../cat721State.js';
 
 export class CAT721OpenMinter extends SmartContract<CAT721OpenMinterState> {
     @prop()

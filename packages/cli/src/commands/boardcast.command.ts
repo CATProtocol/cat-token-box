@@ -8,6 +8,9 @@ export interface BoardcastCommandOptions extends BaseCommandOptions {
   feeRate?: number;
 }
 
+/**
+ * if a command will broadcast a transaction, it should extend this class
+ */
 export abstract class BoardcastCommand extends BaseCommand {
   constructor(
     protected readonly spendSerivce: SpendService,

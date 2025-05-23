@@ -4,15 +4,23 @@ import { log, logerror } from 'src/common';
 import { ConfigService, WalletService } from 'src/providers';
 import { Inject } from '@nestjs/common';
 
-interface ImportCommandOptions extends BaseCommandOptions {
+/**
+ * export command options
+ */
+interface ExportCommandOptions extends BaseCommandOptions {
   create: boolean;
 }
 
+/**
+ * Export wallet command
+ * @example
+ * cat-cli wallet export --create
+ */
 @SubCommand({
   name: 'export',
   description: 'Export wallet to a RPC node.',
 })
-export class ImportCommand extends BaseCommand {
+export class ExportCommand extends BaseCommand {
   constructor(
     @Inject() protected readonly walletService: WalletService,
     @Inject() protected readonly configService: ConfigService,
@@ -23,7 +31,7 @@ export class ImportCommand extends BaseCommand {
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     inputs: string[],
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    options?: ImportCommandOptions,
+    options?: ExportCommandOptions,
   ): Promise<void> {
     try {
       if (!this.configService.useRpc()) {
@@ -45,7 +53,7 @@ export class ImportCommand extends BaseCommand {
   @Option({
     flags: '--create [create]',
     defaultValue: false,
-    description: 'create watch only wallet before import address',
+    description: 'create watch only wallet before export address',
   })
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   parseCreate(val: string): boolean {

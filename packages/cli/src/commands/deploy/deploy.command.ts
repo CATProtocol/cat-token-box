@@ -16,14 +16,25 @@ import {
   deploy,
 } from '@cat-protocol/cat-sdk-v2';
 
+/**
+ * deploy command options
+ */
 interface DeployCommandOptions extends BoardcastCommandOptions {
+  /** specify a customized configuration file */
   config?: string;
+  /** name of token */
   name?: string;
+  /** symbol of token */
   symbol?: string;
+  /** decimals of token */
   decimals?: number;
+  /** max supply of token */
   max?: bigint;
+  /** limit amount for each minting */
   limit?: bigint;
+  /** premine amount */
   premine?: bigint;
+  /** specify a customized metadata file */
   metadata?: string;
 }
 
@@ -42,6 +53,11 @@ function isEmptyOption(options: DeployCommandOptions) {
   );
 }
 
+/**
+ * Deploy cat20 token command
+ * @example
+ * cat-cli deploy -n cat -s cat -d 0 -m 21000000 -p 0 -l 1000
+ */
 @Command({
   name: 'deploy',
   description: 'Deploy an open-mint fungible token (FT)',

@@ -15,12 +15,12 @@ import {
     STATE_OUTPUT_COUNT_MAX,
     uint8ArrayToHex,
 } from '@scrypt-inc/scrypt-ts-btc';
-import { CAT20Covenant, CAT20GuardCovenant, TracedCAT20Token } from '../../../covenants';
-import { Postage } from '../../../lib/constants';
-import { catToXOnly, emptyOutputByteStrings, filterFeeUtxos, isP2TR, pubKeyPrefix } from '../../../lib/utils';
-import { CAT20Utxo } from '../../../lib/provider';
-import { CAT20, CAT20Guard, CAT20State } from '../../../contracts';
 import { Psbt } from '@scrypt-inc/bitcoinjs-lib';
+
+import { CAT20Covenant, CAT20GuardCovenant, TracedCAT20Token } from '../../../covenants/index.js';
+import { Postage, catToXOnly, emptyOutputByteStrings, filterFeeUtxos, isP2TR, pubKeyPrefix, CAT20Utxo } from '../../../lib/index.js';
+import { CAT20, CAT20Guard, CAT20State } from '../../../contracts/index.js';
+
 
 /**
  * Burn CAT20 tokens in a single transaction.

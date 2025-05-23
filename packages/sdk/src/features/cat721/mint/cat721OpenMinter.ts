@@ -1,11 +1,9 @@
 import { Transaction } from '@scrypt-inc/bitcoinjs-lib';
 import { ByteString, ChainProvider, ExtPsbt, Ripemd160, Signer, UTXO, UtxoProvider } from '@scrypt-inc/scrypt-ts-btc';
-import { MerkleProof, ProofNodePos } from '../../../contracts';
-import { CAT721OpenMinterCovenant } from '../../../covenants/cat721OpenMinterCovenant';
-import { OpenMinterCat721Meta } from '../../../lib/metadata';
-import { CAT721OpenMinterUtxo, processExtPsbts } from '../../../lib/provider';
-import { createNft } from './nft';
-import { getTxId } from '../../../lib/utils';
+import { MerkleProof, ProofNodePos } from '../../../contracts/index.js';
+import { CAT721OpenMinterCovenant } from '../../../covenants/index.js';
+import { OpenMinterCat721Meta, CAT721OpenMinterUtxo, processExtPsbts, getTxId  } from '../../../lib/index.js';
+import { createNft } from './nft.js';
 
 export async function mintNft(
     signer: Signer,

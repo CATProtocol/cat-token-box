@@ -1,9 +1,6 @@
 import { ChainProvider, ExtPsbt, hash160, Signer, UTXO, UtxoProvider } from '@scrypt-inc/scrypt-ts-btc';
-import { CAT721OpenMinterCovenant } from '../../../covenants/cat721OpenMinterCovenant';
-import { Postage } from '../../../lib/constants';
-import { Cat721NftInfo, OpenMinterCat721Meta } from '../../../lib/metadata';
-import { dummySig, getDummyUtxo } from '../../../lib/utils';
-import { processExtPsbts } from '../../../lib/provider';
+import { CAT721OpenMinterCovenant } from '../../../covenants/index.js';
+import { Postage, Cat721NftInfo, OpenMinterCat721Meta, dummySig, getDummyUtxo, processExtPsbts } from '../../../lib/index.js';
 
 /**
  * Deploy a CAT20 token with metadata and automatically mint the pre-mined tokens, if applicable.

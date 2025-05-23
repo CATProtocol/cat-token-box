@@ -1,5 +1,5 @@
 import { ChainProvider, ExtPsbt, markSpent, Signer, UTXO, UtxoProvider } from '@scrypt-inc/scrypt-ts-btc';
-import { Cat721NftInfo, ClosedMinterCat721Meta, dummySig, getDummyUtxo, Postage } from '../../../../src/index';
+import { Cat721NftInfo, ClosedMinterCat721Meta, dummySig, getDummyUtxo, Postage } from '@cat-protocol/cat-sdk-v2';
 import { Psbt } from '@scrypt-inc/bitcoinjs-lib';
 import { CAT721ClosedMinterCovenant } from '../cat721ClosedMinterCovenant';
 import { CAT721ClosedMinterUtxo } from '../../testCAT721Generater';

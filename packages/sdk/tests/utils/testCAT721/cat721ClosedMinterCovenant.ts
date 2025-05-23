@@ -22,11 +22,12 @@ import {
     SupportedNetwork,
     toTokenAddress,
     toXOnly,
-} from '../../../src';
-import { CAT721ClosedMinterState } from '../../../src/contracts/cat721/types';
-import { CAT721ClosedMinter } from '../../../src/contracts/cat721/minters/cat721ClosedMinter';
-import { CAT721Covenant } from '../../../src/covenants/cat721Covenant';
-import { CAT721Utxo } from 'packages/sdk/src/lib/provider';
+    CAT721ClosedMinterState,
+    CAT721ClosedMinter,
+    CAT721Covenant,
+    CAT721Utxo,
+} from '@cat-protocol/cat-sdk-v2';
+
 
 export interface CAT721ClosedMinterUtxo extends StatefulCovenantUtxo {
     state: CAT721ClosedMinterState;

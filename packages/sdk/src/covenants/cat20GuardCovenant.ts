@@ -1,5 +1,5 @@
 import { SupportedNetwork, StatefulCovenant } from '@scrypt-inc/scrypt-ts-btc';
-import { CAT20Guard, CAT20GuardConstState } from '../contracts';
+import { CAT20Guard, CAT20GuardConstState } from '../contracts/index.js';
 
 export class CAT20GuardCovenant extends StatefulCovenant<CAT20GuardConstState> {
     constructor(state?: CAT20GuardConstState, network?: SupportedNetwork) {

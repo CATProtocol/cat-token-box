@@ -6,7 +6,7 @@ import {
     CAT721Guard,
     CAT721GuardStateLib,
     CAT721OpenMinter,
-} from '../../../src';
+} from '@cat-protocol/cat-sdk-v2';
 export const loadAllArtifacts = function () {
     //
     CAT721ClosedMinter.loadArtifact(readArtifact('artifacts/cat721/minters/cat721ClosedMinter.json'));

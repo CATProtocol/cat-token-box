@@ -21,12 +21,21 @@ import {
 } from '@cat-protocol/cat-sdk-v2';
 import { BurnConfirmQuestionAnswers } from 'src/questions/burn-confirm.question';
 
+/**
+ * burn command options
+ */
 interface BurnCommandOptions extends BoardcastCommandOptions {
+  /** token Id */
   id: string;
-  amount: bigint;
+  /** specify a customized configuration file */
   config?: string;
 }
 
+/**
+ * Burn command
+ * @example
+ * cat-cli burn -i 45ee725c2c5993b3e4d308842d87e973bf1951f5f7a804b21e4dd964ecd12d6b_0 100
+ */
 @Command({
   name: 'burn',
   description: 'burn tokens',

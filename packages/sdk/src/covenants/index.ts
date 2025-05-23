@@ -1,6 +1,7 @@
-export * from './cat20Covenant';
-export * from './cat20GuardCovenant';
-export * from './cat20OpenMinterCovenant';
-export { CAT721Covenant } from './cat721Covenant';
-export * from './cat721GuardCovenant';
-export * from './cat721OpenMinterCovenant';
+export * from './cat20Covenant.js';
+export * from './cat20GuardCovenant.js';
+export * from './cat20OpenMinterCovenant.js';
+export * from './cat20ClosedMinterCovenant.js';
+export { CAT721Covenant, type TracedCAT721Nft, type InputTrace } from './cat721Covenant.js';
+export * from './cat721GuardCovenant.js';
+export * from './cat721OpenMinterCovenant.js';

@@ -15,10 +15,10 @@ import {
     TX_P2TR_OUTPUT_SCRIPT_BYTE_LEN,
     TxUtils,
 } from '@scrypt-inc/scrypt-ts-btc';
-import { CAT20GuardConstState, CAT20State } from './types';
-import { SafeMath } from '../utils/safeMath';
-import { CAT20StateLib } from './cat20State';
-import { CAT20GuardStateLib } from './cat20GuardState';
+import { CAT20GuardConstState, CAT20State } from './types.js';
+import { SafeMath } from '../utils/safeMath.js';
+import { CAT20StateLib } from './cat20State.js';
+import { CAT20GuardStateLib } from './cat20GuardState.js';
 
 export class CAT20Guard extends SmartContract<CAT20GuardConstState> {
     @method({ autoCheckInputStateHash: false })

@@ -5,7 +5,8 @@ import { expect, use } from 'chai';
 import { loadAllArtifacts } from './features/cat20/utils';
 import chaiAsPromised from 'chai-as-promised';
 import { testSigner } from './utils/testSigner';
-import { catToXOnly, getDummyUtxo, isP2TR, pubKeyPrefix } from '../src/lib/utils';
+import { catToXOnly, getDummyUtxo, isP2TR, pubKeyPrefix, CAT20Covenant, CAT20, CAT20Guard, CAT20State, CAT20StateLib, Postage, 
+    CAT20GuardCovenant} from '@cat-protocol/cat-sdk-v2';
 import {
     PubKey,
     ExtPsbt,
@@ -16,10 +17,7 @@ import {
     uint8ArrayToHex,
     TX_INPUT_COUNT_MAX,
 } from '@scrypt-inc/scrypt-ts-btc';
-import { CAT20Covenant } from '../src/covenants/cat20Covenant';
 import { createCat20, TestCat20 } from './utils/testCAT20Generater';
-import { CAT20, CAT20Guard, CAT20State, CAT20StateLib, Postage } from '../src';
-import { CAT20GuardCovenant } from '../src/covenants/cat20GuardCovenant';
 import { applyArray, getOutputSatoshisList } from './utils/txHelper';
 
 use(chaiAsPromised);

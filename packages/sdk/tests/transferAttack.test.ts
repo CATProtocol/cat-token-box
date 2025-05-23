@@ -4,12 +4,12 @@ dotenv.config();
 import { expect, use } from 'chai';
 import chaiAsPromised from 'chai-as-promised';
 import { ExtPsbt, Ripemd160 } from '@scrypt-inc/scrypt-ts-btc';
-import { CAT20, CAT20Covenant, CAT20Guard, CAT20State, CAT20StateLib, Postage, toTokenAddress } from '../src';
+import { CAT20, CAT20Covenant, CAT20Guard, CAT20State, CAT20StateLib, Postage, toTokenAddress,
+    catToXOnly, getDummyUtxo, isP2TR, pubKeyPrefix, CAT20GuardCovenant
+ } from '@cat-protocol/cat-sdk-v2';
 import { loadAllArtifacts } from './features/cat20/utils';
 import { testSigner } from './utils/testSigner';
 import { createCat20 } from './utils/testCAT20Generater';
-import { CAT20GuardCovenant } from '../src/covenants/cat20GuardCovenant';
-import { catToXOnly, getDummyUtxo, isP2TR, pubKeyPrefix } from '../src/lib/utils';
 import {
     fill,
     getBackTraceInfo,

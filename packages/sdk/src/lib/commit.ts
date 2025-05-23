@@ -1,5 +1,4 @@
-// eslint-disable-next-line @typescript-eslint/no-var-requires
-const cbor2 = require('cbor');
+import { default as cbor } from 'cbor';
 import { script } from '@scrypt-inc/bitcoinjs-lib';
 
 const limit = 520;
@@ -64,7 +63,7 @@ export const getCatCommitScript = (
     for (const key in metadata) {
         m.set(key, metadata[key]);
     }
-    const data = Buffer.from(cbor2.encode(m));
+    const data = Buffer.from(cbor.encode(m));
 
     const res = [];
 
@@ -116,7 +115,7 @@ export const getCatCollectionCommitScript = (
             m.set(key, metadata[key]);
         }
 
-        const metadataChunks = chunks(Array.from(Buffer.from(cbor2.encode(m))), limit);
+        const metadataChunks = chunks(Array.from(Buffer.from(cbor.encode(m))), limit);
 
         // if the metadata exceeds the limit of 520, it is split into multiple chunks.
         for (const chunk of metadataChunks) {
@@ -171,7 +170,7 @@ export const getCatNFTCommitScript = (
             m.set(key, metadata[key]);
         }
 
-        const metadataChunks = chunks(Array.from(Buffer.from(cbor2.encode(m))), limit);
+        const metadataChunks = chunks(Array.from(Buffer.from(cbor.encode(m))), limit);
 
         // if the metadata exceeds the limit of 520, it is split into multiple chunks.
         for (const chunk of metadataChunks) {

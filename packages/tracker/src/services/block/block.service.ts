@@ -86,9 +86,7 @@ export class BlockService implements OnModuleInit {
   private async daemonProcessBlocks() {
     while (true) {
       try {
-        const startTs = Date.now();
         await this.processBlocks();
-        this.logger.debug(`-- one round process blocks cost ${Math.ceil(Date.now() - startTs)} ms`);
       } catch (e) {
         this.logger.error(`daemon process blocks error, ${e.message}`);
       }
@@ -97,7 +95,6 @@ export class BlockService implements OnModuleInit {
 
   private async processBlocks() {
     // query last processed block in database
-    const _tsPrepare = Date.now();
     const lastProcessedBlock = await this.commonService.getLastProcessedBlock();
     // the potential next height to be processed is the height of last processed block plus one
     // or the genesis block height if this is the first time run
@@ -105,9 +102,7 @@ export class BlockService implements OnModuleInit {
     // get block hash by height to check the existence of the next block
     // if cannot get a result, then there is no new block to process
     const nextHash = await this.getBlockHash(nextHeight);
-    this.logger.debug(`process blocks prepare cost ${Math.ceil(Date.now() - _tsPrepare)} ms`);
     if (!nextHash) {
-      this.logger.debug('hit no new block in process blocks');
       await sleep(Constants.BLOCK_PROCESSING_INTERVAL);
       return;
     }

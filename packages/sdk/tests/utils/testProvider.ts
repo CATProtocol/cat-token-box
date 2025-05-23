@@ -1,6 +1,6 @@
 import { Transaction } from '@scrypt-inc/bitcoinjs-lib';
 import { ChainProvider, UTXO, UtxoProvider } from '@scrypt-inc/scrypt-ts-btc';
-import { getDummyUtxo } from '../../src';
+import { getDummyUtxo } from '@cat-protocol/cat-sdk-v2';
 
 export class TestChainProvider implements ChainProvider {
     private broadcastedTxs: Map<string, string> = new Map();

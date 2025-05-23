@@ -8,8 +8,9 @@ import {
     UtxoProvider,
 } from '@scrypt-inc/scrypt-ts-btc';
 import { Transaction } from '@scrypt-inc/bitcoinjs-lib';
-import { Cat20Metadata, CAT20OpenMinterState, CAT20State, Cat20TokenInfo, filterFeeUtxos } from '..';
-import { CAT721OpenMinterState, CAT721State } from '../contracts/cat721/types';
+import { CAT20State, CAT721State, CAT20OpenMinterState, CAT20ClosedMinterState, CAT721OpenMinterState } from '../contracts/index.js';
+import { Cat20Metadata, Cat20TokenInfo } from './metadata.js';
+import { filterFeeUtxos } from './utils.js';
 
 export interface CAT20Utxo extends StatefulCovenantUtxo {
     state: CAT20State;
@@ -21,6 +22,10 @@ export interface CAT721Utxo extends StatefulCovenantUtxo {
 
 export interface CAT20OpenMinterUtxo extends StatefulCovenantUtxo {
     state: CAT20OpenMinterState;
+}
+
+export interface CAT20ClosedMinterUtxo extends StatefulCovenantUtxo {
+    state: CAT20ClosedMinterState;
 }
 
 export interface CAT721OpenMinterUtxo extends StatefulCovenantUtxo {

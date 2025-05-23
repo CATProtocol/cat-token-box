@@ -17,14 +17,14 @@ import {
     CAT721GuardConstState,
     CAT721StateLib,
     Postage,
-} from '../src';
+    CAT20GuardCovenant,
+    CAT721GuardCovenant,
+    catToXOnly, getDummyUtxo, isP2TR, pubKeyPrefix
+} from '@cat-protocol/cat-sdk-v2';
 import { loadAllArtifacts } from './features/cat20/utils';
 import { testSigner } from './utils/testSigner';
 import { createCat20, TestCat20 } from './utils/testCAT20Generater';
 import { createCat721, TestCat721 } from './utils/testCAT721Generater';
-import { CAT20GuardCovenant } from '../src/covenants/cat20GuardCovenant';
-import { CAT721GuardCovenant } from '../src/covenants/cat721GuardCovenant';
-import { catToXOnly, getDummyUtxo, isP2TR, pubKeyPrefix } from '../src/lib/utils';
 import {
     fill,
     getBackTraceInfo,

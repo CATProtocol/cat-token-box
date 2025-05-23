@@ -11,7 +11,7 @@ import {
     TX_INPUT_COUNT_MAX,
     TX_P2TR_OUTPUT_SCRIPT_BYTE_LEN,
 } from '@scrypt-inc/scrypt-ts-btc';
-import { CAT20GuardConstState } from './types';
+import { CAT20GuardConstState } from './types.js';
 
 export class CAT20GuardStateLib extends StateLib<CAT20GuardConstState> {
     @method()

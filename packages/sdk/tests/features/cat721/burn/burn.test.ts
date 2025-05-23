@@ -5,13 +5,11 @@ dotenv.config();
 import { expect, use } from 'chai';
 import chaiAsPromised from 'chai-as-promised';
 import { bvmVerify } from '@scrypt-inc/scrypt-ts-btc';
-import { NftParallelClosedMinterCat721Meta } from 'packages/sdk/src';
+import { NftParallelClosedMinterCat721Meta, CAT721Utxo, burnNft } from '@cat-protocol/cat-sdk-v2';
 import { loadAllArtifacts } from '../utils';
 import { testSigner } from '../../../utils/testSigner';
 import { TestCAT721Generater } from '../../../utils/testCAT721Generater';
-import { CAT721Utxo } from '../../../../src/lib/provider';
 import { testChainProvider, testUtxoProvider } from '../../../utils/testProvider';
-import { burnNft } from '../../../../src/features/cat721/burn/burn';
 
 use(chaiAsPromised);
 

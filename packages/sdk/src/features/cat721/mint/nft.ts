@@ -1,7 +1,5 @@
-import { Postage } from '../../../';
-import { getCatNFTCommitScript } from '../../../lib/commit';
 import { ExtPsbt, hexToUint8Array, Signer, UTXO } from '@scrypt-inc/scrypt-ts-btc';
-import { catToXOnly, isP2TR, scriptToP2tr } from '../../../lib/utils';
+import { getCatNFTCommitScript, Postage, catToXOnly, isP2TR, scriptToP2tr } from '../../../lib/index.js';
 
 export async function createNft(
     wallet: Signer,

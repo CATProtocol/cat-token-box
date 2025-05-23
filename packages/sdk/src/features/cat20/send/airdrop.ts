@@ -1,10 +1,10 @@
 import { ChainProvider, Int32, Signer, UtxoProvider } from '@scrypt-inc/scrypt-ts-btc';
-import { toTokenAddress } from '../../../lib/utils';
-import { mergeCat20Utxo } from './merge';
-import { pickFromStart } from './pick';
-import { singleSend } from './singleSend';
-import { waitTxConfirm } from './split';
-import { CAT20Utxo } from '../../../lib/provider';
+import { toTokenAddress, CAT20Utxo } from '../../../lib/index.js';
+import { mergeCat20Utxo } from './merge.js';
+import { pickFromStart } from './pick.js';
+import { singleSend } from './singleSend.js';
+import { waitTxConfirm } from './split.js';
+
 
 export interface AirdropProcess {
     onStart: () => void;

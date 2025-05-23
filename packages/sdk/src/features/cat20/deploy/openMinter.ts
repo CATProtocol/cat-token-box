@@ -1,9 +1,8 @@
 import { Psbt, Transaction } from '@scrypt-inc/bitcoinjs-lib';
 import { ChainProvider, ExtPsbt, markSpent, Signer, UTXO, UtxoProvider } from '@scrypt-inc/scrypt-ts-btc';
-import { CAT20OpenMinterCovenant } from '../../../covenants/cat20OpenMinterCovenant';
-import { Postage } from '../../../lib/constants';
-import { Cat20TokenInfo, OpenMinterCat20Meta } from '../../../lib/metadata';
-import { addrToP2trLockingScript, dummySig, getDummyUtxo } from '../../../lib/utils';
+import { CAT20OpenMinterCovenant } from '../../../covenants/index.js';
+import { Postage, Cat20TokenInfo, OpenMinterCat20Meta, addrToP2trLockingScript, dummySig, getDummyUtxo } from '../../../lib/index.js';
+
 
 /**
  * Deploy a CAT20 token with metadata and automatically mint the pre-mined tokens, if applicable.

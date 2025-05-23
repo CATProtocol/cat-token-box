@@ -2,8 +2,8 @@ import * as dotenv from 'dotenv';
 dotenv.config();
 
 import { expect, use } from 'chai';
-import { getDummyUtxo, pubKeyPrefix } from '../src/lib/utils';
-import { catToXOnly } from '../src/lib/utils';
+import { getDummyUtxo, pubKeyPrefix, catToXOnly, isP2TR, CAT721Covenant, 
+    CAT721, CAT721GuardCovenant, Postage, CAT721Guard, CAT721StateLib } from '@cat-protocol/cat-sdk-v2';
 import {
     ExtPsbt,
     fill,
@@ -16,12 +16,7 @@ import {
 } from '@scrypt-inc/scrypt-ts-btc';
 import { loadAllArtifacts } from './features/cat20/utils';
 import { testSigner } from './utils/testSigner';
-import { isP2TR } from '../src/lib/utils';
-import { CAT721Covenant } from '../src/covenants/cat721Covenant';
 import { TestCat721, createCat721 } from './utils/testCAT721Generater';
-import { CAT721Guard } from '../src/contracts/cat721/cat721Guard';
-import { CAT721StateLib } from '../src/contracts/cat721/cat721State';
-import { CAT721, CAT721GuardCovenant, Postage } from '../src';
 import { applyArray, getOutputSatoshisList } from './utils/txHelper';
 import chaiAsPromised from 'chai-as-promised';
 

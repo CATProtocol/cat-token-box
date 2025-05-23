@@ -9,13 +9,10 @@ import {
     SupportedNetwork,
     TX_INPUT_COUNT_MAX,
 } from '@scrypt-inc/scrypt-ts-btc';
-import { addrToP2trLockingScript, emptyOutputByteStrings, getTxId } from '..';
-import { CAT721Utxo } from '../lib/provider';
 import { Transaction } from '@scrypt-inc/bitcoinjs-lib';
-import { CAT721State } from '../contracts/cat721/types';
-import { CAT721 } from '../contracts/cat721/cat721';
-import { CAT721GuardCovenant } from './cat721GuardCovenant';
-import { CAT721Guard } from '../contracts/cat721/cat721Guard';
+import { CAT721Utxo, addrToP2trLockingScript, emptyOutputByteStrings, getTxId  } from '../lib/index.js';
+import { CAT721State, CAT721, CAT721Guard } from '../contracts/index.js';
+import { CAT721GuardCovenant } from './cat721GuardCovenant.js';
 
 interface TraceableCat721Utxo extends CAT721Utxo {
     minterAddr: string;

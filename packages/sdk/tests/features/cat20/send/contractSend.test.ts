@@ -4,12 +4,10 @@ dotenv.config();
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { expect, use } from 'chai';
 import chaiAsPromised from 'chai-as-promised';
-import { CAT20Utxo } from '../../../../src/lib/provider';
+import { CAT20Utxo, CAT20Covenant, OpenMinterCat20Meta, toTokenAddress, contractSend } from '@cat-protocol/cat-sdk-v2';
 import { TestCAT20Generater } from '../../../utils/testCAT20Generater';
 import { bvmVerify, hash160, Int32, Ripemd160 } from '@scrypt-inc/scrypt-ts-btc';
-import { CAT20Covenant, OpenMinterCat20Meta, toTokenAddress } from '../../../../src';
 import { testSigner } from '../../../utils/testSigner';
-import { contractSend } from '../../../../src/features/cat20/send/contractSend';
 import { testChainProvider, testUtxoProvider } from '../../../utils/testProvider';
 import { loadAllArtifacts } from '../utils';
 

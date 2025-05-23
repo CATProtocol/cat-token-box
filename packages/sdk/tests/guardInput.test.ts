@@ -20,7 +20,7 @@ import {
     pubKeyPrefix,
 } from '../src';
 import { ExtPsbt, getBackTraceInfo, PubKey } from '@scrypt-inc/scrypt-ts-btc';
-import { CAT20Covenant, Postage } from '../src';
+import { CAT20Covenant, Postage } from '@cat-protocol/cat-sdk-v2';
 import { loadAllArtifacts } from './features/cat20/utils';
 
 describe('Test the guard input, fake or missing', async () => {

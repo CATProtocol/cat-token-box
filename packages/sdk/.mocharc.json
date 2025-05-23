@@ -1,12 +1,11 @@
 {
-  "diff": true,
-  "require": "ts-node/register",
+  "$schema": "https://json.schemastore.org/mocharc.json",
+  "require": "tsx",
   "extensions": ["ts"],
   "spec": ["./tests/**/*.test.ts"],
   "package": "./package.json",
   "reporter": "spec",
-  "slow": "75",
-  "timeout": "60000",
   "ui": "bdd",
+  "timeout": 100000,
   "watch-files": ["./tests/**/*.test.ts"]
 }

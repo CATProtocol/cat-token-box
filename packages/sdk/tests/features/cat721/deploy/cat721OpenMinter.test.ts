@@ -4,20 +4,13 @@ dotenv.config();
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { expect, use } from 'chai';
 import chaiAsPromised from 'chai-as-promised';
-import { isP2TR, scriptToP2tr, toTokenAddress, toXOnly } from '../../../../src/lib/utils';
+import { isP2TR, scriptToP2tr, toTokenAddress, toXOnly, getCatNFTCommitScript,  CAT721MerkleLeaf, 
+    HEIGHT, MerkleProof, OpenMinterCat721Meta, ProofNodePos, deployNft, CAT721OpenMinterUtxo, mintNft,
+    CAT721OpenMinterCovenant, CAT721OpenMinterMerkleTreeData } from '@cat-protocol/cat-sdk-v2';
 import { testChainProvider, testUtxoProvider } from '../../../utils/testProvider';
-import { getCatNFTCommitScript } from '../../../../src/lib/commit';
-import { CAT721MerkleLeaf, HEIGHT, MerkleProof, OpenMinterCat721Meta, ProofNodePos } from '../../../../src';
 import { bvmVerify, ExtPsbt, Ripemd160 } from '@scrypt-inc/scrypt-ts-btc';
-import {
-    CAT721OpenMinterCovenant,
-    CAT721OpenMinterMerkleTreeData,
-} from '../../../../src/covenants/cat721OpenMinterCovenant';
 import { loadAllArtifacts } from '../utils';
 import { testSigner } from '../../../../tests/utils/testSigner';
-import { deployNft } from '../../../../src/features/cat721/deploy/cat721OpenMinter';
-import { CAT721OpenMinterUtxo } from '../../../../src/lib/provider';
-import { mintNft } from '../../../../src/features/cat721/mint/cat721OpenMinter';
 
 use(chaiAsPromised);
 

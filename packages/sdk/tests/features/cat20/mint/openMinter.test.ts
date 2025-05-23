@@ -12,10 +12,10 @@ import {
     OpenMinterCat20Meta,
     Postage,
     toTokenAddress,
-} from '../../../../src';
+    CAT20OpenMinterUtxo,
+} from '@cat-protocol/cat-sdk-v2';
 import { deployToken, loadAllArtifacts, mintToken } from '../utils';
 import { testSigner } from '../../../utils/testSigner';
-import { CAT20OpenMinterUtxo } from '../../../../src/lib/provider';
 
 use(chaiAsPromised);
 

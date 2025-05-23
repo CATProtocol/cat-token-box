@@ -9,11 +9,11 @@ import {
     prop,
     SmartContract,
 } from '@scrypt-inc/scrypt-ts-btc';
-import { ContractUnlockArgs } from '../types';
-import { OwnerUtils } from '../utils/ownerUtils';
-import { CAT20GuardConstState, CAT20State } from './types';
-import { CAT20StateLib } from './cat20State';
-import { CAT20GuardStateLib } from './cat20GuardState';
+import { ContractUnlockArgs } from '../types.js';
+import { OwnerUtils } from '../utils/ownerUtils.js';
+import { CAT20GuardConstState, CAT20State } from './types.js';
+import { CAT20StateLib } from './cat20State.js';
+import { CAT20GuardStateLib } from './cat20GuardState.js';
 import { BacktraceInfo } from '@scrypt-inc/scrypt-ts-btc';
 
 export class CAT20 extends SmartContract<CAT20State> {

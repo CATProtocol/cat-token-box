@@ -1,5 +1,5 @@
 import { ByteString, ExtPsbt, FixedArray } from '@scrypt-inc/scrypt-ts-btc';
-import { satoshiToHex } from '../../src';
+import { satoshiToHex } from '@cat-protocol/cat-sdk-v2';
 
 export function applyArray<T, COUNT extends number>(
     changesArray: T[],

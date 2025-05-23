@@ -6,10 +6,19 @@ import { Inject } from '@nestjs/common';
 import { randomBytes } from 'crypto';
 import * as bip39 from 'bip39';
 
+/**
+ * create command options
+ */
 interface CreateCommandOptions extends BaseCommandOptions {
+  /** wallet name */
   name: string;
 }
 
+/**
+ * Create wallet command
+ * @example
+ * cat-cli wallet create -n my-wallet
+ */
 @SubCommand({
   name: 'create',
   description: 'Create a wallet.',

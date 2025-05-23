@@ -8,14 +8,19 @@ import {
     CAT20OpenMinter,
     OpenMinterCat20Meta,
     toTokenAddress,
-} from '../../../src';
-import { deploy } from '../../../src/features/cat20/deploy/openMinter';
+    ClosedMinterCat20Meta,
+    deployClosedMinter,
+    closedMint,
+    deploy,
+    CAT20ClosedMinterUtxo, 
+    CAT20OpenMinterUtxo, 
+    CAT20Utxo,
+    mint,
+    singleSend
+} from '@cat-protocol/cat-sdk-v2';
 import { testSigner } from '../../utils/testSigner';
 import { testChainProvider, testUtxoProvider } from '../../utils/testProvider';
-import { CAT20OpenMinterUtxo, CAT20Utxo } from '../../../src/lib/provider';
-import { mint } from '../../../src/features/cat20/mint/openMinter';
 import { Int32, Ripemd160 } from '@scrypt-inc/scrypt-ts-btc';
-import { singleSend } from '../../../src/features/cat20/send/singleSend';
 
 export const loadAllArtifacts = function () {
     //
@@ -33,6 +38,10 @@ export async function deployToken(info: OpenMinterCat20Meta) {
     return deploy(testSigner, testUtxoProvider, testChainProvider, info, await testChainProvider.getFeeRate());
 }
 
+export async function deployClosedMinterToken(info: ClosedMinterCat20Meta) {
+    return deployClosedMinter(testSigner, testUtxoProvider, testChainProvider, info, await testChainProvider.getFeeRate());
+}
+
 export async function mintToken(cat20MinterUtxo: CAT20OpenMinterUtxo, tokenId: string, info: OpenMinterCat20Meta) {
     const changeAddress = await testSigner.getAddress();
     const tokenReceiverAddr = Ripemd160(toTokenAddress(changeAddress));
@@ -45,6 +54,19 @@ export async function mintToken(cat20MinterUtxo: CAT20OpenMinterUtxo, tokenId: s
         info,
         tokenReceiverAddr,
         changeAddress,
+        await testChainProvider.getFeeRate(),
+    );
+}
+
+export async function mintClosedMinterToken(cat20MinterUtxo: CAT20ClosedMinterUtxo, tokenId: string, info: ClosedMinterCat20Meta, amount: Int32) {
+    return closedMint(
+        testSigner,
+        testUtxoProvider,
+        testChainProvider,
+        cat20MinterUtxo,
+        tokenId,
+        info,
+        amount,
         await testChainProvider.getFeeRate(),
     );
 }

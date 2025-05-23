@@ -2,7 +2,7 @@ import { Command, CommandRunner } from 'nest-commander';
 import { AddressCommand } from './address.command';
 import { CreateCommand } from './create.command';
 import { BalanceCommand } from './balance.command';
-import { ImportCommand } from './import.command';
+import { ExportCommand } from './export.command';
 import { logerror } from 'src/common';
 import { BalanceNftCommand } from './balanceNft.command';
 interface WalletCommandOptions {}
@@ -15,7 +15,7 @@ interface WalletCommandOptions {}
     AddressCommand,
     CreateCommand,
     BalanceCommand,
-    ImportCommand,
+    ExportCommand,
     BalanceNftCommand,
   ],
 })

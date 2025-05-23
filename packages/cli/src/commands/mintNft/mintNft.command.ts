@@ -30,9 +30,15 @@ import {
   toTokenAddress,
 } from '@cat-protocol/cat-sdk-v2';
 
+/**
+ * mintNft command options
+ */
 interface MintNftCommandOptions extends BoardcastCommandOptions {
+  /** nft collection Id */
   id: string;
-  resource: string;
+  /** specify a customized resource directory */
+  resource?: string;
+  /** specify a customized resource mime type */
   type?: string;
 }
 
@@ -201,7 +207,7 @@ export class MintNftCommand extends BoardcastCommand {
   })
   parseType(val: string): string {
     if (!val) {
-      logerror("resource can't be empty!", new Error());
+      logerror("type can't be empty!", new Error());
       process.exit(0);
     }
 

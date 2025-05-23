@@ -15,10 +15,9 @@ import {
     StateHashes,
     Int32,
 } from '@scrypt-inc/scrypt-ts-btc';
-import { getCatCollectionCommitScript } from '../lib/commit';
-import { Postage } from '../lib/constants';
-import { OpenMinterCat721Meta } from '../lib/metadata';
-import {
+import { getCatCollectionCommitScript, 
+    Postage, 
+    OpenMinterCat721Meta,
     outpoint2ByteString,
     isP2TR,
     scriptToP2tr,
@@ -27,12 +26,13 @@ import {
     pubKeyPrefix,
     satoshiToHex,
     byteStringToBigInt,
-} from '../lib/utils';
-import { CAT721MerkleLeaf, CAT721OpenMinterState, MerkleProof, ProofNodePos } from '../contracts';
-import { CAT721OpenMinter } from '../contracts/cat721/minters/cat721OpenMinter';
-import { CAT721Covenant } from './cat721Covenant';
-import { CAT721OpenMinterMerkleTree } from '../contracts/cat721/minters/cat721OpenMinterMerkleTree';
-import { CAT721OpenMinterUtxo } from '../lib/provider';
+    CAT721OpenMinterUtxo,
+ } from '../lib/index.js';
+
+import { CAT721MerkleLeaf, CAT721OpenMinterState, MerkleProof, ProofNodePos, CAT721OpenMinter, CAT721OpenMinterMerkleTree} from '../contracts/index.js';
+
+import { CAT721Covenant } from './cat721Covenant.js';
+
 
 export const PROOF_NODE_ON_RIGHT = true;
 export const PROOF_NODE_ON_LEFT = false;

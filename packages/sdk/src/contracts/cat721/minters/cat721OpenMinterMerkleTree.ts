@@ -9,7 +9,7 @@ import {
     toByteString,
     TX_P2TR_OUTPUT_SCRIPT_BYTE_LEN,
 } from '@scrypt-inc/scrypt-ts-btc';
-import { CAT721MerkleLeaf, HEIGHT, MerkleProof, ProofNodePos } from '../types';
+import { CAT721MerkleLeaf, HEIGHT, MerkleProof, ProofNodePos } from '../types.js';
 
 export class CAT721OpenMinterMerkleTree extends SmartContractLib {
     /**

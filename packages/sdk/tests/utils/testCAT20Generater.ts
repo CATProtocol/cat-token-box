@@ -16,13 +16,13 @@ import {
     Postage,
     toTokenAddress,
     TracedCAT20Token,
-} from '../../src';
-import { deploy } from './testCAT20/features/deploy';
+    singleSend,
+    CAT20Utxo,
+    closedMint,
+    deployClosedMinter,
+} from '@cat-protocol/cat-sdk-v2';
 import { testSigner } from './testSigner';
 import { testChainProvider, testUtxoProvider } from './testProvider';
-import { mint } from './testCAT20/features/mint';
-import { singleSend } from '../../src/features/cat20/send/singleSend';
-import { CAT20Utxo } from '../../src/lib/provider';
 
 export interface CAT20ClosedMinterUtxo extends StatefulCovenantUtxo {
     state: CAT20ClosedMinterState;
@@ -46,7 +46,7 @@ export class TestCAT20Generater {
     }
 
     static async init(info: ClosedMinterCat20Meta) {
-        const deployInfo = await deploy(
+        const deployInfo = await deployClosedMinter(
             testSigner,
             testUtxoProvider,
             testChainProvider,
@@ -73,16 +73,14 @@ export class TestCAT20Generater {
 
     async mintThenTransfer(addr: ByteString, amount: Int32) {
         const signerAddr = await testSigner.getAddress();
-        const signerTokenAddr = toTokenAddress(signerAddr);
-        const mintInfo = await mint(
+        const mintInfo = await closedMint(
             testSigner,
             testUtxoProvider,
             testChainProvider,
             this.getCat20MinterUtxo(),
             this.deployInfo.tokenId,
-            signerTokenAddr,
+            this.deployInfo.metadata,
             amount,
-            await testSigner.getAddress(),
             await testChainProvider.getFeeRate(),
         );
         for (let index = 0; index < mintInfo.mintTx.inputCount; index++) {

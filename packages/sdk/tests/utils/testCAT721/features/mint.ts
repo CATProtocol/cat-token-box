@@ -1,8 +1,7 @@
 import { Psbt, Transaction } from '@scrypt-inc/bitcoinjs-lib';
 import { ByteString, ChainProvider, ExtPsbt, Int32, markSpent, Signer, UtxoProvider } from '@scrypt-inc/scrypt-ts-btc';
-import { CAT721Utxo } from '../../../../src/lib/provider';
+import { CAT721Utxo, getTxId} from '@cat-protocol/cat-sdk-v2';
 import { CAT721ClosedMinterCovenant, CAT721ClosedMinterUtxo } from '../cat721ClosedMinterCovenant';
-import { getTxId } from '../../../../src';
 
 export async function mint(
     signer: Signer,

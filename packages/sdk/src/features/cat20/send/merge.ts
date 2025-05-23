@@ -1,11 +1,8 @@
-// import { Cat20Utxo, ChainProvider, UtxoProvider } from '../../../lib/provider';
-// import { Signer } from '../../../lib/signer';
-import { toTokenAddress } from '../../../lib/utils';
-import { singleSend } from './singleSend';
-import { feeSplitTx, waitTxConfirm } from './split';
-import { calcTotalAmount } from './pick';
 import { ChainProvider, Signer, UtxoProvider } from '@scrypt-inc/scrypt-ts-btc';
-import { CAT20Utxo } from '../../../lib/provider';
+import { toTokenAddress, CAT20Utxo } from '../../../lib/index.js';
+import { singleSend } from './singleSend.js';
+import { feeSplitTx, waitTxConfirm } from './split.js';
+import { calcTotalAmount } from './pick.js';
 
 /**
  * Consolidate all CAT20 tokens into a single UTXO through multiple transactions.

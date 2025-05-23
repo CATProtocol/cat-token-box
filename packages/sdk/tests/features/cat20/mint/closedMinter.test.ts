@@ -8,40 +8,39 @@ import { bvmVerify, ExtPsbt, Ripemd160 } from '@scrypt-inc/scrypt-ts-btc';
 import {
     addrToP2trLockingScript,
     CAT20Covenant,
-    CAT20OpenMinterCovenant,
-    OpenMinterCat20Meta,
+    CAT20ClosedMinterCovenant,
+    ClosedMinterCat20Meta,
     Postage,
     toTokenAddress,
-    CAT20OpenMinterUtxo,
+    CAT20ClosedMinterUtxo,
 } from '@cat-protocol/cat-sdk-v2';
-import { deployToken, loadAllArtifacts, mintToken } from '../utils';
-import { testSigner } from '../../..//utils/testSigner';
+import { deployClosedMinterToken, loadAllArtifacts, mintClosedMinterToken } from '../utils';
+import { testSigner } from '../../../utils/testSigner';
 
 use(chaiAsPromised);
 
-describe('Test the feature `mint` for `CAT20OpenMinterCovenant`', () => {
+describe('Test the feature `mint` for `CAT20ClosedMinterCovenant`', () => {
     let address: string;
     let tokenReceiverAddr: Ripemd160;
 
     let tokenId: string;
     let tokenAddr: string;
     let minterAddr: string;
-    let metadata: OpenMinterCat20Meta;
+    let metadata: ClosedMinterCat20Meta;
 
     let spentMinterTx: ExtPsbt;
 
     before(async () => {
         loadAllArtifacts();
+        // await OpenMinter.loadArtifact();
+        // await CAT20.loadArtifact();
+        // await Guard.loadArtifact();
         address = await testSigner.getAddress();
         tokenReceiverAddr = Ripemd160(toTokenAddress(address));
         metadata = {
             name: 'c',
             symbol: 'C',
             decimals: 2,
-            max: 21000000n,
-            limit: 1000n,
-            premine: 0n,
-            preminerAddr: tokenReceiverAddr,
             minterMd5: '',
         };
 
@@ -50,16 +49,16 @@ describe('Test the feature `mint` for `CAT20OpenMinterCovenant`', () => {
             tokenId: deployedTokenId,
             tokenAddr: deployedTokenAddr,
             minterAddr: deployedMinterAddr,
-        } = await deployToken(metadata);
+        } = await deployClosedMinterToken(metadata);
         tokenId = deployedTokenId;
         tokenAddr = deployedTokenAddr;
         spentMinterTx = revealTx;
         minterAddr = deployedMinterAddr;
     });
 
-    describe('When minting an existed token', () => {
-        it('should mint successfully, if premine is zero', async () => {
-            const cat20MinterUtxo: CAT20OpenMinterUtxo = {
+    describe('When minting an deployed token', () => {
+        it('should mint the first tokens successfully', async () => {
+            const cat20MinterUtxo: CAT20ClosedMinterUtxo = {
                 txId: spentMinterTx.extractTransaction().getId(),
                 outputIndex: 1,
                 script: addrToP2trLockingScript(minterAddr),
@@ -68,19 +67,17 @@ describe('Test the feature `mint` for `CAT20OpenMinterCovenant`', () => {
                 txoStateHashes: spentMinterTx.getTxoStateHashes(),
                 state: {
                     tokenScript: addrToP2trLockingScript(tokenAddr),
-                    hasMintedBefore: false,
-                    remainingCount: (metadata.max - metadata.premine) / metadata.limit,
                 },
             };
 
-            await testMintResult(cat20MinterUtxo, minterAddr, [10500n, 10499n], 1000n * 100n);
+            await testMintResult(cat20MinterUtxo, minterAddr, 3150000n * 100n);
         });
 
         it('should mint a new token successfully', async () => {
             // use the second minter in previous outputs
-            const minterOutputIndex = 2;
+            const minterOutputIndex = 1;
 
-            const cat20MinterUtxo: CAT20OpenMinterUtxo = {
+            const cat20MinterUtxo: CAT20ClosedMinterUtxo = {
                 txId: spentMinterTx.extractTransaction().getId(),
                 outputIndex: minterOutputIndex,
                 script: addrToP2trLockingScript(minterAddr),
@@ -89,22 +86,19 @@ describe('Test the feature `mint` for `CAT20OpenMinterCovenant`', () => {
                 txoStateHashes: spentMinterTx.getTxoStateHashes(),
                 state: {
                     tokenScript: addrToP2trLockingScript(tokenAddr),
-                    hasMintedBefore: true,
-                    remainingCount: 10499n,
                 },
             };
 
-            await testMintResult(cat20MinterUtxo, minterAddr, [5249n, 5249n], 1000n * 100n);
+            await testMintResult(cat20MinterUtxo, minterAddr, 1000n * 100n);
         });
     });
 
     async function testMintResult(
-        cat20MinterUtxo: CAT20OpenMinterUtxo,
+        cat20MinterUtxo: CAT20ClosedMinterUtxo,
         minterAddr: string,
-        expectedNextMinterCounts: bigint[],
         expectedMintedAmount: bigint,
     ) {
-        const { mintTx } = await mintToken(cat20MinterUtxo, tokenId, metadata);
+        const { mintTx } = await mintClosedMinterToken(cat20MinterUtxo, tokenId, metadata, expectedMintedAmount);
 
         expect(mintTx).to.not.be.null;
         expect(mintTx.isFinalized).to.be.true;
@@ -113,22 +107,18 @@ describe('Test the feature `mint` for `CAT20OpenMinterCovenant`', () => {
         expect(bvmVerify(mintTx, 0)).to.be.true;
 
         let outputIndex = 1;
-        for (let i = 0; i < expectedNextMinterCounts.length; i++) {
-            // ensure a new minter is created
-            const nextMinterOutputIndex = outputIndex++;
-            const nextMinter = new CAT20OpenMinterCovenant(tokenId, metadata, {
-                tokenScript: cat20MinterUtxo.state.tokenScript,
-                hasMintedBefore: true,
-                remainingCount: expectedNextMinterCounts[i],
-            });
-            expect(Buffer.from(mintTx.txOutputs[nextMinterOutputIndex].script).toString('hex')).to.eq(
-                nextMinter.lockingScript.toHex(),
-            );
-            expect(
-                mintTx.getTxoStateHashes()[nextMinterOutputIndex - 1],
-                `incorrect minter state on outputs[${nextMinterOutputIndex}]`,
-            ).eq(nextMinter.stateHash);
-        }
+        // ensure a new minter is created
+        const nextMinterOutputIndex = outputIndex++;
+        const nextMinter = new CAT20ClosedMinterCovenant(tokenId, address, metadata, {
+            tokenScript: cat20MinterUtxo.state.tokenScript,
+        });
+        expect(Buffer.from(mintTx.txOutputs[nextMinterOutputIndex].script).toString('hex')).to.eq(
+            nextMinter.lockingScript.toHex(),
+        );
+        expect(
+            mintTx.getTxoStateHashes()[nextMinterOutputIndex - 1],
+            `incorrect minter state on outputs[${nextMinterOutputIndex}]`,
+        ).eq(nextMinter.stateHash);
 
         // ensure the minted token is sent to the receiver
         const tokenOutputIndex = outputIndex;
