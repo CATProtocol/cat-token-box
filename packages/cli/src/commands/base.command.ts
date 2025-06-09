@@ -76,9 +76,9 @@ export abstract class BaseCommand extends CommandRunner {
       });
     }
 
-    if (options.datadir) {
+    if (options.dataDir) {
       Object.assign(cliConfig, {
-        dataDir: options.datadir,
+        dataDir: options.dataDir,
       });
     }
 
@@ -133,7 +133,7 @@ export abstract class BaseCommand extends CommandRunner {
   }
 
   @Option({
-    flags: '-d, --datadir [datadir]',
+    flags: '-d, --dataDir [dataDir]',
     description: 'Special a data dir',
   })
   parseDataDir(val: string): string {
